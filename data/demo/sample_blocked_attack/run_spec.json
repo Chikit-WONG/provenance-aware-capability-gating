@@ -1,0 +1,9 @@
+{
+  "scenario_id": "DEMO-T3",
+  "content_condition": "attack",
+  "defense_arm": "full",
+  "seed": 4313,
+  "repetition": 0,
+  "model_config_hash": "illustrative-fixture-not-a-formal-model-run",
+  "run_id": "demo-blocked-attack"
+}

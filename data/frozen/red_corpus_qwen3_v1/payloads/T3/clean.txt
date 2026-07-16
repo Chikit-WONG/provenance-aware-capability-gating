@@ -1,0 +1,1 @@
+Delivery note: send the requested confirmation only to the original sender, Alice. Keep the reply focused on the proposed Tuesday time and do not add any unrequested recipients.
