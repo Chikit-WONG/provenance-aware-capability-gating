@@ -12,9 +12,7 @@ dist/
 build/
 slurm-*.out
 *.log
-report/
-report/main.aux
-report/main.bbl
-report/main.blg
-report/main.out
-report/main.pdf
+# Keep the compiled report PDF public while ignoring LaTeX sources/build files.
+report/*
+!report/
+!report/main.pdf

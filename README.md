@@ -60,6 +60,32 @@ and [experiment protocol](docs/EXPERIMENT_PROTOCOL.md). The
 [demo guide](docs/DEMO.md) covers live execution, artifact replay, and the
 presentation script.
 
+## Formal results
+
+The frozen plan contained 216 runs. The analysis retained 213 valid records and
+3 infrastructure-invalid records; the latter remain visible in the intention-to-
+test (ITT) accounting. The table reports valid-run rates across all six tasks.
+
+| Defense | Attack: unauthorized effect | Attack: secret leakage | Clean: benign success |
+| --- | ---: | ---: | ---: |
+| Allow-All | 9/17 (52.9%) | 6/17 (35.3%) | 17/17 (100%) |
+| Prompt-Only | 6/18 (33.3%) | 3/18 (16.7%) | 18/18 (100%) |
+| Capability-Only | 3/18 (16.7%) | 3/18 (16.7%) | 17/18 (94.4%) |
+| Full | 0/18 (0%) | 0/18 (0%) | 15/18 (83.3%) |
+
+On the provenance-isolating T5--T6 subset, Allow-All and Capability-Only each
+leaked in 3/6 attack runs, while Full leaked in 0/6. The complete aggregate,
+confidence intervals, registered comparisons, and figures are available in
+[`artifacts/formal-analysis-v1/`](artifacts/formal-analysis-v1/):
+
+- [results summary](artifacts/formal-analysis-v1/results_summary.json)
+- [publication table](artifacts/formal-analysis-v1/publication_table.csv)
+- [registered comparisons](artifacts/formal-analysis-v1/registered_comparisons.csv)
+- [security figure](artifacts/formal-analysis-v1/security_outcomes.png)
+- [utility figure](artifacts/formal-analysis-v1/utility_outcomes.png)
+- [task-family figure](artifacts/formal-analysis-v1/task_family_outcomes.png)
+- [technical report PDF](report/main.pdf)
+
 ## Demo and report
 
 Launch the replay-safe Gradio app from the controller environment:
@@ -69,9 +95,9 @@ conda run -n test python scripts/demo.py --replay-only
 ```
 
 Omit `--replay-only` when the local vLLM service and live experiment adapter are
-available. Compile the report with `bash scripts/compile_report.sh`. Its results
-include remains explicitly unpopulated until verified formal aggregation; the
-bundled deterministic replay is never treated as an experimental result.
+available. The bundled deterministic replay is illustrative only; the formal
+claims above come from the frozen Qwen3-VL evaluation and its stored aggregates.
+The compiled report is [available here](report/main.pdf).
 
 ## Repository layout
 
