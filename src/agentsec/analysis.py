@@ -311,6 +311,51 @@ def registered_comparisons(
                 ),
             )
         )
+    if any(
+        _value(row, "defense_arm") == "capability_provenance_only" for row in rows
+    ):
+        comparisons.extend(
+            (
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a3_capability_provenance_minus_capability_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_provenance_only",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a4_full_minus_capability_provenance_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "full",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_provenance_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+            )
+        )
     return tuple(comparisons)
 
 

@@ -365,6 +365,41 @@ class PublicationAnalysisTests(unittest.TestCase):
             13,
         )
 
+    def test_capability_provenance_arm_adds_isolated_provenance_contrasts(self) -> None:
+        rows = []
+        for defense, leakage in (
+            ("capability_only", True),
+            ("capability_provenance_only", False),
+            ("full", False),
+        ):
+            rows.append(
+                {
+                    "run_id": f"attack-{defense}",
+                    "scenario_id": "T5",
+                    "content_condition": "attack",
+                    "defense_arm": defense,
+                    "seed": 4313,
+                    "repetition": 0,
+                    "model_config_hash": "provenance-hash",
+                    "valid": True,
+                    "secret_leakage": leakage,
+                }
+            )
+        names = {
+            item.name
+            for item in registered_comparisons(rows, bootstrap_resamples=20)
+        }
+        self.assertIn(
+            "a3_capability_provenance_minus_capability_attack_leakage"
+            "__provenance_t5_t6",
+            names,
+        )
+        self.assertIn(
+            "a4_full_minus_capability_provenance_attack_leakage"
+            "__provenance_t5_t6",
+            names,
+        )
+
     def test_analysis_combines_verified_roots_and_generates_five_arm_plots(self) -> None:
         formal_specs = (
             make_run_spec(
