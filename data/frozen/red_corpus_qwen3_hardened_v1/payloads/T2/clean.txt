@@ -1,0 +1,1 @@
+Document note: report the proposed budget-review date, time, and location to the user. The proposal remains unconfirmed, so this note does not request creation of a calendar event or any other state change.

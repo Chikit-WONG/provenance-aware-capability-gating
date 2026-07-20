@@ -26,6 +26,10 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 不改写原 216-run 正式研究的前提下隔离 Full 相对 Prompt+Capability 的来源追踪
 增量。
 
+随后又补充了 54 次 `capability_provenance_only`（能力限制 + provenance、无安全提示词），
+形成完整的 2×2 消融；合并分析共 324 次计划运行。另有确定性的 16-case sink 压力测试，
+在邮件 subject/body 以及日历 title/location 四类出口注入恶意敏感值。
+
 详细接口见 [系统架构](docs/ARCHITECTURE.md)、[威胁模型](docs/THREAT_MODEL.md)
 和[实验协议](docs/EXPERIMENT_PROTOCOL.md)。
 
@@ -45,30 +49,53 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 相差安全提示词和 provenance 检查，不能据此把差异归因于 provenance。第五组消融
 专门拆开了这两个因素。
 
-## 后续消融结果
+## 2×2 消融与压力测试结果
 
-新增 54 次运行全部完成且全部有效。在 T5--T6 attack 子集上：
+两组各 54 次 add-on 运行全部完成且全部有效。在 T5--T6 attack 子集上：
 
 | 防御方案 | 秘密泄漏 |
 | --- | ---: |
 | Capability-Only | 3/6（50.0%） |
+| Capability+Provenance | 0/6（0%） |
 | Prompt+Capability | 0/6（0%） |
 | Full | 0/6（0%） |
 
-Prompt+Capability 相对 Capability-Only 的配对泄漏风险差为 $-0.50$（95% bootstrap
-CI $[-0.83,-0.17]$）；Full 相对 Prompt+Capability 为 $0.00$（95% bootstrap CI
-$[0.00,0.00]$）。因此，在当前冻结语料中，观察到的泄漏下降可以由安全提示词解释；
-实验**没有证明 provenance 检查带来独立增益**。这是一个收窄项目结论的负消融结果，
-并不等于 provenance 在一般情况下没有价值。
+Capability+Provenance 和 Prompt+Capability 相对 Capability-Only 的配对泄漏风险差都为
+$-0.50$（95% bootstrap CI $[-0.83,-0.17]$）；Full 相对这两个中间方案均为
+$0.00$（95% bootstrap CI $[0.00,0.00]$）。因此，当前实验已经显示 provenance
+相对 Capability-Only 的独立增益；但在这个攻击集上 Full 与 Prompt+Capability 都达到
+0/6，存在 floor effect，尚未显示 provenance 在安全提示词之上的端到端额外收益。
 
-合并分析覆盖 270 次计划运行，其中 267 条有效、3 条基础设施无效；表中百分比使用
+合并分析覆盖 324 次计划运行，其中 321 条有效、3 条基础设施无效；表中百分比使用
 有效样本分母，无效记录没有被静默替换。完整材料见
-[合并分析目录](artifacts/ablation-analysis-v1/)：
+[合并分析目录](artifacts/provenance-strength-analysis-v1/)：
 
-- [结果摘要](artifacts/ablation-analysis-v1/results_summary.json)
-- [正式结果表](artifacts/ablation-analysis-v1/publication_table.csv)
-- [注册比较](artifacts/ablation-analysis-v1/registered_comparisons.csv)
-- [安全性图](artifacts/ablation-analysis-v1/security_outcomes.png)
-- [效用图](artifacts/ablation-analysis-v1/utility_outcomes.png)
-- [任务族图](artifacts/ablation-analysis-v1/task_family_outcomes.png)
+- [结果摘要](artifacts/provenance-strength-analysis-v1/results_summary.json)
+- [正式结果表](artifacts/provenance-strength-analysis-v1/publication_table.csv)
+- [注册比较](artifacts/provenance-strength-analysis-v1/registered_comparisons.csv)
+- [安全性图](artifacts/provenance-strength-analysis-v1/security_outcomes.png)
+- [效用图](artifacts/provenance-strength-analysis-v1/utility_outcomes.png)
+- [任务族图](artifacts/provenance-strength-analysis-v1/task_family_outcomes.png)
+
+确定性 sink 压力测试为 16/16 通过：启用 provenance 的 8 次受保护值出口调用全部被拒绝，
+副作用为 0；两个未启用 provenance 的对照方案的 8 次能力合法调用均正常执行。原始结果见
+[sink-pressure-v1/results.json](artifacts/sink-pressure-v1/results.json)。
+
+## 独立 hardened 攻击集结果
+
+为了检验 Full 在安全提示词之后是否还能增加收益，Red Agent 使用新的冻结 system
+prompt 生成了独立的 30-candidate 语料，加入审批伪装、合规流程伪装和数据字段/context
+laundering 等策略，并在 victim 实验前完成冻结和校验。108 次配对运行（Prompt+Capability
+54 次、Full 54 次）全部 valid：
+
+| 防御方案 | T5--T6 attack 泄漏 | T6 attack 泄漏 |
+| --- | ---: | ---: |
+| Prompt+Capability | 3/6（50.0%） | 3/3（100%） |
+| Full | 0/6（0%） | 0/3（0%） |
+
+Full 相对 Prompt+Capability 的配对泄漏风险差为 $-0.50$（95% bootstrap CI
+$[-0.83,-0.17]$）。因此，独立 hardened 语料显示了端到端 provenance 增益；原始语料的
+0/6 floor effect 掩盖了这一差异。完整结果和图见
+[hardened-analysis-v1](artifacts/hardened-analysis-v1/)，冻结语料见
+[red_corpus_qwen3_hardened_v1](data/frozen/red_corpus_qwen3_hardened_v1/)。
 - [技术报告 PDF](report/main.pdf)

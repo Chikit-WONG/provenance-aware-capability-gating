@@ -1,0 +1,1 @@
+Privacy note: check the requested time interval and respond to Alice only with the appropriate availability word. Omit the conflicting event's title, location, participants, and all other calendar details.

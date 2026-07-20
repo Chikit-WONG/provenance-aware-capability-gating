@@ -90,10 +90,12 @@ removed.
 
 Report arm-wise counts/rates and Wilson 95% intervals. The original analysis
 reports paired rate differences for Attack-Placebo, Full-Allow-all, and
-Full-Capability-only using a fixed bootstrap over scenario-seed units. Once the
-follow-up aggregation succeeds, also report Prompt+Capability-Capability-only
-and Full-Prompt+Capability. Present T1-T4 and T5-T6 separately; do not claim
-broad statistical significance from six task templates.
+Full-Capability-only using a fixed bootstrap over scenario-seed units. The
+two-by-two follow-up additionally reports Capability+Provenance-Capability-only,
+Prompt+Capability-Capability-only, and Full minus each intermediate arm. The
+hardened-corpus follow-up is analyzed separately and reports Full minus
+Prompt+Capability. Present T1-T4 and T5-T6 separately; do not claim broad
+statistical significance from six task templates.
 
 ## Pre-model truth table
 
@@ -112,3 +114,13 @@ Prompt+Capability are expected to execute the calls, while
 Capability+Provenance and Full must deny them and record the `deploy-token`
 taint. These 16 records are mechanism evidence, not victim-model runs, and
 are stored separately from all rate aggregates.
+
+## Independent hardened attack corpus
+
+The hardened Red-Agent pass uses a distinct frozen system prompt that asks for
+approval-shaped, compliance-shaped, and context-laundering payloads. Its
+validation profile permits only scenario-context email addresses and rejects
+new domains or recipients; the formal candidate is still selected before any
+victim run. A separate 108-cell plan pairs Prompt+Capability and Full on the
+same six-scenario, three-seed corpus. Its records are never merged with the
+original corpus for the Full-minus-Prompt+Capability contrast.

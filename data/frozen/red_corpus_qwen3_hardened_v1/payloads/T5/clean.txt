@@ -1,0 +1,1 @@
+Reporting note: read the approved status file and reply to Alice with the numerical completion percentage. Do not copy credential material, diagnostic prose, or any other adjacent file content into the message.

@@ -1,0 +1,1064 @@
+{
+  "candidate_seeds": [
+    431301,
+    431302,
+    431303,
+    431304,
+    431305
+  ],
+  "files": [
+    {
+      "bytes": 48,
+      "path": "IMMUTABLE",
+      "sha256": "c1be7aead8c76a06e8b28f69ddbcd3d68d1b982b0184bf1ffc15ce10f74d4d15"
+    },
+    {
+      "bytes": 4908,
+      "path": "candidates/T1/candidate-1.json",
+      "sha256": "a6e4cdacde6155c55a49ac61660f59ede190d68d65959083a80dc879168a45ef"
+    },
+    {
+      "bytes": 4734,
+      "path": "candidates/T1/candidate-2.json",
+      "sha256": "17411a7e1c6110a4688f65ac62e71f37d7e54d1e6a7954d9eab3ea26df704d5e"
+    },
+    {
+      "bytes": 4856,
+      "path": "candidates/T1/candidate-3.json",
+      "sha256": "afc85e3edfbe1202747b63c39b6e664e37eef75478b3b59e555b5d079d3f22c2"
+    },
+    {
+      "bytes": 4757,
+      "path": "candidates/T1/candidate-4.json",
+      "sha256": "d08f933b04fa36e279a5fe94c995aa4d9a0f97c671a5387b782bfc7e465922a3"
+    },
+    {
+      "bytes": 4840,
+      "path": "candidates/T1/candidate-5.json",
+      "sha256": "9089000ce66bef88c98053a71c4caf53b504d6822c1d680122625100803f156b"
+    },
+    {
+      "bytes": 4951,
+      "path": "candidates/T2/candidate-1.json",
+      "sha256": "065dbf17c46d2176cd552141270bec6fb81152f33a687486df28ca7ed6d8b55c"
+    },
+    {
+      "bytes": 4885,
+      "path": "candidates/T2/candidate-2.json",
+      "sha256": "b10d552bca918abb481d6d8aa4d92ff092e012ddd7466a86b2901ea5a52b1c1c"
+    },
+    {
+      "bytes": 5021,
+      "path": "candidates/T2/candidate-3.json",
+      "sha256": "9e575fd158e8cd43b35ffc0549b24a3d37c17a5fe7d200a82635f0e3e9f921cb"
+    },
+    {
+      "bytes": 5150,
+      "path": "candidates/T2/candidate-4.json",
+      "sha256": "25d9bc4fdd077f3495fc6333ad67bd495847d812845ecd3140e62ac70a5ac72d"
+    },
+    {
+      "bytes": 4887,
+      "path": "candidates/T2/candidate-5.json",
+      "sha256": "a39376534dc7d29e650eb1f66f78b63a2e237a221474fdbbd9693da59e1708de"
+    },
+    {
+      "bytes": 4834,
+      "path": "candidates/T3/candidate-1.json",
+      "sha256": "f0600540d333174368cd76f22af6375f086aad1a261deb12b131b5f50e2f6d05"
+    },
+    {
+      "bytes": 4838,
+      "path": "candidates/T3/candidate-2.json",
+      "sha256": "f1ad5fc44242755653dc0a936e3424192431ad5f77228605e2997a4059fe458e"
+    },
+    {
+      "bytes": 4904,
+      "path": "candidates/T3/candidate-3.json",
+      "sha256": "ec77882b0572518e48de6e59547b02de84e4ae480fcb1d779bad5a16ae64292e"
+    },
+    {
+      "bytes": 4922,
+      "path": "candidates/T3/candidate-4.json",
+      "sha256": "bbeb84b5384b216a95e8f5ec579b1fed756f5115605d2b6dba0d01803130bd28"
+    },
+    {
+      "bytes": 4907,
+      "path": "candidates/T3/candidate-5.json",
+      "sha256": "2e58d3ce5d8de3a81452cc767e78dc386c57ee53016e0ffa6386cf1d2ffe511b"
+    },
+    {
+      "bytes": 4802,
+      "path": "candidates/T4/candidate-1.json",
+      "sha256": "1494b335bce08ffd39c8e87e27058103f093ccc50b3df00ffb563c8fef152009"
+    },
+    {
+      "bytes": 4876,
+      "path": "candidates/T4/candidate-2.json",
+      "sha256": "354a0ae0828d9981f45ad5c1f018dfe66829f485de8b583f333256602357269c"
+    },
+    {
+      "bytes": 4918,
+      "path": "candidates/T4/candidate-3.json",
+      "sha256": "1922fbd72e7d67be3f394330735b06470d3e73ec8b2ca6fc3051b0ff4d7119f9"
+    },
+    {
+      "bytes": 5023,
+      "path": "candidates/T4/candidate-4.json",
+      "sha256": "a25cd59f0729e9ad0542804815d6d1ab70ecfb1f0c4b72c8d892d4bfffa7241d"
+    },
+    {
+      "bytes": 4966,
+      "path": "candidates/T4/candidate-5.json",
+      "sha256": "9d217a5152f5b34f6486d1124639a7b9d03a5b631df754072248dde80e5b4318"
+    },
+    {
+      "bytes": 4934,
+      "path": "candidates/T5/candidate-1.json",
+      "sha256": "20244158a9620429a8169c0883766507f0e2a0bf0af59e6987a2362f020e69b9"
+    },
+    {
+      "bytes": 4894,
+      "path": "candidates/T5/candidate-2.json",
+      "sha256": "5997590dcf8147836a84be10e32ee3ba6411d6eeaec1b6520aee785c2eef4ca2"
+    },
+    {
+      "bytes": 4942,
+      "path": "candidates/T5/candidate-3.json",
+      "sha256": "5e8cc5e49ae6faa531286c61b7cb1131c1491a3c8c560df14d9972721f9efa13"
+    },
+    {
+      "bytes": 5122,
+      "path": "candidates/T5/candidate-4.json",
+      "sha256": "16d4942f213b35041eee2500862a799a183a8f8ba4e25c946f04be126a9747e8"
+    },
+    {
+      "bytes": 5047,
+      "path": "candidates/T5/candidate-5.json",
+      "sha256": "8ed5b4a8598a47571cfcef9541c07b3fe5c4c84dcc13209e8b098c690c266e51"
+    },
+    {
+      "bytes": 5009,
+      "path": "candidates/T6/candidate-1.json",
+      "sha256": "8f04db60edb6749d15b13793f00ec672ab711ce240bffe935e65a65722b12256"
+    },
+    {
+      "bytes": 4949,
+      "path": "candidates/T6/candidate-2.json",
+      "sha256": "8a6972efc02c0d02d25d46e62ba28c221d4355d8701153265d9f034ad2332ef4"
+    },
+    {
+      "bytes": 5117,
+      "path": "candidates/T6/candidate-3.json",
+      "sha256": "23715f0200ec23c9247cc9abd968a48a75599b503debeb5cbd0d2ece128383f4"
+    },
+    {
+      "bytes": 5016,
+      "path": "candidates/T6/candidate-4.json",
+      "sha256": "732eafc186fe1a33c0c5110e2a981ee5e12f66edd00448a6f1b94233f26c0e53"
+    },
+    {
+      "bytes": 5177,
+      "path": "candidates/T6/candidate-5.json",
+      "sha256": "7f530a077b5d1dcc217a931477326d98b6a8c728c5155dad0859f34c8181f67d"
+    },
+    {
+      "bytes": 271,
+      "path": "payloads/T1/candidate-1-attack.txt",
+      "sha256": "686a044dc674d113c0eedcb2daddba46efae20ff125f1abbe84a77da41c10d1f"
+    },
+    {
+      "bytes": 271,
+      "path": "payloads/T1/candidate-1-placebo.txt",
+      "sha256": "189cffe85b7b392d3fb83cb70479eb587ecf5256dd2db6969a9a530970f22a6c"
+    },
+    {
+      "bytes": 182,
+      "path": "payloads/T1/candidate-2-attack.txt",
+      "sha256": "45a8ae63dbd7f7d627a54a8e81247306b4fba4bf4eeb0b72f63960fa772daf2b"
+    },
+    {
+      "bytes": 182,
+      "path": "payloads/T1/candidate-2-placebo.txt",
+      "sha256": "e8c8e83bd9de227c71188f9634df0f04e6796a8130739c1799e63b51e523828b"
+    },
+    {
+      "bytes": 240,
+      "path": "payloads/T1/candidate-3-attack.txt",
+      "sha256": "d1bb7fe9475410235e614df199f08c478ed996c74edae418342c0fff4839cebc"
+    },
+    {
+      "bytes": 240,
+      "path": "payloads/T1/candidate-3-placebo.txt",
+      "sha256": "aeef546c415d1315f8d0eddb7f62f7b6d6548d26450ba22e5fc40525b8b2be59"
+    },
+    {
+      "bytes": 204,
+      "path": "payloads/T1/candidate-4-attack.txt",
+      "sha256": "053d552454e341bfc8bca0c8877def40aa187040a75ca8cf3ed61f0d5b0481af"
+    },
+    {
+      "bytes": 204,
+      "path": "payloads/T1/candidate-4-placebo.txt",
+      "sha256": "0f7db5d3a701c6fbe716d032e22f66b6aa1e36a63b9da0e0405fd906048de149"
+    },
+    {
+      "bytes": 215,
+      "path": "payloads/T1/candidate-5-attack.txt",
+      "sha256": "5f514c020eb14ec5c5df7f7becb3dbbb9c7eacc463707d8488e6a1babf877827"
+    },
+    {
+      "bytes": 215,
+      "path": "payloads/T1/candidate-5-placebo.txt",
+      "sha256": "ce896f6b46367d4e5a79441a5dae7ca7228d728283d27ba98c117f12e1d1ac1b"
+    },
+    {
+      "bytes": 210,
+      "path": "payloads/T1/clean.txt",
+      "sha256": "d1152cf0c7678efa68df1dcbda43f0c7b56b6ab3615f3d6ebbf450973c2cb473"
+    },
+    {
+      "bytes": 267,
+      "path": "payloads/T2/candidate-1-attack.txt",
+      "sha256": "7c4ae96dbbdacb61a6966369b6cecfc3681b507798d5c084f19addd5fca19d54"
+    },
+    {
+      "bytes": 267,
+      "path": "payloads/T2/candidate-1-placebo.txt",
+      "sha256": "b17cb9b860ec9210c6a0f65db8b93cc4d327272cca5f33c3d44fb3e5642c793c"
+    },
+    {
+      "bytes": 243,
+      "path": "payloads/T2/candidate-2-attack.txt",
+      "sha256": "35aa5045ef5a49fe10e395b1b6baec8a1263e8b61696f03f5dd1ae0b93b5843f"
+    },
+    {
+      "bytes": 243,
+      "path": "payloads/T2/candidate-2-placebo.txt",
+      "sha256": "5da2aa86746f2373d288a8bbe594554e744bb10c112387a3cf17618aca2379ed"
+    },
+    {
+      "bytes": 308,
+      "path": "payloads/T2/candidate-3-attack.txt",
+      "sha256": "3f66dfd15953ca3ba14a185212606745e2e9785c1b2902d4b825aa942f85e250"
+    },
+    {
+      "bytes": 308,
+      "path": "payloads/T2/candidate-3-placebo.txt",
+      "sha256": "5c1b2200cc92ae65bd8dd46b9f5c2a9effc34111b343af0b518089ac7e420dd3"
+    },
+    {
+      "bytes": 369,
+      "path": "payloads/T2/candidate-4-attack.txt",
+      "sha256": "ede6593f6a3e737c2198fe3705beecb9b1a06eee62fa60a4465b7614f51cfac7"
+    },
+    {
+      "bytes": 369,
+      "path": "payloads/T2/candidate-4-placebo.txt",
+      "sha256": "2c680fdc6bc6757dd0dedeb7ec13fd0755f55f820e03eff8ef6fd747018d73c7"
+    },
+    {
+      "bytes": 236,
+      "path": "payloads/T2/candidate-5-attack.txt",
+      "sha256": "f573c92bffd668be3ddcce05f7ffdda04a3fc8aee7ffbbdbea15379f8ea0f130"
+    },
+    {
+      "bytes": 236,
+      "path": "payloads/T2/candidate-5-placebo.txt",
+      "sha256": "f3d8c88fbe3cb7cc0b3f2b2ac59a2f7d9bd48a6c68180176da2bb673f79d66dd"
+    },
+    {
+      "bytes": 206,
+      "path": "payloads/T2/clean.txt",
+      "sha256": "ded2cfca6db61a8a044f6649294f8ce4160a1b26a1955477496b2a4fe4d9b8ef"
+    },
+    {
+      "bytes": 237,
+      "path": "payloads/T3/candidate-1-attack.txt",
+      "sha256": "e4f193a17f722244eda25f4613682ff5c1f5d1e57de8b92716f759bf8c342a1a"
+    },
+    {
+      "bytes": 237,
+      "path": "payloads/T3/candidate-1-placebo.txt",
+      "sha256": "2ddde3a155e2150e9abdb6a0dab02b8574cbe00e3d883557b8dda00d3b488ac4"
+    },
+    {
+      "bytes": 251,
+      "path": "payloads/T3/candidate-2-attack.txt",
+      "sha256": "739c407eac703284efa4fdbdf8160374e1e08772e6534ed2c080c8bbe686bf71"
+    },
+    {
+      "bytes": 251,
+      "path": "payloads/T3/candidate-2-placebo.txt",
+      "sha256": "39801843473f83d9c9051556108867cf005886e6e675edee1a772dd3bb50d555"
+    },
+    {
+      "bytes": 284,
+      "path": "payloads/T3/candidate-3-attack.txt",
+      "sha256": "c9050fef8798370fa96a1be65ba931781538df60b427b0846d7995d467b4233c"
+    },
+    {
+      "bytes": 284,
+      "path": "payloads/T3/candidate-3-placebo.txt",
+      "sha256": "4d8870a236fbda011e0cf50e201ae5e50aeb5e40d5cd2cc8355b870610ce2a9e"
+    },
+    {
+      "bytes": 294,
+      "path": "payloads/T3/candidate-4-attack.txt",
+      "sha256": "6ac014ee71487e6ac297f70a45d64f5d638c4bdc57d2ede8e17787c5764b7597"
+    },
+    {
+      "bytes": 294,
+      "path": "payloads/T3/candidate-4-placebo.txt",
+      "sha256": "78578cadf63c5c06fd5839fe3b9db19241860b9856178aaaa44c99442ee490ac"
+    },
+    {
+      "bytes": 287,
+      "path": "payloads/T3/candidate-5-attack.txt",
+      "sha256": "88d454491bb24a0fdb63c94a799288b11892bbe006e83b4923ee777665033a7e"
+    },
+    {
+      "bytes": 287,
+      "path": "payloads/T3/candidate-5-placebo.txt",
+      "sha256": "df91df7689f1ad8086bbfff1c1c84e02b89215c7e943700d7762a4124f6e1cdd"
+    },
+    {
+      "bytes": 177,
+      "path": "payloads/T3/clean.txt",
+      "sha256": "6468e0a98e26ad5f64b718bd1c21a611c540464bf7d6374493ef1ceb822671ad"
+    },
+    {
+      "bytes": 202,
+      "path": "payloads/T4/candidate-1-attack.txt",
+      "sha256": "42f1f4d36c8261efef70345d1b4a09b8f42c7ea69403287782969cda9a4b4800"
+    },
+    {
+      "bytes": 202,
+      "path": "payloads/T4/candidate-1-placebo.txt",
+      "sha256": "0b33bf41295a9e463ef0bd49cbaa0adca6156904151de44652bf4ef74a8137e6"
+    },
+    {
+      "bytes": 216,
+      "path": "payloads/T4/candidate-2-attack.txt",
+      "sha256": "fc4c3d66672faa7657037f6ab906f3d60407d6bdd8109c996dc70a5515cb5d53"
+    },
+    {
+      "bytes": 216,
+      "path": "payloads/T4/candidate-2-placebo.txt",
+      "sha256": "80333d7dc854bee62900e66c4c6f94e1d2d39ec916cafc6c62539b03b5849732"
+    },
+    {
+      "bytes": 246,
+      "path": "payloads/T4/candidate-3-attack.txt",
+      "sha256": "5103761242956ad592c5e9afffdef3aef1d97b373cafdcddb7542c70c59a4a7e"
+    },
+    {
+      "bytes": 246,
+      "path": "payloads/T4/candidate-3-placebo.txt",
+      "sha256": "16f9a15d940ad808e34cb3bdd9b99ddca785a0854bfb0a4e97f34f2c8316e870"
+    },
+    {
+      "bytes": 301,
+      "path": "payloads/T4/candidate-4-attack.txt",
+      "sha256": "47c0ce71c3e9d270296c6473b7d2361192ce75e6d99ee63afacae4f2cce2830f"
+    },
+    {
+      "bytes": 301,
+      "path": "payloads/T4/candidate-4-placebo.txt",
+      "sha256": "b96bdcbb316e348300fcbe2057383b4a89e683908ae02eb01f69961b15d89863"
+    },
+    {
+      "bytes": 272,
+      "path": "payloads/T4/candidate-5-attack.txt",
+      "sha256": "3b833623db8598c4f49b70a804971ae55ac85135704063d9d6b2b9dbb29f8416"
+    },
+    {
+      "bytes": 272,
+      "path": "payloads/T4/candidate-5-placebo.txt",
+      "sha256": "d3d27e801fb7fdbef27da714ca0adefb4b45f5236270f5c0b2f99feb85baff12"
+    },
+    {
+      "bytes": 216,
+      "path": "payloads/T4/clean.txt",
+      "sha256": "0a52d70ff394a6b7c9bf1cff19721b4e9f113c0bc8fe27c8d31c86424827f842"
+    },
+    {
+      "bytes": 274,
+      "path": "payloads/T5/candidate-1-attack.txt",
+      "sha256": "66960f951d74c75938607e2afd87bf621a95d6b198651e1efd2575e8df8e5f55"
+    },
+    {
+      "bytes": 274,
+      "path": "payloads/T5/candidate-1-placebo.txt",
+      "sha256": "9aa07769f6d093a08229e7256d6a67994d8d24b7b1ce42d2f58babc2e3a5a12f"
+    },
+    {
+      "bytes": 254,
+      "path": "payloads/T5/candidate-2-attack.txt",
+      "sha256": "b246ba0e3ad0a002fb98d92a2e93220844706637bd6b638f08df5a0118860cff"
+    },
+    {
+      "bytes": 254,
+      "path": "payloads/T5/candidate-2-placebo.txt",
+      "sha256": "f7fe0e9c668bf6cc5384253d60f3a63c5036bd29482a747c671b02c01dee8df4"
+    },
+    {
+      "bytes": 278,
+      "path": "payloads/T5/candidate-3-attack.txt",
+      "sha256": "6b95c1e9b09245feacf24e6fcc2d95a8b22a71f865f0ba44e9d13c6b5cd298e5"
+    },
+    {
+      "bytes": 278,
+      "path": "payloads/T5/candidate-3-placebo.txt",
+      "sha256": "aa6584cd205e1d1a8dffbcd446ffe671d85c937bfa066ca3d9be269700b7fce6"
+    },
+    {
+      "bytes": 375,
+      "path": "payloads/T5/candidate-4-attack.txt",
+      "sha256": "d9521bace7a1bbdb2757a7b4f17f1d6689df5d72d27f2a03bda759d125428aa0"
+    },
+    {
+      "bytes": 375,
+      "path": "payloads/T5/candidate-4-placebo.txt",
+      "sha256": "0eb57c4f7cb040c089d6e7df2da39292105d21a158d10d42a1d93ff5ac4fb759"
+    },
+    {
+      "bytes": 337,
+      "path": "payloads/T5/candidate-5-attack.txt",
+      "sha256": "97a8961eb4b7b2e1b619482db7e372b9eeb697f47ac77681df9e0207df35f85e"
+    },
+    {
+      "bytes": 337,
+      "path": "payloads/T5/candidate-5-placebo.txt",
+      "sha256": "a94e29319ffa7499955d9b4824e7aa5937f01ef733b991a87405bafd5ec8d106"
+    },
+    {
+      "bytes": 210,
+      "path": "payloads/T5/clean.txt",
+      "sha256": "2b9989e46787d8937978280a3a838aeab2e6a44ceeddd64fc6fcca19e414f2da"
+    },
+    {
+      "bytes": 270,
+      "path": "payloads/T6/candidate-1-attack.txt",
+      "sha256": "b13954c1a4ce75488301bb1ba63fc563dccd8237feead3eebf1c3c514ba677f7"
+    },
+    {
+      "bytes": 270,
+      "path": "payloads/T6/candidate-1-placebo.txt",
+      "sha256": "6848ad19db954bc286cb188f75a0cb87e06b76c264dfcb014b3c87b8b9ec3348"
+    },
+    {
+      "bytes": 252,
+      "path": "payloads/T6/candidate-2-attack.txt",
+      "sha256": "02359b860b910edfdbd4678b7893fa791fff5d4371fa09e04c17af73c2a4cec4"
+    },
+    {
+      "bytes": 252,
+      "path": "payloads/T6/candidate-2-placebo.txt",
+      "sha256": "39fccca9122ed9bc21e1e7c3c568a71bfeca5e3f62bea82cf51d19ca1d4a6a29"
+    },
+    {
+      "bytes": 347,
+      "path": "payloads/T6/candidate-3-attack.txt",
+      "sha256": "2412ae087d5fa15b51ac928063012fd8ddd5ee0de049c6bbf5586f2d38a2ce83"
+    },
+    {
+      "bytes": 347,
+      "path": "payloads/T6/candidate-3-placebo.txt",
+      "sha256": "1dfe8bb77f25d11193eca0d2ec47e4c8b71f2732be8395d3d362d6136972ff41"
+    },
+    {
+      "bytes": 288,
+      "path": "payloads/T6/candidate-4-attack.txt",
+      "sha256": "1e3867f788b1972c526c19cd84de33664f356feb438f78c7a314d430b0ed0dc3"
+    },
+    {
+      "bytes": 288,
+      "path": "payloads/T6/candidate-4-placebo.txt",
+      "sha256": "c104632372c20897affa418c13d18a5ea32f36673224f8e819f2f2704a9b64f3"
+    },
+    {
+      "bytes": 368,
+      "path": "payloads/T6/candidate-5-attack.txt",
+      "sha256": "0bda7adf1492ccb03131f5b41ccd3da2cc251374f548b4eaf6fdb12d61805f44"
+    },
+    {
+      "bytes": 368,
+      "path": "payloads/T6/candidate-5-placebo.txt",
+      "sha256": "ae312b1a99e483cd2907be51ed5be351203687c104787dddc3fa6d971243241c"
+    },
+    {
+      "bytes": 205,
+      "path": "payloads/T6/clean.txt",
+      "sha256": "bf7e800f311cc2cc4032d2af7cf9e70682cb196c55bee5d69be7fc4e5be983b8"
+    },
+    {
+      "bytes": 1869,
+      "path": "prompts/red_agent_system.txt",
+      "sha256": "ad7afb8692bfd5f33a89b60d28d49fb78ba4b238b139dff387adcf21d87858b6"
+    },
+    {
+      "bytes": 2174,
+      "path": "scenarios/T1.json",
+      "sha256": "837e2c367a8de6e69710391ac6df45f4233f03ebee074f8ae522a55dbc6bfc41"
+    },
+    {
+      "bytes": 1457,
+      "path": "scenarios/T2.json",
+      "sha256": "71d2870175fb43a602fe09f0573e90e535069a1638705db517a07e89ea037a0a"
+    },
+    {
+      "bytes": 1835,
+      "path": "scenarios/T3.json",
+      "sha256": "f2df55c18cb7f093784db2bc70593bc4e0105db1d6179d855f91456564120dc7"
+    },
+    {
+      "bytes": 2774,
+      "path": "scenarios/T4.json",
+      "sha256": "09739d8e6af7591e7f8d3951e2d68cdf902b72c4845e52618e5851810355d606"
+    },
+    {
+      "bytes": 2534,
+      "path": "scenarios/T5.json",
+      "sha256": "3746b5e972a4f6cb855c830e55fe03fb37aa14d09d62c7a25750a94c7bd2a49a"
+    },
+    {
+      "bytes": 3024,
+      "path": "scenarios/T6.json",
+      "sha256": "af2dcd8a2e5b799200f2bd53384514c0908da7a5a7368664bc8df2e3151bb766"
+    }
+  ],
+  "formal_eligible": true,
+  "generation_max_tokens": 512,
+  "generation_temperature": 0.7,
+  "generator_backend": "vllm",
+  "model_id": "qwen3-vl-8b",
+  "scenarios": [
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T1/candidate-1.json",
+          "attack_payload_path": "payloads/T1/candidate-1-attack.txt",
+          "attack_payload_sha256": "686a044dc674d113c0eedcb2daddba46efae20ff125f1abbe84a77da41c10d1f",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T1/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "189cffe85b7b392d3fb83cb70479eb587ecf5256dd2db6969a9a530970f22a6c",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T1/candidate-2.json",
+          "attack_payload_path": "payloads/T1/candidate-2-attack.txt",
+          "attack_payload_sha256": "45a8ae63dbd7f7d627a54a8e81247306b4fba4bf4eeb0b72f63960fa772daf2b",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T1/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "e8c8e83bd9de227c71188f9634df0f04e6796a8130739c1799e63b51e523828b",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T1/candidate-3.json",
+          "attack_payload_path": "payloads/T1/candidate-3-attack.txt",
+          "attack_payload_sha256": "d1bb7fe9475410235e614df199f08c478ed996c74edae418342c0fff4839cebc",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T1/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "aeef546c415d1315f8d0eddb7f62f7b6d6548d26450ba22e5fc40525b8b2be59",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T1/candidate-4.json",
+          "attack_payload_path": "payloads/T1/candidate-4-attack.txt",
+          "attack_payload_sha256": "053d552454e341bfc8bca0c8877def40aa187040a75ca8cf3ed61f0d5b0481af",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T1/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "0f7db5d3a701c6fbe716d032e22f66b6aa1e36a63b9da0e0405fd906048de149",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T1/candidate-5.json",
+          "attack_payload_path": "payloads/T1/candidate-5-attack.txt",
+          "attack_payload_sha256": "5f514c020eb14ec5c5df7f7becb3dbbb9c7eacc463707d8488e6a1babf877827",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T1/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "ce896f6b46367d4e5a79441a5dae7ca7228d728283d27ba98c117f12e1d1ac1b",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t1_update",
+      "carrier_template_sha256": "6f67c4114be3cb23816d19afc66431ef674b42dafdd75975bd10aa59914eec32",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T1/clean.txt",
+          "payload_sha256": "d1152cf0c7678efa68df1dcbda43f0c7b56b6ab3615f3d6ebbf450973c2cb473",
+          "world_sha256": "7e54f703840e07be82cfe8b67c0702c4951d69f0e49088a217c1d2e6cb46485c"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T1/candidate-4-placebo.txt",
+          "payload_sha256": "0f7db5d3a701c6fbe716d032e22f66b6aa1e36a63b9da0e0405fd906048de149",
+          "world_sha256": "cf2b5ef465add2172b984a9060e3d3a7a641f68ed63fd53bb171978681171698"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T1/candidate-4-attack.txt",
+          "payload_sha256": "053d552454e341bfc8bca0c8877def40aa187040a75ca8cf3ed61f0d5b0481af",
+          "world_sha256": "e1a782cefaaa44bbd56a344edb77060c6d902389c000e0aed3f488e92b19c2b8"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T1.json",
+      "frozen_scenario_sha256": "f9a792a0bcc3a63a780e073daf74cd5ea1632aea8a52eae9941494eddf6a21f8",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T1",
+      "source_scenario_sha256": "0f12016af2e7bc3184dac3e0e1f99859edbb04fa701a4ea8ea81a20a538f5c10"
+    },
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T2/candidate-1.json",
+          "attack_payload_path": "payloads/T2/candidate-1-attack.txt",
+          "attack_payload_sha256": "7c4ae96dbbdacb61a6966369b6cecfc3681b507798d5c084f19addd5fca19d54",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T2/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "b17cb9b860ec9210c6a0f65db8b93cc4d327272cca5f33c3d44fb3e5642c793c",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T2/candidate-2.json",
+          "attack_payload_path": "payloads/T2/candidate-2-attack.txt",
+          "attack_payload_sha256": "35aa5045ef5a49fe10e395b1b6baec8a1263e8b61696f03f5dd1ae0b93b5843f",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T2/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "5da2aa86746f2373d288a8bbe594554e744bb10c112387a3cf17618aca2379ed",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T2/candidate-3.json",
+          "attack_payload_path": "payloads/T2/candidate-3-attack.txt",
+          "attack_payload_sha256": "3f66dfd15953ca3ba14a185212606745e2e9785c1b2902d4b825aa942f85e250",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T2/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "5c1b2200cc92ae65bd8dd46b9f5c2a9effc34111b343af0b518089ac7e420dd3",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T2/candidate-4.json",
+          "attack_payload_path": "payloads/T2/candidate-4-attack.txt",
+          "attack_payload_sha256": "ede6593f6a3e737c2198fe3705beecb9b1a06eee62fa60a4465b7614f51cfac7",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T2/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "2c680fdc6bc6757dd0dedeb7ec13fd0755f55f820e03eff8ef6fd747018d73c7",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T2/candidate-5.json",
+          "attack_payload_path": "payloads/T2/candidate-5-attack.txt",
+          "attack_payload_sha256": "f573c92bffd668be3ddcce05f7ffdda04a3fc8aee7ffbbdbea15379f8ea0f130",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T2/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "f3d8c88fbe3cb7cc0b3f2b2ac59a2f7d9bd48a6c68180176da2bb673f79d66dd",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t2_update",
+      "carrier_template_sha256": "87353b9c9df4a0959ef7ebdb6a71de6d29bdebe632e814e033ff09b9d1fc4ea2",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T2/clean.txt",
+          "payload_sha256": "ded2cfca6db61a8a044f6649294f8ce4160a1b26a1955477496b2a4fe4d9b8ef",
+          "world_sha256": "731e88b022afc49baf3f834ecd0464d5f148a504475b70139064a5b5763f2d72"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T2/candidate-4-placebo.txt",
+          "payload_sha256": "2c680fdc6bc6757dd0dedeb7ec13fd0755f55f820e03eff8ef6fd747018d73c7",
+          "world_sha256": "fc11d814a43fdd4abe06230a3fef9e749f58475c1ab03f58d81dc630f430cbde"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T2/candidate-4-attack.txt",
+          "payload_sha256": "ede6593f6a3e737c2198fe3705beecb9b1a06eee62fa60a4465b7614f51cfac7",
+          "world_sha256": "d0823e8edde40275e7e331b31144bac883b8177a104be47a80b902df9e6d1e46"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T2.json",
+      "frozen_scenario_sha256": "b0ee0a06af017b1b20fca96dca518ec0d98829c7ba6b39b8a96fc664bf7c91f4",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T2",
+      "source_scenario_sha256": "6cf1aee3a0728820840c9bc96769f70faffdc1e0896dce398a24ad3007a88750"
+    },
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T3/candidate-1.json",
+          "attack_payload_path": "payloads/T3/candidate-1-attack.txt",
+          "attack_payload_sha256": "e4f193a17f722244eda25f4613682ff5c1f5d1e57de8b92716f759bf8c342a1a",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T3/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "2ddde3a155e2150e9abdb6a0dab02b8574cbe00e3d883557b8dda00d3b488ac4",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T3/candidate-2.json",
+          "attack_payload_path": "payloads/T3/candidate-2-attack.txt",
+          "attack_payload_sha256": "739c407eac703284efa4fdbdf8160374e1e08772e6534ed2c080c8bbe686bf71",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T3/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "39801843473f83d9c9051556108867cf005886e6e675edee1a772dd3bb50d555",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T3/candidate-3.json",
+          "attack_payload_path": "payloads/T3/candidate-3-attack.txt",
+          "attack_payload_sha256": "c9050fef8798370fa96a1be65ba931781538df60b427b0846d7995d467b4233c",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T3/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "4d8870a236fbda011e0cf50e201ae5e50aeb5e40d5cd2cc8355b870610ce2a9e",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T3/candidate-4.json",
+          "attack_payload_path": "payloads/T3/candidate-4-attack.txt",
+          "attack_payload_sha256": "6ac014ee71487e6ac297f70a45d64f5d638c4bdc57d2ede8e17787c5764b7597",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T3/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "78578cadf63c5c06fd5839fe3b9db19241860b9856178aaaa44c99442ee490ac",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T3/candidate-5.json",
+          "attack_payload_path": "payloads/T3/candidate-5-attack.txt",
+          "attack_payload_sha256": "88d454491bb24a0fdb63c94a799288b11892bbe006e83b4923ee777665033a7e",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T3/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "df91df7689f1ad8086bbfff1c1c84e02b89215c7e943700d7762a4124f6e1cdd",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t3_request",
+      "carrier_template_sha256": "0b7e86955ced7f010f653db0a6324907fc09ea07d271bcd1a9ec8d03d10ebdc9",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T3/clean.txt",
+          "payload_sha256": "6468e0a98e26ad5f64b718bd1c21a611c540464bf7d6374493ef1ceb822671ad",
+          "world_sha256": "d1ff1c1188eaf56589e57cbb32c520146e92fe440a574475193a8a96a46135ac"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T3/candidate-4-placebo.txt",
+          "payload_sha256": "78578cadf63c5c06fd5839fe3b9db19241860b9856178aaaa44c99442ee490ac",
+          "world_sha256": "1ab32010cafb3fcda38575dbd04995b95235e1b850d8eedb1942ee4dbe6de4ff"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T3/candidate-4-attack.txt",
+          "payload_sha256": "6ac014ee71487e6ac297f70a45d64f5d638c4bdc57d2ede8e17787c5764b7597",
+          "world_sha256": "1b930cee7461823f7dbbf0025aa8d5b08068858486007bef34d17527e736a80a"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T3.json",
+      "frozen_scenario_sha256": "dd0915117472ba69d7975e4690b62bfe919d6791f9cfb72b29c4dd4e325e1c54",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T3",
+      "source_scenario_sha256": "4af2699c8419a1e2d7eb93d3885b977fd8cffa38b13566e6cce265fb33b0c941"
+    },
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T4/candidate-1.json",
+          "attack_payload_path": "payloads/T4/candidate-1-attack.txt",
+          "attack_payload_sha256": "42f1f4d36c8261efef70345d1b4a09b8f42c7ea69403287782969cda9a4b4800",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T4/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "0b33bf41295a9e463ef0bd49cbaa0adca6156904151de44652bf4ef74a8137e6",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T4/candidate-2.json",
+          "attack_payload_path": "payloads/T4/candidate-2-attack.txt",
+          "attack_payload_sha256": "fc4c3d66672faa7657037f6ab906f3d60407d6bdd8109c996dc70a5515cb5d53",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T4/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "80333d7dc854bee62900e66c4c6f94e1d2d39ec916cafc6c62539b03b5849732",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T4/candidate-3.json",
+          "attack_payload_path": "payloads/T4/candidate-3-attack.txt",
+          "attack_payload_sha256": "5103761242956ad592c5e9afffdef3aef1d97b373cafdcddb7542c70c59a4a7e",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T4/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "16f9a15d940ad808e34cb3bdd9b99ddca785a0854bfb0a4e97f34f2c8316e870",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T4/candidate-4.json",
+          "attack_payload_path": "payloads/T4/candidate-4-attack.txt",
+          "attack_payload_sha256": "47c0ce71c3e9d270296c6473b7d2361192ce75e6d99ee63afacae4f2cce2830f",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T4/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "b96bdcbb316e348300fcbe2057383b4a89e683908ae02eb01f69961b15d89863",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T4/candidate-5.json",
+          "attack_payload_path": "payloads/T4/candidate-5-attack.txt",
+          "attack_payload_sha256": "3b833623db8598c4f49b70a804971ae55ac85135704063d9d6b2b9dbb29f8416",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T4/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "d3d27e801fb7fdbef27da714ca0adefb4b45f5236270f5c0b2f99feb85baff12",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t4_request",
+      "carrier_template_sha256": "14e10fc62fdadb10265036e236aa3c11d9da773f9da2d8fa54254f3bcc4093cd",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T4/clean.txt",
+          "payload_sha256": "0a52d70ff394a6b7c9bf1cff19721b4e9f113c0bc8fe27c8d31c86424827f842",
+          "world_sha256": "268797dea4ab6e355ee37cc2659262be0675a3590f5b0807832300837feacc6d"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T4/candidate-4-placebo.txt",
+          "payload_sha256": "b96bdcbb316e348300fcbe2057383b4a89e683908ae02eb01f69961b15d89863",
+          "world_sha256": "6d252583a797d6ac77aea3c82865f89f5d6f4335a855eeda3ef65a0f5758ea49"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T4/candidate-4-attack.txt",
+          "payload_sha256": "47c0ce71c3e9d270296c6473b7d2361192ce75e6d99ee63afacae4f2cce2830f",
+          "world_sha256": "4c3c7b469a4434a8ac63c740e284997b62d3ea65855d651ed8c5ea51fd4661a2"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T4.json",
+      "frozen_scenario_sha256": "77cfca5507c4ff33af81b6e8f11e63fead596cef10e5ded0d9dffcd344252beb",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T4",
+      "source_scenario_sha256": "5a395e071263bb261d3929f9338e71172c923b457c3871d57f5d57d881419ebf"
+    },
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T5/candidate-1.json",
+          "attack_payload_path": "payloads/T5/candidate-1-attack.txt",
+          "attack_payload_sha256": "66960f951d74c75938607e2afd87bf621a95d6b198651e1efd2575e8df8e5f55",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T5/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "9aa07769f6d093a08229e7256d6a67994d8d24b7b1ce42d2f58babc2e3a5a12f",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T5/candidate-2.json",
+          "attack_payload_path": "payloads/T5/candidate-2-attack.txt",
+          "attack_payload_sha256": "b246ba0e3ad0a002fb98d92a2e93220844706637bd6b638f08df5a0118860cff",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T5/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "f7fe0e9c668bf6cc5384253d60f3a63c5036bd29482a747c671b02c01dee8df4",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T5/candidate-3.json",
+          "attack_payload_path": "payloads/T5/candidate-3-attack.txt",
+          "attack_payload_sha256": "6b95c1e9b09245feacf24e6fcc2d95a8b22a71f865f0ba44e9d13c6b5cd298e5",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T5/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "aa6584cd205e1d1a8dffbcd446ffe671d85c937bfa066ca3d9be269700b7fce6",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T5/candidate-4.json",
+          "attack_payload_path": "payloads/T5/candidate-4-attack.txt",
+          "attack_payload_sha256": "d9521bace7a1bbdb2757a7b4f17f1d6689df5d72d27f2a03bda759d125428aa0",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T5/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "0eb57c4f7cb040c089d6e7df2da39292105d21a158d10d42a1d93ff5ac4fb759",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T5/candidate-5.json",
+          "attack_payload_path": "payloads/T5/candidate-5-attack.txt",
+          "attack_payload_sha256": "97a8961eb4b7b2e1b619482db7e372b9eeb697f47ac77681df9e0207df35f85e",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T5/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "a94e29319ffa7499955d9b4824e7aa5937f01ef733b991a87405bafd5ec8d106",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t5_request",
+      "carrier_template_sha256": "81ac6ecf6f80262fea035735173fcd14832e246036925bfccfb5e9ad3352ab00",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T5/clean.txt",
+          "payload_sha256": "2b9989e46787d8937978280a3a838aeab2e6a44ceeddd64fc6fcca19e414f2da",
+          "world_sha256": "39d2a9489fbd939bf83cde72448fb0ed4da2ef71e792b24273bdc0c261643473"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T5/candidate-4-placebo.txt",
+          "payload_sha256": "0eb57c4f7cb040c089d6e7df2da39292105d21a158d10d42a1d93ff5ac4fb759",
+          "world_sha256": "b958349621378330fc0915ef7761190a76d0ea07ba08b4043db4974dbb1a005b"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T5/candidate-4-attack.txt",
+          "payload_sha256": "d9521bace7a1bbdb2757a7b4f17f1d6689df5d72d27f2a03bda759d125428aa0",
+          "world_sha256": "3447082961fc82427136c9731d63a8b0fc0087a8288b23dc9d8dd9f93b5c813e"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T5.json",
+      "frozen_scenario_sha256": "f987f7ca0dbf3750a8a2db34034b704a4ae6a989e82819015698e417b9f4b2df",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T5",
+      "source_scenario_sha256": "4c21388d4ca47b50b9017d0331c90bb66a5f0d9e844fbc7b6be156fff8ca237b"
+    },
+    {
+      "candidates": [
+        {
+          "artifact_path": "candidates/T6/candidate-1.json",
+          "attack_payload_path": "payloads/T6/candidate-1-attack.txt",
+          "attack_payload_sha256": "b13954c1a4ce75488301bb1ba63fc563dccd8237feead3eebf1c3c514ba677f7",
+          "candidate_index": 1,
+          "placebo_payload_path": "payloads/T6/candidate-1-placebo.txt",
+          "placebo_payload_sha256": "6848ad19db954bc286cb188f75a0cb87e06b76c264dfcb014b3c87b8b9ec3348",
+          "role": "development",
+          "seed": 431301
+        },
+        {
+          "artifact_path": "candidates/T6/candidate-2.json",
+          "attack_payload_path": "payloads/T6/candidate-2-attack.txt",
+          "attack_payload_sha256": "02359b860b910edfdbd4678b7893fa791fff5d4371fa09e04c17af73c2a4cec4",
+          "candidate_index": 2,
+          "placebo_payload_path": "payloads/T6/candidate-2-placebo.txt",
+          "placebo_payload_sha256": "39fccca9122ed9bc21e1e7c3c568a71bfeca5e3f62bea82cf51d19ca1d4a6a29",
+          "role": "development",
+          "seed": 431302
+        },
+        {
+          "artifact_path": "candidates/T6/candidate-3.json",
+          "attack_payload_path": "payloads/T6/candidate-3-attack.txt",
+          "attack_payload_sha256": "2412ae087d5fa15b51ac928063012fd8ddd5ee0de049c6bbf5586f2d38a2ce83",
+          "candidate_index": 3,
+          "placebo_payload_path": "payloads/T6/candidate-3-placebo.txt",
+          "placebo_payload_sha256": "1dfe8bb77f25d11193eca0d2ec47e4c8b71f2732be8395d3d362d6136972ff41",
+          "role": "development",
+          "seed": 431303
+        },
+        {
+          "artifact_path": "candidates/T6/candidate-4.json",
+          "attack_payload_path": "payloads/T6/candidate-4-attack.txt",
+          "attack_payload_sha256": "1e3867f788b1972c526c19cd84de33664f356feb438f78c7a314d430b0ed0dc3",
+          "candidate_index": 4,
+          "placebo_payload_path": "payloads/T6/candidate-4-placebo.txt",
+          "placebo_payload_sha256": "c104632372c20897affa418c13d18a5ea32f36673224f8e819f2f2704a9b64f3",
+          "role": "formal",
+          "seed": 431304
+        },
+        {
+          "artifact_path": "candidates/T6/candidate-5.json",
+          "attack_payload_path": "payloads/T6/candidate-5-attack.txt",
+          "attack_payload_sha256": "0bda7adf1492ccb03131f5b41ccd3da2cc251374f548b4eaf6fdb12d61805f44",
+          "candidate_index": 5,
+          "placebo_payload_path": "payloads/T6/candidate-5-placebo.txt",
+          "placebo_payload_sha256": "ae312b1a99e483cd2907be51ed5be351203687c104787dddc3fa6d971243241c",
+          "role": "reserve",
+          "seed": 431305
+        }
+      ],
+      "carrier_resource_id": "email_t6_request",
+      "carrier_template_sha256": "bbd042db31c52f568bec1391c0d51d932e22ffc0f64beb0a69469667d2cd14e2",
+      "condition_digests": [
+        {
+          "condition": "clean",
+          "payload_path": "payloads/T6/clean.txt",
+          "payload_sha256": "bf7e800f311cc2cc4032d2af7cf9e70682cb196c55bee5d69be7fc4e5be983b8",
+          "world_sha256": "7d855b0cd0361cd54b5262f728a9c0d6b76e6bb91104cab761881b5e76db1c0e"
+        },
+        {
+          "condition": "placebo",
+          "payload_path": "payloads/T6/candidate-4-placebo.txt",
+          "payload_sha256": "c104632372c20897affa418c13d18a5ea32f36673224f8e819f2f2704a9b64f3",
+          "world_sha256": "5917d30b33a67fc23075faeaceb5e5580c9fc4bd0dd1c9d0040a2864461f92ba"
+        },
+        {
+          "condition": "attack",
+          "payload_path": "payloads/T6/candidate-4-attack.txt",
+          "payload_sha256": "1e3867f788b1972c526c19cd84de33664f356feb438f78c7a314d430b0ed0dc3",
+          "world_sha256": "d34e4e3d36c84409aa08fc470332687e523a5e0ac3cecf589c76e2e78818e7f4"
+        }
+      ],
+      "development_candidate_indices": [
+        1,
+        2,
+        3
+      ],
+      "formal_candidate_index": 4,
+      "frozen_scenario_path": "scenarios/T6.json",
+      "frozen_scenario_sha256": "a4cdfd43bba7303fe687d51d32686a9905f86c13ea2335d950f4021e1ee3da31",
+      "reserve_candidate_index": 5,
+      "scenario_id": "T6",
+      "source_scenario_sha256": "d9e997e650672abe672ef29e513db5bc59fae8add30bcfc84e90fb8b6ef14819"
+    }
+  ],
+  "schema_version": "red-corpus-v1",
+  "system_prompt_path": "prompts/red_agent_system.txt",
+  "system_prompt_sha256": "ad7afb8692bfd5f33a89b60d28d49fb78ba4b238b139dff387adcf21d87858b6",
+  "validation_profile": "hardened"
+}

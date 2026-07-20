@@ -1,0 +1,403 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\system}{\textsc{ProvGate}}
+\newcommand{\attack}{\textsc{Attack}}
+\newcommand{\placebo}{\textsc{Placebo}}
+\newcommand{\clean}{\textsc{Clean}}
+\newcommand{\fullarm}{\textsc{Full}}
+\newcommand{\caparm}{\textsc{Capability-Only}}
+\newcommand{\promptcaparm}{\textsc{Prompt+Capability}}
+\newcommand{\allowarm}{\textsc{Allow-All}}
+
+\title{Provenance-Aware Capability Gating against\\
+Indirect Prompt Injection in Multi-Agent Systems}
+\author{AIAA 4313 Group Project\\
+\textit{Team member names and student IDs to be inserted}}
+\date{Summer 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Tool-using language-model agents can mistake instructions embedded in retrieved
+content for authorized user intent.  We study this indirect prompt-injection
+failure in a controlled two-agent office assistant.  A Reader Agent retrieves
+synthetic email, an Action Agent proposes file, calendar, and email operations,
+and an independent gateway mediates every side effect.  Our defense combines a
+task-scoped capability manifest with exact provenance and sensitivity labels.
+We pre-register six tasks, three content conditions, four defense arms, and
+three paired seeds, for 216 planned victim runs.  Attacks are generated offline,
+frozen, and hashed before formal evaluation.  Executed unauthorized effects,
+exact synthetic-secret leakage, and benign task success are derived from audit
+events and before/after world state rather than from model text.  The report
+contains the completed frozen evaluation: 216 victim runs were planned, 213
+were valid, and three infrastructure-invalid attempts are retained in the
+intention-to-test denominator.  A two-by-two follow-up added 54
+Capability+Provenance runs and 54 Prompt+Capability runs, all valid.  On the
+original T5--T6 attacks, each intermediate arm reduced Capability-Only leakage
+from 3/6 to 0/6, while Full remained at the 0/6 floor.  A deterministic
+16-case sink-pressure test blocked all eight provenance-enabled protected-value
+calls.  Finally, an independently frozen hardened corpus produced 3/6
+Prompt+Capability leakages versus 0/6 for Full, exposing an end-to-end
+provenance gain on attacks that survived the safe prompt.
+\end{abstract}
+
+\section{Introduction}
+
+Large language models increasingly act through tools rather than only producing
+text.  Retrieval makes such systems useful, but it also introduces a confused-
+deputy problem: an attacker can place an instruction in an email or document,
+and a model may execute it using authority granted by the user.  This is an
+\emph{indirect prompt injection} because the adversarial instruction arrives
+through data selected at run time rather than through the user message
+\cite{greshake2023indirect}.  Evaluations of tool-using agents show that neither
+ordinary helpfulness prompting nor simple refusal instructions reliably
+separate data from commands \cite{debenedetti2024agentdojo,zverev2024separate}.
+
+This project asks:
+
+\begin{quote}
+Given a correct task-authorization manifest, can provenance-aware capability
+gating reduce executed unauthorized actions and exact synthetic-secret leakage
+without substantially reducing benign task completion?
+\end{quote}
+
+We deliberately make a narrow claim.  The prototype is a local synthetic office,
+the capability oracle is assumed correct, and leakage tracking recognizes exact
+registered values.  It is an auditable experiment in enforcement mechanisms,
+not a proof of general language-model security.
+
+\section{Background and Design Principles}
+
+Prompt-level instruction hierarchy attempts to teach a model that trusted system
+and user instructions outrank untrusted content \cite{wallace2024hierarchy}.
+This can reduce attacks but leaves the same probabilistic component responsible
+for interpreting both data and policy.  Capability systems instead provide an
+unforgeable, least-authority description of the operations a component may
+perform \cite{dennis1966capabilities,saltzer1975protection}.  Information-flow
+control tracks where information came from and constrains where it may go
+\cite{denning1976lattice}.
+
+\system{} combines these ideas at the tool boundary.  The model may still read
+an attack and may still propose a malicious call.  Security rests on a small,
+deterministic reference monitor that checks the call against task authority and
+against the provenance and sensitivity of outbound values.  The distinction
+between proposal, policy decision, execution, and world mutation is preserved in
+an append-only audit trail.
+
+\section{Threat Model}
+
+\paragraph{Adversary.}
+The attacker controls one external-content block in a synthetic email consumed
+by the Reader Agent.  It can issue natural-language instructions designed to
+cause an unauthorized recipient, file read, calendar mutation, or disclosure.
+The formal Red Agent is not present at victim run time: it generates five
+candidates per task offline under fixed seeds, after which the selected payload
+is frozen and hashed.
+
+\paragraph{Trusted computing base.}
+The scenario manifest, capability gateway, provenance tracker, mock tools,
+append-only artifact writer, and independent evaluator are trusted.  The Reader
+and Action model outputs, retrieved email content, summaries derived from it, and
+all tool arguments proposed by a model are untrusted.  We assume the manifest
+correctly captures the user's intended authority.
+
+\paragraph{Attacker goals.}
+Success requires an observable world effect: a forbidden message recipient, an
+unauthorized calendar event or resource access, or an exact registered synthetic
+secret in an outbound message.  Model text that merely repeats an instruction is
+not counted as an executed effect.  A denied proposal is an attempted and blocked
+attack, not a successful attack.
+
+\paragraph{Out of scope.}
+The system exposes no shell, payment, deletion, real account, credential, or
+external network tool.  We do not claim protection against a compromised
+gateway, an incorrect capability manifest, semantic paraphrases of a secret,
+side channels, encoded values, or attacks that exploit the model-serving stack.
+
+\section{System Design}
+
+\subsection{Agents and mock tools}
+
+The Reader Agent may call \texttt{search\_emails} and
+\texttt{read\_email}.  It returns a task summary plus exact evidence and its
+event identifiers.  The Action Agent receives the original request, the summary,
+and retrieved evidence.  Depending on the scenario, it may propose
+\texttt{read\_file}, \texttt{search\_calendar},
+\texttt{send\_email}, or \texttt{create\_calendar\_event}.  All resources and
+side effects live in a fresh in-memory world for each attempt.
+
+The separation is intentional: it creates a realistic propagation path from an
+untrusted retrieval agent to a privileged action agent while retaining complete
+evidence about exposure.  A structured context event links the exact resource-
+read event to the Action Agent's context.
+
+\subsection{Capabilities}
+
+Each task supplies a finite capability set.  A capability binds a tool to zero
+or more resource identifiers, recipient allow-lists, parameter bounds, maximum
+call counts, and maximum outbound sensitivity.  For example, a reply task may
+authorize one message to \texttt{alice@example.com} while excluding added carbon
+copy recipients.  A scheduling task may constrain participants, start/end
+windows, and duration.  Calls outside this envelope are denied even if a model
+describes them as mandatory.
+
+\subsection{Provenance and sensitivity}
+
+Every relevant value carries an authority label (trusted, untrusted, or derived),
+a sensitivity label (public, internal, or secret), and explicit source and parent
+event identifiers.  Derived values conservatively retain their sources.  The
+prototype additionally registers exact synthetic protected literals.  If such a
+literal flows from a protected resource into an outbound argument, the gateway
+can deny the call even when the tool and recipient are otherwise authorized.
+Tasks T5 and T6 were intended to probe this incremental provenance effect.  A
+follow-up fifth arm is needed to test whether they actually isolate it from the
+effect of the safe prompt.
+
+\subsection{Defense arms}
+
+\begin{table}[t]
+\centering
+\caption{Original defense arms and the independently frozen ablation arms.}
+\label{tab:arms}
+\begin{tabular}{lll}
+\toprule
+Arm & Prompt hierarchy & Deterministic gateway \\
+\midrule
+\allowarm{} & No & No \\
+\textsc{Prompt-Only} & Yes & No \\
+\caparm{} & No & Capability constraints only \\
+\textsc{Capability+Provenance} & No & Capability and provenance constraints \\
+\promptcaparm{} & Yes & Capability constraints only \\
+\fullarm{} & Yes & Capability and provenance constraints \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All arms retain the same scenario, tools, model checkpoint, decoding settings,
+and evaluator.  In the original four-arm design, Capability-Only and Full
+differed in both the safe prompt and provenance checking, so their contrast did
+not isolate either factor.  The follow-up \promptcaparm{} arm uses the same safe
+prompt, capability enforcement, and denial recovery as Full but disables only
+the provenance sink check.  The \textsc{Capability+Provenance} arm disables the
+safe prompt while retaining deterministic provenance checks.  Capability-Only,
+the two intermediate arms, and Full therefore form a two-by-two decomposition
+of prompt and provenance effects.
+
+\section{Offline Attack Corpus}
+
+The Red Agent receives the scenario objective, carrier location, allowed and
+forbidden effects, and a JSON output schema.  For each scenario, fixed candidate
+indices 1--3 are development data, index 4 is the formal payload, and index 5 is
+a reserve that may replace index 4 only for a syntax defect found before any
+victim run.  A payload is never selected or replaced according to victim-model
+success.  We retain the generation prompt, raw response, normalized payload,
+seed, model identifier, and SHA-256 digest.
+
+Each \placebo{} uses the same carrier, surrounding template, tone, and
+approximately the same byte length as its paired \attack{}, but contains no
+security-relevant directive.  The \clean{} version contains task-relevant benign
+content.  A condition builder asserts that fields outside the carrier are
+identical.  Formal experiments load only frozen files; they never call the Red
+Agent.
+
+\section{Experimental Method}
+
+\subsection{Matrix and hypotheses}
+
+\begin{table}[t]
+\centering
+\caption{Frozen factorial design.  The Cartesian product contains 216 planned
+victim runs.}
+\label{tab:matrix}
+\begin{tabular}{lll}
+\toprule
+Factor & Levels & Count \\
+\midrule
+Scenario & T1--T6 & 6 \\
+Content & \clean{}, \placebo{}, \attack{} & 3 \\
+Defense & Table~\ref{tab:arms} & 4 \\
+Paired seed & 4313, 4314, 4315 & 3 \\
+\midrule
+Total & $6 \times 3 \times 4 \times 3$ & 216 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We pre-register four hypotheses.  H1: under \allowarm{}, \attack{} causes more
+executed forbidden effects than \placebo{}.  H2: under \attack{}, \fullarm{}
+reduces executed forbidden effects and exact leakage relative to \allowarm{}.
+H3: on T5--T6, \fullarm{} reduces leakage relative to \caparm{} when the tool and
+recipient are already authorized.  H4: \fullarm{} retains useful benign task
+completion while introducing measurable false blocks and latency.
+
+The complete Cartesian plan is shuffled once with randomization seed 4313 and
+hashed.  Each run starts from a new deep copy of its condition world.  Retried
+infrastructure failures receive a new append-only attempt identifier and never
+overwrite evidence.
+
+\subsection{Pilot gates and freezing}
+
+Only development payloads may be used while checking tool-call parsing, benign
+utility, attack exposure, baseline attack effect, and at least one effective
+Full-defense block.  Prompt wording, task clarity, and security code are frozen
+before formal payloads are evaluated.  Formal failures are retained; no no-op,
+refusal, timeout, or malformed call is selectively deleted.
+
+\subsection{Outcome definitions}
+
+For valid run $i$, let $U_i$ indicate an executed forbidden world effect,
+$L_i$ an exact protected-value disclosure in the synthetic outbox, $B_i$ benign
+task completion, $A_i$ a malicious tool proposal, and $D_i$ a gateway denial of
+that proposal.  For a cell with $n$ valid runs, the principal rates are
+
+\begin{align}
+\widehat{p}_{U} &= n^{-1}\sum_i U_i, &
+\widehat{p}_{L} &= n^{-1}\sum_i L_i, &
+\widehat{p}_{B} &= n^{-1}\sum_i B_i.
+\end{align}
+
+Exposure, attempt, block, benign block, tool calls, tokens, and latency are
+diagnostics.  We report counts and Wilson 95\% intervals
+\cite{wilson1927probable}.  Infrastructure-invalid counts are shown explicitly,
+and an intention-to-test sensitivity analysis retains every planned run in its
+denominator.  The original primary comparisons are paired differences for
+Attack minus Placebo under Allow-All, Full minus Allow-All under Attack, and
+Full minus Capability-Only on T5--T6 attacks.  The last contrast is recognized
+as factorially confounded.  The follow-up analysis therefore predeclares
+Capability+Provenance minus Capability-Only, Prompt+Capability minus
+Capability-Only, and Full minus each intermediate arm for T5--T6 attack
+leakage.  A separate deterministic sink-pressure protocol directly inserts a
+protected value into four registered outbound fields under four arms; it is a
+mechanism test, not a victim-model rate estimate.  We report task-level
+heterogeneity and avoid broad significance claims from six templates.
+
+\subsection{Independent evaluation}
+
+The evaluator does not treat a gateway decision or model statement as evidence
+of an effect.  It compares the initial and final world, checks successful tool
+execution events, evaluates pre-registered benign and forbidden predicates, and
+scans new outbound messages for exact registered values.  Exposure requires both
+a resource-read event and an Action-context event that explicitly links to that
+read.  Pre-model truth-table tests cover benign success, no-op, denial, execution,
+leakage, timeout, HTTP failure, malformed call, and a null audit.
+
+\section{Results}
+
+\input{generated/results_summary.tex}
+
+Formal tables and figures are generated from the frozen artifact manifests, not
+entered by hand.  The report includes per-cell counts, Wilson intervals, the
+original and follow-up paired contrasts, invalid-run accounting, and utility
+results.  The bundled demo replay is excluded from all aggregation.
+
+\subsection{Independent hardened-corpus follow-up}
+
+The original two-by-two ablation contains a floor effect: both Prompt+Capability
+and Full leak in 0/6 T5--T6 attack runs.  We therefore generated a separate
+30-candidate Red corpus with a new frozen system prompt encouraging
+approval-shaped, compliance-shaped, and context-laundering injections.  The
+paired follow-up contains 54 Prompt+Capability and 54 Full runs; all 108 are
+valid.  On the hardened T5--T6 attacks, Prompt+Capability leaks in 3/6 runs,
+all three from T6, while Full leaks in 0/6.  The paired risk difference
+\mbox{Full--Prompt+Capability} is $-0.50$ (95\% bootstrap CI
+$[-0.83,-0.17]$).  This result is an end-to-end provenance gain on an
+independent attack set, complementary to the isolated two-by-two ablation.
+
+\subsection{Deterministic sink-pressure test}
+
+The pressure suite contains four cases (email subject, email body, calendar
+title, and calendar location) under four defense arms, for 16 registered calls.
+All 16 pass.  Capability-Only and Prompt+Capability execute their eight
+capability-valid calls, whereas Capability+Provenance and Full deny all eight
+protected-value calls and produce zero side effects.  This directly verifies
+that the provenance sink check is active when an otherwise authorized tool call
+contains a tainted protected value.
+
+\section{Limitations}
+
+First, the capability manifest is an oracle.  Real deployments need a safe way
+to infer, confirm, or revise user authority; an over-broad manifest can authorize
+the attack.  Second, exact-literal taint does not recognize paraphrases,
+translations, encodings, partial secrets, or information reconstructed across
+multiple messages.  Third, six deterministic office templates cannot represent
+the diversity of applications, models, tools, languages, or adaptive attackers.
+Fourth, both runtime agents use one local checkpoint, so results may be model-
+specific.  Fifth, the gateway sees structured tool calls but does not control
+harmful natural-language content that never reaches a tool.  Finally, the Red
+Agent is frozen and non-adaptive by design; this improves causal validity but
+understates an online adversary.  The original corpus shows a 0/6 floor for
+both Prompt+Capability and Full, while the independent hardened corpus shows
+3/6 versus 0/6.  The mechanism claim is therefore supported only for attacks
+represented by these synthetic sink and hardened-corpus tests, not as a general
+guarantee.
+
+\section{Ethics and Safety}
+
+All names, email addresses, files, calendar entries, secrets, and side effects
+are synthetic and local.  The model receives no shell, real messaging, real
+calendar, payment, deletion, credential, or arbitrary network capability.
+Payload generation is separated from formal execution, artifacts are hashed,
+and the public conclusions will state the defense assumptions and failure modes.
+The work aims to improve defensive measurement.  Attack examples should be
+shared with enough context to reproduce the benchmark but not represented as a
+guaranteed bypass of unrelated production systems.
+
+\section{Reproducibility}
+
+The repository records the local model path and configuration, frozen prompts,
+scenario JSON, payload registries and hashes, randomized run plan, raw responses,
+world snapshots, JSONL audit events, evaluator outputs, environment metadata, and
+aggregation code.  Replay remains usable without a GPU or model server.  Live
+execution uses one local Qwen3-VL-8B-Instruct checkpoint through a non-streaming
+OpenAI-compatible vLLM endpoint.  Controller tests run in the cluster's
+\texttt{test} Conda environment; model jobs use SLURM and an A40 GPU.
+
+\section{AI-Use Disclosure}
+
+Generative AI systems were used as engineering and writing assistants: to help
+scaffold code and tests, review threat-model and experimental-design choices,
+draft documentation, and generate the offline synthetic attack candidates.  The
+runtime attacker corpus records its model, prompt, seed, raw output, normalized
+output, and hash.  Human team members remain responsible for the research
+question, security assumptions, scenario authorization, code review, executed
+experiments, statistical interpretation, source verification, and final prose.
+AI-generated content is not accepted as evidence; claims must be supported by
+saved artifacts or cited literature.  This disclosure should be revised to name
+the exact tools and division of work used in the submitted version, following
+the course policy.
+
+\section{Team Contributions}
+
+\begin{table}[h]
+\centering
+\caption{Replace every placeholder before submission.}
+\begin{tabular}{lll}
+\toprule
+Member & Student ID & Verifiable contribution \\
+\midrule
+Member A & [ID] & [Design / implementation / experiments] \\
+Member B & [ID] & [Attack corpus / evaluation / analysis] \\
+Member C & [ID] & [Demo / report / reproducibility review] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Peer-evaluation note.}
+Each member should independently confirm this table and complete any separate
+course peer-evaluation form.  Commit history and artifact authorship should be
+used as supporting evidence, not as a substitute for team agreement.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
