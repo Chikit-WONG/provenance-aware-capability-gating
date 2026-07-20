@@ -30,6 +30,7 @@ DEFENSE_LABELS = {
     "allow_all": "Allow all",
     "prompt_only": "Prompt only",
     "capability_only": "Capability",
+    "capability_provenance_only": "Capability + provenance",
     "prompt_capability_only": "Prompt + capability",
     "full": "Full",
 }
