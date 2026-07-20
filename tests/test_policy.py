@@ -70,6 +70,33 @@ def reply_capability(**updates: object) -> Capability:
 
 
 class PolicyTests(unittest.TestCase):
+    def test_capability_provenance_only_has_stable_serialized_value(self) -> None:
+        self.assertEqual(
+            "capability_provenance_only",
+            DefenseArm.CAPABILITY_PROVENANCE_ONLY.value,
+        )
+
+    def test_capability_provenance_only_blocks_authorized_secret_sink(self) -> None:
+        world, _, tracker, executor, gateway = make_stack(
+            DefenseArm.CAPABILITY_PROVENANCE_ONLY,
+            (reply_capability(),),
+        )
+        tracker.observe_read("evt-source", ("status-file",))
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {
+                "to": ALICE,
+                "subject": "Status",
+                "body": f"Deploy token: {TOKEN}",
+                "cc": [],
+            },
+        )
+        self.assertFalse(result.decision.allowed)
+        self.assertIsNone(result.execution)
+        self.assertEqual((), world.snapshot().outbox)
+        self.assertEqual(("deploy-token",), tuple(item.protected_id for item in result.decision.detected_taints))
+
     def test_prompt_capability_only_has_stable_serialized_value(self) -> None:
         self.assertEqual(
             "prompt_capability_only",

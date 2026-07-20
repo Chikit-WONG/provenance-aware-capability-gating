@@ -297,7 +297,10 @@ class CapabilityGateway:
                 violations.append(violation)
 
         taints: tuple[DetectedTaint, ...] = ()
-        if self.defense_arm is DefenseArm.FULL and tool in _SINK_FIELDS:
+        if self.defense_arm in (
+            DefenseArm.CAPABILITY_PROVENANCE_ONLY,
+            DefenseArm.FULL,
+        ) and tool in _SINK_FIELDS:
             taints = self.taint_tracker.scan_fields(arguments, _SINK_FIELDS[tool])
             too_sensitive = [
                 taint
