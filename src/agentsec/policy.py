@@ -137,7 +137,7 @@ def _recipients(tool: ToolName, arguments: Mapping[str, Any]) -> tuple[str, ...]
 
 
 class CapabilityGateway:
-    """Mediate Action-Agent proposals under one of the four experiment arms."""
+    """Mediate Action-Agent proposals under an experiment defense arm."""
 
     def __init__(
         self,
