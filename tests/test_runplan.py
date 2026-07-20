@@ -9,10 +9,12 @@ from pathlib import Path
 from agentsec.runplan import (
     ABLATION_DEFENSE_ARMS,
     CAPABILITY_PROVENANCE_DEFENSE_ARMS,
+    HARDENED_DEFENSE_ARMS,
     EXPECTED_FORMAL_RUNS,
     FORMAL_DEFENSE_ARMS,
     build_ablation_plan,
     build_capability_provenance_plan,
+    build_hardened_plan,
     build_formal_plan,
     freeze_formal_plan,
     sha256_file,
@@ -60,6 +62,14 @@ class RunPlanTests(unittest.TestCase):
         )
         self.assertEqual(
             {row.defense_arm for row in records}, set(CAPABILITY_PROVENANCE_DEFENSE_ARMS)
+        )
+
+    def test_hardened_plan_pairs_prompt_capability_and_full(self):
+        records = build_hardened_plan(self.scenarios, self.model_config)
+
+        self.assertEqual(len(records), 108)
+        self.assertEqual(
+            {row.defense_arm for row in records}, set(HARDENED_DEFENSE_ARMS)
         )
 
     def test_ablation_plan_freezes_and_verifies(self):

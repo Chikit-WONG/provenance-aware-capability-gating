@@ -31,6 +31,10 @@ FORMAL_DEFENSE_ARMS = (
 )
 ABLATION_DEFENSE_ARMS = (DefenseArm.PROMPT_CAPABILITY_ONLY,)
 CAPABILITY_PROVENANCE_DEFENSE_ARMS = (DefenseArm.CAPABILITY_PROVENANCE_ONLY,)
+HARDENED_DEFENSE_ARMS = (
+    DefenseArm.PROMPT_CAPABILITY_ONLY,
+    DefenseArm.FULL,
+)
 
 
 class FrozenRunPlanManifest(BaseModel):
@@ -48,7 +52,10 @@ class FrozenRunPlanManifest(BaseModel):
     corpus_manifest_sha256: str
     input_sha256: dict[str, str] = Field(default_factory=dict)
     plan_kind: Literal[
-        "formal", "provenance_ablation", "capability_provenance_ablation"
+        "formal",
+        "provenance_ablation",
+        "capability_provenance_ablation",
+        "hardened_followup",
     ] = "formal"
     defense_arms: tuple[DefenseArm, ...] = FORMAL_DEFENSE_ARMS
 
@@ -60,6 +67,8 @@ class FrozenRunPlanManifest(BaseModel):
             else ABLATION_DEFENSE_ARMS
             if self.plan_kind == "provenance_ablation"
             else CAPABILITY_PROVENANCE_DEFENSE_ARMS
+            if self.plan_kind == "capability_provenance_ablation"
+            else HARDENED_DEFENSE_ARMS
         )
         if self.defense_arms != expected_arms:
             raise ValueError(
@@ -123,6 +132,24 @@ def build_capability_provenance_plan(
     )
 
 
+def build_hardened_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the paired hardened-corpus Full versus Prompt+Capability plan."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=HARDENED_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
 def _build_plan(
     scenarios: Sequence[ScenarioSpec],
     model_config: Mapping[str, Any] | BaseModel,
@@ -176,7 +203,10 @@ def freeze_formal_plan(
     formal_seeds: Sequence[int] = FORMAL_SEEDS,
     randomization_seed: int = RANDOMIZATION_SEED,
     plan_kind: Literal[
-        "formal", "provenance_ablation", "capability_provenance_ablation"
+        "formal",
+        "provenance_ablation",
+        "capability_provenance_ablation",
+        "hardened_followup",
     ] = "formal",
     defense_arms: Sequence[DefenseArm] = FORMAL_DEFENSE_ARMS,
 ) -> FrozenRunPlanManifest:
@@ -346,6 +376,7 @@ def _sha256_bytes(value: bytes) -> str:
 __all__ = [
     "ABLATION_DEFENSE_ARMS",
     "CAPABILITY_PROVENANCE_DEFENSE_ARMS",
+    "HARDENED_DEFENSE_ARMS",
     "EXPECTED_FORMAL_RUNS",
     "FORMAL_DEFENSE_ARMS",
     "FORMAL_SEEDS",
@@ -353,6 +384,7 @@ __all__ = [
     "RANDOMIZATION_SEED",
     "build_ablation_plan",
     "build_capability_provenance_plan",
+    "build_hardened_plan",
     "build_formal_plan",
     "freeze_formal_plan",
     "load_run_plan",

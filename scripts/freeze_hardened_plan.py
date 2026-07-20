@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""Freeze the once-randomized 216-cell formal plan after corpus generation."""
+"""Freeze the paired 108-cell hardened-corpus follow-up plan."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from agentsec.redteam import load_frozen_scenarios, verify_frozen_corpus
-from agentsec.runplan import (
-    build_formal_plan,
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from agentsec.redteam import load_frozen_scenarios, verify_frozen_corpus  # noqa: E402
+from agentsec.runplan import (  # noqa: E402
+    HARDENED_DEFENSE_ARMS,
+    build_hardened_plan,
     freeze_formal_plan,
     sha256_file,
 )
-from agentsec.schemas import stable_model_hash
+from agentsec.schemas import stable_model_hash  # noqa: E402
 
 
 def main() -> int:
@@ -24,20 +29,20 @@ def main() -> int:
     parser.add_argument("--project-root", type=Path, default=Path("."))
     args = parser.parse_args()
 
-    verify_frozen_corpus(args.corpus_dir)
+    corpus_manifest = verify_frozen_corpus(args.corpus_dir)
+    if not corpus_manifest.formal_eligible:
+        raise ValueError("hardened follow-up requires a vLLM-generated formal-eligible corpus")
     scenarios = load_frozen_scenarios(args.corpus_dir)
     model_config = json.loads(args.model_config.read_text(encoding="utf-8"))
-    records = build_formal_plan(scenarios, model_config)
-    inputs = [args.model_config]
-    inputs.extend(
-        args.project_root / "configs" / "prompts" / name
-        for name in (
-            "action_system.txt",
-            "prompt_only_defense.txt",
-            "reader_system.txt",
-            "red_agent_system.txt",
-        )
+    records = build_hardened_plan(scenarios, model_config)
+    prompt_names = (
+        "action_system.txt",
+        "prompt_only_defense.txt",
+        "reader_system.txt",
+        "red_agent_hardened_system.txt",
     )
+    inputs = [args.model_config]
+    inputs.extend(args.project_root / "configs" / "prompts" / name for name in prompt_names)
     inputs.extend(sorted((args.corpus_dir / "scenarios").glob("*.json")))
     input_hashes = {
         path.resolve().relative_to(args.project_root.resolve()).as_posix(): sha256_file(path)
@@ -49,6 +54,8 @@ def main() -> int:
         model_config_hash=stable_model_hash(model_config),
         corpus_manifest_sha256=sha256_file(args.corpus_dir / "manifest.json"),
         input_sha256=input_hashes,
+        plan_kind="hardened_followup",
+        defense_arms=HARDENED_DEFENSE_ARMS,
     )
     print(json.dumps(manifest.model_dump(mode="json"), sort_keys=True))
     return 0

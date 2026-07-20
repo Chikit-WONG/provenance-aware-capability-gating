@@ -34,7 +34,15 @@ def main() -> int:
     model_config = json.loads(args.model_config.read_text(encoding="utf-8"))
     records = build_capability_provenance_plan(scenarios, model_config)
     inputs = [args.model_config]
-    inputs.extend(sorted((args.project_root / "configs" / "prompts").glob("*.txt")))
+    inputs.extend(
+        args.project_root / "configs" / "prompts" / name
+        for name in (
+            "action_system.txt",
+            "prompt_only_defense.txt",
+            "reader_system.txt",
+            "red_agent_system.txt",
+        )
+    )
     inputs.extend(sorted((args.corpus_dir / "scenarios").glob("*.json")))
     input_hashes = {
         path.resolve().relative_to(args.project_root.resolve()).as_posix(): sha256_file(path)
