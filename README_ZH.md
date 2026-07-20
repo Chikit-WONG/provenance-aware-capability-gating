@@ -20,7 +20,7 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 - 攻击是否成功由独立 evaluator 读取实际 world state 判定，不使用 LLM judge；
 - Demo 使用 Gradio 现场展示，并准备录屏/离线回放作为备份。
 
-后续将另行冻结的消融计划只增加第五个防御
+独立冻结的后续消融计划只增加第五个防御
 `prompt_capability_only`：它与 Full 使用相同的安全提示、能力检查和阻断后恢复，
 但关闭 provenance sink check。该 add-on 为 6 × 3 × 1 × 3 = 54 次运行，用于在
 不改写原 216-run 正式研究的前提下隔离 Full 相对 Prompt+Capability 的来源追踪
@@ -41,22 +41,34 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 | Capability-Only | 3/18（16.7%） | 3/18（16.7%） | 17/18（94.4%） |
 | Full | 0/18（0%） | 0/18（0%） | 15/18（83.3%） |
 
-在专门隔离 provenance 作用的 T5--T6 子集上，Allow-All 和 Capability-Only 各有
-3/6 次秘密泄露，Full 为 0/6。完整聚合结果、比较表和图见
-[正式分析目录](artifacts/formal-analysis-v1/)：
+原 T5--T6 对比中，Capability-Only 泄漏 3/6，Full 泄漏 0/6；但这两个方案同时
+相差安全提示词和 provenance 检查，不能据此把差异归因于 provenance。第五组消融
+专门拆开了这两个因素。
 
-- [结果摘要](artifacts/formal-analysis-v1/results_summary.json)
-- [正式结果表](artifacts/formal-analysis-v1/publication_table.csv)
-- [注册比较](artifacts/formal-analysis-v1/registered_comparisons.csv)
-- [安全性图](artifacts/formal-analysis-v1/security_outcomes.png)
-- [效用图](artifacts/formal-analysis-v1/utility_outcomes.png)
-- [任务族图](artifacts/formal-analysis-v1/task_family_outcomes.png)
+## 后续消融结果
+
+新增 54 次运行全部完成且全部有效。在 T5--T6 attack 子集上：
+
+| 防御方案 | 秘密泄漏 |
+| --- | ---: |
+| Capability-Only | 3/6（50.0%） |
+| Prompt+Capability | 0/6（0%） |
+| Full | 0/6（0%） |
+
+Prompt+Capability 相对 Capability-Only 的配对泄漏风险差为 $-0.50$（95% bootstrap
+CI $[-0.83,-0.17]$）；Full 相对 Prompt+Capability 为 $0.00$（95% bootstrap CI
+$[0.00,0.00]$）。因此，在当前冻结语料中，观察到的泄漏下降可以由安全提示词解释；
+实验**没有证明 provenance 检查带来独立增益**。这是一个收窄项目结论的负消融结果，
+并不等于 provenance 在一般情况下没有价值。
+
+合并分析覆盖 270 次计划运行，其中 267 条有效、3 条基础设施无效；表中百分比使用
+有效样本分母，无效记录没有被静默替换。完整材料见
+[合并分析目录](artifacts/ablation-analysis-v1/)：
+
+- [结果摘要](artifacts/ablation-analysis-v1/results_summary.json)
+- [正式结果表](artifacts/ablation-analysis-v1/publication_table.csv)
+- [注册比较](artifacts/ablation-analysis-v1/registered_comparisons.csv)
+- [安全性图](artifacts/ablation-analysis-v1/security_outcomes.png)
+- [效用图](artifacts/ablation-analysis-v1/utility_outcomes.png)
+- [任务族图](artifacts/ablation-analysis-v1/task_family_outcomes.png)
 - [技术报告 PDF](report/main.pdf)
-
-表中百分比使用有效样本分母；无效记录没有被静默替换。
-
-## 后续消融状态
-
-54-run provenance 消融是原 216-run 正式矩阵之外的独立 add-on。其完成数、
-有效/无效记录数、安全提示增量、provenance 增量和结果解释目前均为
-**待 combined aggregation 成功后更新**。

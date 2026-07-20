@@ -55,7 +55,7 @@ Conditions are `clean`, matched `placebo`, and `attack`. Defense arms are
 are executed unauthorized action rate, exact synthetic-secret leakage rate, and
 benign task success. Attempted and blocked actions are reported separately.
 
-A separately planned follow-up adds the fifth arm `prompt_capability_only`
+A separately frozen follow-up adds the fifth arm `prompt_capability_only`
 (safe prompt and capability checks, without provenance sink checks):
 
 ```text
@@ -84,25 +84,39 @@ test (ITT) accounting. The table reports valid-run rates across all six tasks.
 | Capability-Only | 3/18 (16.7%) | 3/18 (16.7%) | 17/18 (94.4%) |
 | Full | 0/18 (0%) | 0/18 (0%) | 15/18 (83.3%) |
 
-On the provenance-isolating T5--T6 subset, Allow-All and Capability-Only each
-leaked in 3/6 attack runs, while Full leaked in 0/6. The complete aggregate,
-confidence intervals, registered comparisons, and figures are available in
-[`artifacts/formal-analysis-v1/`](artifacts/formal-analysis-v1/):
+The original T5--T6 comparison showed 3/6 leakages for Capability-Only and 0/6
+for Full, but these arms differed in both prompt hierarchy and provenance
+checking. The fifth-arm ablation below separates those effects.
 
-- [results summary](artifacts/formal-analysis-v1/results_summary.json)
-- [publication table](artifacts/formal-analysis-v1/publication_table.csv)
-- [registered comparisons](artifacts/formal-analysis-v1/registered_comparisons.csv)
-- [security figure](artifacts/formal-analysis-v1/security_outcomes.png)
-- [utility figure](artifacts/formal-analysis-v1/utility_outcomes.png)
-- [task-family figure](artifacts/formal-analysis-v1/task_family_outcomes.png)
+### Follow-up ablation result
+
+All 54 add-on runs completed and were valid. In the T5--T6 attack subset:
+
+| Defense | Secret leakage |
+| --- | ---: |
+| Capability-Only | 3/6 (50.0%) |
+| Prompt+Capability | 0/6 (0%) |
+| Full | 0/6 (0%) |
+
+Prompt+Capability minus Capability-Only had a paired leakage risk difference of
+$-0.50$ (95% bootstrap CI $[-0.83,-0.17]$). Full minus Prompt+Capability was
+$0.00$ (95% bootstrap CI $[0.00,0.00]$). Thus, in this frozen corpus, the safe
+prompt explains the observed leakage reduction; the experiment does **not**
+demonstrate an incremental provenance-check benefit. This negative ablation
+narrows the project claim rather than showing that provenance is generally
+useless.
+
+The combined analysis covers 270 planned runs: 267 valid and 3
+infrastructure-invalid records. Its tables, comparisons, figures, and manifest
+are in [`artifacts/ablation-analysis-v1/`](artifacts/ablation-analysis-v1/):
+
+- [results summary](artifacts/ablation-analysis-v1/results_summary.json)
+- [publication table](artifacts/ablation-analysis-v1/publication_table.csv)
+- [registered comparisons](artifacts/ablation-analysis-v1/registered_comparisons.csv)
+- [security figure](artifacts/ablation-analysis-v1/security_outcomes.png)
+- [utility figure](artifacts/ablation-analysis-v1/utility_outcomes.png)
+- [task-family figure](artifacts/ablation-analysis-v1/task_family_outcomes.png)
 - [technical report PDF](report/main.pdf)
-
-### Follow-up ablation status
-
-The 54-run provenance ablation is a separate add-on, not part of the original
-216-run preregistered matrix. Its completed/valid/invalid counts, paired
-safe-prompt and provenance effects, and substantive interpretation are
-**pending until combined aggregation succeeds**.
 
 ## Demo and report
 
