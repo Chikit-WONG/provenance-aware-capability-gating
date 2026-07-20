@@ -13,12 +13,19 @@ from agentsec.runplan import verify_frozen_plan
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--artifact-root", type=Path, required=True)
+    parser.add_argument(
+        "--artifact-root",
+        type=Path,
+        action="append",
+        required=True,
+        help="artifact root to include; repeat to combine formal and ablation results",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
         "--plan-dir",
         type=Path,
-        help="verified frozen formal plan; when supplied, all planned runs are required",
+        action="append",
+        help="verified frozen run plan; repeat to combine formal and ablation plans",
     )
     parser.add_argument(
         "--no-plots",
@@ -29,7 +36,11 @@ def main() -> int:
 
     expected = None
     if args.plan_dir is not None:
-        _, expected = verify_frozen_plan(args.plan_dir)
+        expected = tuple(
+            run_spec
+            for plan_dir in args.plan_dir
+            for run_spec in verify_frozen_plan(plan_dir)[1]
+        )
     report = analyze_artifacts(
         args.artifact_root,
         args.output_dir,
@@ -42,4 +53,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
