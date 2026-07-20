@@ -20,6 +20,12 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 - 攻击是否成功由独立 evaluator 读取实际 world state 判定，不使用 LLM judge；
 - Demo 使用 Gradio 现场展示，并准备录屏/离线回放作为备份。
 
+后续将另行冻结的消融计划只增加第五个防御
+`prompt_capability_only`：它与 Full 使用相同的安全提示、能力检查和阻断后恢复，
+但关闭 provenance sink check。该 add-on 为 6 × 3 × 1 × 3 = 54 次运行，用于在
+不改写原 216-run 正式研究的前提下隔离 Full 相对 Prompt+Capability 的来源追踪
+增量。
+
 详细接口见 [系统架构](docs/ARCHITECTURE.md)、[威胁模型](docs/THREAT_MODEL.md)
 和[实验协议](docs/EXPERIMENT_PROTOCOL.md)。
 
@@ -48,3 +54,9 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 - [技术报告 PDF](report/main.pdf)
 
 表中百分比使用有效样本分母；无效记录没有被静默替换。
+
+## 后续消融状态
+
+54-run provenance 消融是原 216-run 正式矩阵之外的独立 add-on。其完成数、
+有效/无效记录数、安全提示增量、provenance 增量和结果解释目前均为
+**待 combined aggregation 成功后更新**。

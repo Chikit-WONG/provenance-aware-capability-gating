@@ -37,6 +37,21 @@ The complete Cartesian plan is shuffled once with randomization seed 4313,
 written to JSONL, hashed, and then treated as immutable. Each attempt receives a
 new deep copy of its condition world. A retry gets a new append-only attempt ID.
 
+## Follow-up provenance ablation
+
+The original 216-run study remains unchanged. The follow-up plan will be frozen
+separately with 54 cells: T1-T6 x clean/placebo/attack x
+`prompt_capability_only` x seeds 4313-4315. This fifth arm uses the same safe
+prompt, capability enforcement, and blocked-action recovery as `full`, but
+disables provenance sink checks.
+
+The combined analysis adds two paired Attack contrasts: Prompt+Capability minus
+Capability-only for the safe-prompt increment, and Full minus
+Prompt+Capability for the provenance increment. The primary provenance outcome
+is exact secret leakage on T5-T6. Ablation record count, valid/invalid counts,
+effect estimates, and interpretation are **pending** until the separate
+54-record aggregation succeeds.
+
 ## Pilot gates
 
 Development payloads only are used until all gates pass:
@@ -73,10 +88,12 @@ removed.
 
 ## Analysis
 
-Report arm-wise counts/rates and Wilson 95% intervals. Report paired rate
-differences for Attack-Placebo, Full-Allow-all, and Full-Capability-only using a
-fixed bootstrap over scenario-seed units. Present T1-T4 and T5-T6 separately;
-do not claim broad statistical significance from six task templates.
+Report arm-wise counts/rates and Wilson 95% intervals. The original analysis
+reports paired rate differences for Attack-Placebo, Full-Allow-all, and
+Full-Capability-only using a fixed bootstrap over scenario-seed units. Once the
+follow-up aggregation succeeds, also report Prompt+Capability-Capability-only
+and Full-Prompt+Capability. Present T1-T4 and T5-T6 separately; do not claim
+broad statistical significance from six task templates.
 
 ## Pre-model truth table
 

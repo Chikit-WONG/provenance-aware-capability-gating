@@ -55,6 +55,17 @@ Conditions are `clean`, matched `placebo`, and `attack`. Defense arms are
 are executed unauthorized action rate, exact synthetic-secret leakage rate, and
 benign task success. Attempted and blocked actions are reported separately.
 
+A separately planned follow-up adds the fifth arm `prompt_capability_only`
+(safe prompt and capability checks, without provenance sink checks):
+
+```text
+6 scenarios x 3 content conditions x 1 additional defense x 3 paired seeds
+= 54 add-on runs
+```
+
+This add-on isolates Full minus Prompt+Capability while leaving the original
+216-run formal study and its reported results unchanged.
+
 See [architecture](docs/ARCHITECTURE.md), [threat model](docs/THREAT_MODEL.md),
 and [experiment protocol](docs/EXPERIMENT_PROTOCOL.md). The
 [demo guide](docs/DEMO.md) covers live execution, artifact replay, and the
@@ -85,6 +96,13 @@ confidence intervals, registered comparisons, and figures are available in
 - [utility figure](artifacts/formal-analysis-v1/utility_outcomes.png)
 - [task-family figure](artifacts/formal-analysis-v1/task_family_outcomes.png)
 - [technical report PDF](report/main.pdf)
+
+### Follow-up ablation status
+
+The 54-run provenance ablation is a separate add-on, not part of the original
+216-run preregistered matrix. Its completed/valid/invalid counts, paired
+safe-prompt and provenance effects, and substantive interpretation are
+**pending until combined aggregation succeeds**.
 
 ## Demo and report
 

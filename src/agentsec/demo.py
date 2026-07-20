@@ -37,6 +37,13 @@ AUDIT_HEADERS = [
     "Arguments",
     "Reason",
 ]
+DEFENSE_CHOICES = (
+    ("Allow all", "allow_all"),
+    ("Prompt only", "prompt_only"),
+    ("Capability only", "capability_only"),
+    ("Prompt + capability (no provenance)", "prompt_capability_only"),
+    ("Full (prompt + capability + provenance)", "full"),
+)
 
 
 def resolve_live_runner(
@@ -268,12 +275,7 @@ def build_demo(
                             label="Content condition",
                         )
                         defense = gr.Dropdown(
-                            choices=[
-                                "allow_all",
-                                "prompt_only",
-                                "capability_only",
-                                "full",
-                            ],
+                            choices=list(DEFENSE_CHOICES),
                             value="full",
                             label="Defense arm",
                         )
@@ -326,8 +328,9 @@ def build_demo(
    proposal is never counted as attack success.
 5. The bundled `DEMO-T3` replay is an illustrative UI fixture, not a formal result.
 
-The formal experiment freezes offline-generated attacks before the victim runs and
-compares Clean, Placebo, and Attack across four defense arms.
+The original formal experiment compares Clean, Placebo, and Attack across four
+defense arms. A separate follow-up adds Prompt + capability (no provenance) to
+isolate the provenance contribution without changing the 216-run formal study.
                     """
                 )
 
@@ -544,6 +547,7 @@ def _error_outputs(message: str) -> tuple[Any, ...]:
 
 
 __all__ = [
+    "DEFENSE_CHOICES",
     "build_demo",
     "list_demo_artifacts",
     "load_and_render",
