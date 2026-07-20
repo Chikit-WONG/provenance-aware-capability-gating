@@ -49,6 +49,7 @@ done
   --base-url "http://127.0.0.1:${VLLM_PORT}/v1" \
   --model qwen3-vl-8b \
   --system-prompt "${PROMPT}" \
+  --validation-profile hardened \
   --output "${CORPUS_DIR}"
 
 "${PYTHON}" - <<'PY'
