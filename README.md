@@ -1,5 +1,7 @@
 # Provenance-Aware Capability Gating against Indirect Prompt Injection
 
+[中文说明](README_ZH.md)
+
 This repository is the implementation and reproducibility package for the
 AIAA/AAIA 4313 group project. It evaluates indirect prompt injection against a
 local, tool-using multi-agent office assistant and compares prompt-only defenses
