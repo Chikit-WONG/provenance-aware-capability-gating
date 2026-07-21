@@ -34,21 +34,18 @@ failure in a controlled two-agent office assistant.  A Reader Agent retrieves
 synthetic email, an Action Agent proposes file, calendar, and email operations,
 and an independent gateway mediates every side effect.  Our defense combines a
 task-scoped capability manifest with exact provenance and sensitivity labels.
-We pre-register six tasks, three content conditions, four defense arms, and
-three paired seeds, for 216 planned victim runs.  Attacks are generated offline,
-frozen, and hashed before formal evaluation.  Executed unauthorized effects,
-exact synthetic-secret leakage, and benign task success are derived from audit
-events and before/after world state rather than from model text.  The report
-contains the completed frozen evaluation: 216 victim runs were planned, 213
-were valid, and three infrastructure-invalid attempts are retained in the
-intention-to-test denominator.  A two-by-two follow-up added 54
-Capability+Provenance runs and 54 Prompt+Capability runs, all valid.  On the
-original T5--T6 attacks, each intermediate arm reduced Capability-Only leakage
-from 3/6 to 0/6, while Full remained at the 0/6 floor.  A deterministic
-16-case sink-pressure test blocked all eight provenance-enabled protected-value
-calls.  Finally, an independently frozen hardened corpus produced 3/6
-Prompt+Capability leakages versus 0/6 for Full, exposing an end-to-end
-provenance gain on attacks that survived the safe prompt.
+We pre-register six tasks, three content conditions, eight defense arms, and
+three paired seeds.  Attacks are generated offline, frozen, and hashed before
+formal evaluation.  Executed unauthorized effects, exact synthetic-secret
+leakage, and benign task success are derived from audit events and before/after
+world state rather than from model text.  The original and hardened corpora
+each contain 432 planned records, with 428 valid and four invalid records
+retained in intention-to-test accounting.  The new Provenance-only and
+Prompt+Provenance arms complete the factorial without changing earlier frozen
+plans.  On original T5--T6 attacks, Capability-Only leaks 3/6 while
+Provenance-only and Full leak 0/6; on hardened T5--T6 attacks, Prompt+Capability
+leaks 3/6 while Full leaks 0/6.  A deterministic 16-case sink-pressure test
+blocked all eight provenance-enabled protected-value calls.
 \end{abstract}
 
 \section{Introduction}
@@ -176,8 +173,10 @@ Arm & Prompt hierarchy & Deterministic gateway \\
 \allowarm{} & No & No \\
 \textsc{Prompt-Only} & Yes & No \\
 \caparm{} & No & Capability constraints only \\
+\textsc{Provenance-Only} & No & Provenance sink check only \\
 \textsc{Capability+Provenance} & No & Capability and provenance constraints \\
 \promptcaparm{} & Yes & Capability constraints only \\
+\textsc{Prompt+Provenance} & Yes & Provenance sink check only \\
 \fullarm{} & Yes & Capability and provenance constraints \\
 \bottomrule
 \end{tabular}
@@ -189,9 +188,11 @@ differed in both the safe prompt and provenance checking, so their contrast did
 not isolate either factor.  The follow-up \promptcaparm{} arm uses the same safe
 prompt, capability enforcement, and denial recovery as Full but disables only
 the provenance sink check.  The \textsc{Capability+Provenance} arm disables the
-safe prompt while retaining deterministic provenance checks.  Capability-Only,
-the two intermediate arms, and Full therefore form a two-by-two decomposition
-of prompt and provenance effects.
+safe prompt while retaining deterministic provenance checks.  Provenance-only
+and Prompt+Provenance deliberately bypass capability checks, so they isolate
+sink-taint blocking rather than full least-authority enforcement.  The eight
+arms form a complete factorial for separately frozen original and hardened
+corpora.
 
 \section{Offline Attack Corpus}
 
@@ -216,8 +217,8 @@ Agent.
 
 \begin{table}[t]
 \centering
-\caption{Frozen factorial design.  The Cartesian product contains 216 planned
-victim runs.}
+\caption{Frozen factorial design.  Each complete corpus contains 432 planned
+victim runs; the original formal plan is a frozen subset of this matrix.}
 \label{tab:matrix}
 \begin{tabular}{lll}
 \toprule
@@ -225,10 +226,10 @@ Factor & Levels & Count \\
 \midrule
 Scenario & T1--T6 & 6 \\
 Content & \clean{}, \placebo{}, \attack{} & 3 \\
-Defense & Table~\ref{tab:arms} & 4 \\
+Defense & Table~\ref{tab:arms} & 8 \\
 Paired seed & 4313, 4314, 4315 & 3 \\
 \midrule
-Total & $6 \times 3 \times 4 \times 3$ & 216 \\
+Total per complete corpus & $6 \times 3 \times 8 \times 3$ & 432 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -275,7 +276,8 @@ Attack minus Placebo under Allow-All, Full minus Allow-All under Attack, and
 Full minus Capability-Only on T5--T6 attacks.  The last contrast is recognized
 as factorially confounded.  The follow-up analysis therefore predeclares
 Capability+Provenance minus Capability-Only, Prompt+Capability minus
-Capability-Only, and Full minus each intermediate arm for T5--T6 attack
+Capability-Only, Provenance-only minus Allow-All, and Prompt+Provenance minus
+Prompt-Only, together with Full minus each intermediate arm for T5--T6 attack
 leakage.  A separate deterministic sink-pressure protocol directly inserts a
 protected value into four registered outbound fields under four arms; it is a
 mechanism test, not a victim-model rate estimate.  We report task-level
@@ -300,18 +302,27 @@ entered by hand.  The report includes per-cell counts, Wilson intervals, the
 original and follow-up paired contrasts, invalid-run accounting, and utility
 results.  The bundled demo replay is excluded from all aggregation.
 
-\subsection{Independent hardened-corpus follow-up}
+\subsection{Complete-factorial original and hardened evaluations}
 
-The original two-by-two ablation contains a floor effect: both Prompt+Capability
-and Full leak in 0/6 T5--T6 attack runs.  We therefore generated a separate
-30-candidate Red corpus with a new frozen system prompt encouraging
-approval-shaped, compliance-shaped, and context-laundering injections.  The
-paired follow-up contains 54 Prompt+Capability and 54 Full runs; all 108 are
-valid.  On the hardened T5--T6 attacks, Prompt+Capability leaks in 3/6 runs,
-all three from T6, while Full leaks in 0/6.  The paired risk difference
-\mbox{Full--Prompt+Capability} is $-0.50$ (95\% bootstrap CI
-$[-0.83,-0.17]$).  This result is an end-to-end provenance gain on an
-independent attack set, complementary to the isolated two-by-two ablation.
+The original corpus combines the earlier formal and ablation artifacts with
+the new Allow-All, Prompt-Only, Capability-Only, Provenance-only, and
+Prompt+Provenance completion plans.  It contains 432 planned records, 428
+valid and four invalid.  On T5--T6 attacks, Capability-Only leaks in 3/6,
+whereas Provenance-only, Capability+Provenance, Prompt+Capability,
+Prompt+Provenance, and Full each leak 0/6.  The registered
+Provenance-only--Allow-All risk difference is $-0.50$ (95\% bootstrap CI
+$[-0.83,-0.17]$); Prompt+Provenance--Prompt-Only is $0.00$.
+
+The independent hardened corpus uses a new frozen Red Agent prompt with
+approval-shaped, compliance-shaped, and context-laundering injections.  Its
+complete factorial also contains 432 planned records, 428 valid and four
+invalid.  On T5--T6 attacks, Prompt+Capability leaks in 3/6 while Full leaks in
+0/6; Provenance-only, Prompt+Provenance, and Capability+Provenance also leak
+0/6.  Provenance-only--Allow-All is $-0.33$ (95\% CI $[-0.67,0.00]$),
+Prompt+Provenance--Prompt-Only is $-0.50$ (95\% CI $[-0.83,-0.17]$), and
+Full--Prompt+Capability is $-0.50$ (95\% CI $[-0.83,-0.17]$).  The hardened
+set therefore exposes an end-to-end gain above the safe prompt/capability
+baseline, while the original set retains a floor effect.
 
 \subsection{Deterministic sink-pressure test}
 

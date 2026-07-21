@@ -1,73 +1,85 @@
-% Generated from artifacts/provenance-strength-analysis-v1 by scripts/analyze_results.py.
-% The manifests and combined input digest are recorded in analysis_manifest.json.
-\paragraph{Formal evaluation and two-by-two follow-up.}
-The frozen Cartesian plan contained 216 victim runs (six scenarios, three
-content conditions, four defense arms, and three paired seeds).  The formal
-artifact set contains 213 valid records and three infrastructure-invalid
-records; the latter are retained in intention-to-test (ITT) denominators and
-are not silently replaced.  Two independently frozen add-ons contributed 54
-Capability+Provenance and 54 Prompt+Capability runs, all of which completed
-validly.  The combined analysis therefore contains 324 planned runs, 321 valid
-records, and three invalid records.  Its full input digest is recorded in the
-analysis manifest (prefix \texttt{9443985c}).
+% Generated from the corpus-specific complete-factorial analyses.
+% Original digest: ac843b2d790c5ab28c744dc3a73b88b4dec0b52dfcf303e90f61f604b8a8899e.
+% Hardened digest: b3cd005cb0a44d5989a8c9cf41c57fa5bdac7cd5f22689edfd4c6e3295611185.
+\paragraph{Complete-factorial evaluation.}
+The original corpus combines the 216-run formal plan with three frozen
+completion plans (432 planned records, 428 valid, and four invalid records retained under
+intention-to-test accounting).  The hardened corpus is analyzed separately with
+the existing 108-run Prompt+Capability/Full follow-up and three new paired
+completion plans (also 432 planned, 428 valid, and four invalid).  No records
+are pooled across corpora, and every input record is checked against its frozen
+run-plan hash before aggregation.
 
-\paragraph{Main security and utility findings.}
-Across all tasks, Allow-All under Attack produced an executed unauthorized
-effect in 9/17 valid runs (52.9\%) and exact-secret leakage in 6/17 (35.3\%),
-whereas Full produced 0/18 for both outcomes.  The paired ITT risk differences
-(Full minus Allow-All under Attack) were $-0.50$ for executed effects
-($95\%$ CI $[-0.72,-0.28]$) and $-0.33$ for leakage
-($95\%$ CI $[-0.56,-0.11]$).  Under Clean, Full completed the benign task in
-15/18 runs (83.3\%) versus 17/18 (94.4\%) for Allow-All; the paired ITT utility
-difference was $-0.11$ (95\% CI $[-0.33,0.11]$).  On T5--T6,
-Capability-Only leaked in 3/6 attack runs, while Capability+Provenance,
-Prompt+Capability, and Full each leaked in 0/6.  Capability+Provenance minus
-Capability-Only and Prompt+Capability minus Capability-Only both had paired
-risk differences of $-0.50$ (95\% bootstrap CI $[-0.83,-0.17]$).  Full minus
-each intermediate arm had a paired risk difference of $0.00$ (95\% bootstrap
-CI $[0.00,0.00]$).  The two-by-two corpus therefore shows an isolated
-provenance gain, while its 0/6 Full rate has a floor effect.  Under Clean,
-benign task success was 16/18 (88.9\%) for Prompt+Capability and 15/18
-(83.3\%) for Full.
+\paragraph{T5--T6 exact-secret leakage.}
+On the original corpus, the valid attack leakage counts are Allow-All $3/6$,
+Prompt-Only $0/6$, Capability-Only $3/6$, Provenance-only $0/6$,
+Prompt+Provenance $0/6$, Capability+Provenance $0/6$,
+Prompt+Capability $0/6$, and Full $0/6$.  The registered
+Provenance-only--Allow-All contrast is $-0.50$ (95\% bootstrap CI
+$[-0.83,-0.17]$), while Prompt+Provenance--Prompt-Only is $0.00$ and
+Full adds no further leakage reduction over either no-capability provenance arm
+on this original set.
 
-The deterministic sink-pressure test passed all 16 registered calls: the eight
-provenance-enabled protected-value calls were denied with zero side effects,
-while the eight non-provenance controls executed.  An independent hardened
-corpus then produced 3/6 T5--T6 leakages for Prompt+Capability and 0/6 for Full;
-the paired risk difference was $-0.50$ (95\% bootstrap CI
-$[-0.83,-0.17]$).
+On the hardened corpus, the corresponding counts are Allow-All $2/6$,
+Prompt-Only $3/6$, Capability-Only $2/6$, Provenance-only $0/6$,
+Prompt+Provenance $0/6$, Capability+Provenance $0/6$,
+Prompt+Capability $3/6$, and Full $0/6$.  Provenance-only--Allow-All is
+$-0.33$ (95\% CI $[-0.67,0.00]$), Prompt+Provenance--Prompt-Only is
+$-0.50$ (95\% CI $[-0.83,-0.17]$), and Full--Prompt+Capability is
+$-0.50$ (95\% CI $[-0.83,-0.17]$).  Thus the hardened set supplies an
+end-to-end provenance gain above the safe prompt/capability baseline, whereas
+the original set retains a floor effect for the two strongest arms.
 
-The table below is generated directly from the frozen records and reports
-valid counts, Wilson intervals, executed effects, leakage, and utility.  The
-figures use the same aggregate and are included for auditability.
+\paragraph{Mechanism pressure test.}
+The deterministic sink-pressure suite still passes all 16 registered calls:
+all eight provenance-enabled protected-value calls are denied with zero side
+effects, while the eight non-provenance controls execute their capability-valid
+calls.  This is a mechanism test, not a victim-model rate estimate.
+
+The tables and figures below are generated from the two complete-factorial
+artifact manifests.  Percentages are valid-only rates; invalid planned runs
+remain visible in the Valid/Planned columns.
 
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{Combined formal and ablation outcomes.  Percentages are valid-only
-rates with Wilson 95\%
-intervals; the Valid/Planned column makes invalid attempts visible.}
-\label{tab:combined-outcomes}
-\resizebox{\linewidth}{!}{\input{../artifacts/provenance-strength-analysis-v1/publication_table.tex}}
+\caption{Original-corpus complete-factorial outcomes.}
+\label{tab:original-complete-factorial}
+\resizebox{\linewidth}{!}{\input{../artifacts/original-full-factorial-analysis-v1/publication_table.tex}}
 \end{table}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.92\linewidth]{../artifacts/provenance-strength-analysis-v1/security_outcomes.png}
-\caption{Security outcomes from the combined formal and ablation artifact set.}
-\label{fig:security-outcomes}
+\includegraphics[width=0.92\linewidth]{../artifacts/original-full-factorial-analysis-v1/security_outcomes.png}
+\caption{Security outcomes on the original complete-factorial artifact set.}
+\label{fig:original-security-outcomes}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.92\linewidth]{../artifacts/provenance-strength-analysis-v1/utility_outcomes.png}
-\caption{Benign utility outcomes from the combined artifact set.}
-\label{fig:utility-outcomes}
+\includegraphics[width=0.92\linewidth]{../artifacts/original-full-factorial-analysis-v1/utility_outcomes.png}
+\caption{Benign utility outcomes on the original complete-factorial artifact set.}
+\label{fig:original-utility-outcomes}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Hardened-corpus complete-factorial outcomes.}
+\label{tab:hardened-complete-factorial}
+\resizebox{\linewidth}{!}{\input{../artifacts/hardened-full-factorial-analysis-v1/publication_table.tex}}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{../artifacts/hardened-full-factorial-analysis-v1/security_outcomes.png}
+\caption{Security outcomes on the hardened complete-factorial artifact set.}
+\label{fig:hardened-security-outcomes}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.92\linewidth]{../artifacts/provenance-strength-analysis-v1/task_family_outcomes.png}
-\caption{Task-family heterogeneity for capability and provenance scenarios.}
-\label{fig:task-family-outcomes}
+\includegraphics[width=0.92\linewidth]{../artifacts/hardened-full-factorial-analysis-v1/utility_outcomes.png}
+\caption{Benign utility outcomes on the hardened complete-factorial artifact set.}
+\label{fig:hardened-utility-outcomes}
 \end{figure}
