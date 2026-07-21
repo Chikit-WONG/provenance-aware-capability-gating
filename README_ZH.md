@@ -1,5 +1,7 @@
 # 基于来源追踪与能力门控的多 Agent 间接提示注入攻防
 
+[English version](README.md)
+
 本目录是 AIAA/AAIA 4313 Group Project 的代码、实验和复现材料。项目构建一个
 完全本地的 Level-2 办公助理：Reader Agent 读取不可信邮件，Action Agent 使用
 文件、日历和发信工具，确定性 Gateway 在实际执行前检查用户授权、参数边界及敏感
