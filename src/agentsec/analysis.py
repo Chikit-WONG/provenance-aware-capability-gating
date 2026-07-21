@@ -30,6 +30,8 @@ DEFENSE_LABELS = {
     "allow_all": "Allow all",
     "prompt_only": "Prompt only",
     "capability_only": "Capability",
+    "provenance_only": "Provenance-only",
+    "prompt_provenance_only": "Prompt + provenance",
     "capability_provenance_only": "Capability + provenance",
     "prompt_capability_only": "Prompt + capability",
     "full": "Full",
@@ -354,6 +356,95 @@ def registered_comparisons(
                     bootstrap_seed=bootstrap_seed,
                     bootstrap_resamples=bootstrap_resamples,
                 ),
+            )
+        )
+    present_arms = {_value(row, "defense_arm") for row in rows}
+    if {"allow_all", "provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a5_provenance_only_minus_allow_all_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "provenance_only",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "allow_all",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"prompt_only", "prompt_provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a6_prompt_provenance_minus_prompt_only_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_provenance_only",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"full", "prompt_provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a7_full_minus_prompt_provenance_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "full",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_provenance_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"full", "provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a8_full_minus_provenance_only_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "full",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "provenance_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
             )
         )
     return tuple(comparisons)

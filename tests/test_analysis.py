@@ -342,6 +342,8 @@ class PublicationAnalysisTests(unittest.TestCase):
                     "model_config_hash": "ablation-hash",
                     "valid": True,
                     "secret_leakage": leakage,
+                    "executed_unauthorized_effect": leakage,
+                    "benign_task_success": True,
                 }
             )
 
@@ -398,6 +400,50 @@ class PublicationAnalysisTests(unittest.TestCase):
             "a4_full_minus_capability_provenance_attack_leakage"
             "__provenance_t5_t6",
             names,
+        )
+
+    def test_complete_factorial_adds_provenance_only_contrasts(self) -> None:
+        rows = []
+        for defense, leakage in (
+            ("allow_all", True),
+            ("prompt_only", True),
+            ("capability_only", True),
+            ("provenance_only", False),
+            ("prompt_provenance_only", False),
+            ("capability_provenance_only", False),
+            ("prompt_capability_only", False),
+            ("full", False),
+        ):
+            rows.append(
+                {
+                    "run_id": f"factorial-{defense}",
+                    "scenario_id": "T5",
+                    "content_condition": "attack",
+                    "defense_arm": defense,
+                    "seed": 4313,
+                    "repetition": 0,
+                    "model_config_hash": "factorial-hash",
+                    "valid": True,
+                    "secret_leakage": leakage,
+                    "executed_unauthorized_effect": leakage,
+                    "benign_task_success": True,
+                }
+            )
+        names = {
+            item.name
+            for item in registered_comparisons(rows, bootstrap_resamples=20)
+        }
+        self.assertTrue(
+            {
+                "a5_provenance_only_minus_allow_all_attack_leakage"
+                "__provenance_t5_t6",
+                "a6_prompt_provenance_minus_prompt_only_attack_leakage"
+                "__provenance_t5_t6",
+                "a7_full_minus_prompt_provenance_attack_leakage"
+                "__provenance_t5_t6",
+                "a8_full_minus_provenance_only_attack_leakage"
+                "__provenance_t5_t6",
+            }.issubset(names)
         )
 
     def test_analysis_combines_verified_roots_and_generates_five_arm_plots(self) -> None:
