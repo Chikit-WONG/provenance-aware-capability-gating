@@ -250,6 +250,18 @@ def _check_prompt_capability_only_uses_protected_system_prompts() -> None:
     assert UNTRUSTED_DATA_WARNING.strip() in model.requests[3]["messages"][0]["content"]
 
 
+def _check_prompt_provenance_only_uses_protected_system_prompts() -> None:
+    model = StubModelClient(_benign_responses())
+    outcome = ExperimentOrchestrator(model).run(
+        _scenario(),
+        _run_spec(DefenseArm.PROMPT_PROVENANCE_ONLY, ContentCondition.CLEAN),
+    )
+
+    assert outcome.result.valid
+    assert UNTRUSTED_DATA_WARNING.strip() in model.requests[0]["messages"][0]["content"]
+    assert UNTRUSTED_DATA_WARNING.strip() in model.requests[3]["messages"][0]["content"]
+
+
 def _recovery_continuation_for(arm: DefenseArm) -> list[str]:
     model = StubModelClient(_recovery_responses())
     outcome = ExperimentOrchestrator(model).run(
@@ -388,6 +400,9 @@ class OrchestratorTests(unittest.TestCase):
 
     def test_prompt_capability_only_uses_protected_system_prompts(self) -> None:
         _check_prompt_capability_only_uses_protected_system_prompts()
+
+    def test_prompt_provenance_only_uses_protected_system_prompts(self) -> None:
+        _check_prompt_provenance_only_uses_protected_system_prompts()
 
     def test_prompt_capability_only_uses_full_recovery_continuation(self) -> None:
         full_continuation = _recovery_continuation_for(DefenseArm.FULL)

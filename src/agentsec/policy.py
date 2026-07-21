@@ -14,6 +14,7 @@ from .schemas import (
     DefenseArm,
     EventKind,
     ParameterBound,
+    Sensitivity,
     ToolName,
 )
 from .tools import ToolExecutionResult, ToolExecutor
@@ -202,6 +203,36 @@ class CapabilityGateway:
                 reason=f"{self.defense_arm.value} bypasses capability enforcement",
             )
 
+        if self.defense_arm in (
+            DefenseArm.PROVENANCE_ONLY,
+            DefenseArm.PROMPT_PROVENANCE_ONLY,
+        ):
+            taints = self._provenance_violations(
+                tool_name, arguments, Sensitivity.PUBLIC
+            )
+            if taints:
+                identifiers = ", ".join(taint.protected_id for taint in taints)
+                return self._record_decision(
+                    actor=actor,
+                    tool=tool_name,
+                    arguments=arguments,
+                    proposal_event_id=proposal.event_id,
+                    allowed=False,
+                    reason=(
+                        "protected values exceed maximum outbound sensitivity "
+                        f"{Sensitivity.PUBLIC.value}: {identifiers}"
+                    ),
+                    taints=taints,
+                )
+            return self._record_decision(
+                actor=actor,
+                tool=tool_name,
+                arguments=arguments,
+                proposal_event_id=proposal.event_id,
+                allowed=True,
+                reason=f"{self.defense_arm.value} provenance checks passed",
+            )
+
         candidates = [capability for capability in self.capabilities if capability.tool is tool_name]
         if not candidates:
             return self._record_decision(
@@ -300,8 +331,10 @@ class CapabilityGateway:
         if self.defense_arm in (
             DefenseArm.CAPABILITY_PROVENANCE_ONLY,
             DefenseArm.FULL,
-        ) and tool in _SINK_FIELDS:
-            taints = self.taint_tracker.scan_fields(arguments, _SINK_FIELDS[tool])
+        ):
+            taints = self.taint_tracker.scan_fields(
+                arguments, _SINK_FIELDS.get(tool, ())
+            )
             too_sensitive = [
                 taint
                 for taint in taints
@@ -315,6 +348,24 @@ class CapabilityGateway:
                     f"{capability.max_outbound_sensitivity.value}: {identifiers}"
                 )
         return violations, taints
+
+    def _provenance_violations(
+        self,
+        tool: ToolName,
+        arguments: Mapping[str, Any],
+        maximum_sensitivity: Sensitivity,
+    ) -> tuple[DetectedTaint, ...]:
+        """Return protected sink taints above a no-capability sensitivity limit."""
+
+        if tool not in _SINK_FIELDS:
+            return ()
+        taints = self.taint_tracker.scan_fields(arguments, _SINK_FIELDS[tool])
+        return tuple(
+            taint
+            for taint in taints
+            if SENSITIVITY_RANK[taint.sensitivity]
+            > SENSITIVITY_RANK[maximum_sensitivity]
+        )
 
     def _record_decision(
         self,

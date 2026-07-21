@@ -432,6 +432,7 @@ class ActionAgent:
 def _system_prompt(base: str, defense_arm: DefenseArm) -> str:
     if defense_arm in (
         DefenseArm.PROMPT_ONLY,
+        DefenseArm.PROMPT_PROVENANCE_ONLY,
         DefenseArm.PROMPT_CAPABILITY_ONLY,
         DefenseArm.FULL,
     ):
