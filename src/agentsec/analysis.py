@@ -26,6 +26,16 @@ ANALYSIS_METRICS = (
 )
 CONDITION_ORDER = {item.value: index for index, item in enumerate(ContentCondition)}
 DEFENSE_ORDER = {item.value: index for index, item in enumerate(DefenseArm)}
+DEFENSE_LABELS = {
+    "allow_all": "Allow all",
+    "prompt_only": "Prompt only",
+    "capability_only": "Capability",
+    "provenance_only": "Provenance-only",
+    "prompt_provenance_only": "Prompt + provenance",
+    "capability_provenance_only": "Capability + provenance",
+    "prompt_capability_only": "Prompt + capability",
+    "full": "Full",
+}
 EXPECTED_ARTIFACT_FILES = {
     "run_spec": "run_spec.json",
     "world_before": "world_before.json",
@@ -83,7 +93,7 @@ class AnalysisReport(BaseModel):
 
 
 def load_artifact_records(
-    root: str | Path,
+    root: str | Path | Sequence[str | Path],
     *,
     expected_run_specs: Sequence[RunSpec] | None = None,
 ) -> tuple[LoadedRecord, ...]:
@@ -94,26 +104,47 @@ def load_artifact_records(
     attempt set rather than silently preferring a successful or later retry.
     """
 
-    selected = Path(root).expanduser().resolve()
-    if not selected.exists():
-        raise ArtifactAnalysisError(f"artifact path does not exist: {selected}")
-    if selected.is_file():
-        paths = [selected]
-        base = selected.parent
-    else:
-        paths = sorted(path.resolve() for path in selected.rglob("record.json"))
-        base = selected
-    if not paths:
-        raise ArtifactAnalysisError(f"no record.json artifacts found under: {selected}")
-    for path in paths:
-        try:
-            path.relative_to(base)
-        except ValueError as exc:
-            raise ArtifactAnalysisError(
-                f"record.json symlink escapes the selected artifact root: {path}"
-            ) from exc
+    roots = (root,) if isinstance(root, (str, Path)) else tuple(root)
+    if not roots:
+        raise ArtifactAnalysisError("at least one artifact root is required")
 
-    records = tuple(_load_record(path, base=base) for path in paths)
+    records: list[LoadedRecord] = []
+    for root_index, artifact_root in enumerate(roots):
+        selected = Path(artifact_root).expanduser().resolve()
+        if not selected.exists():
+            raise ArtifactAnalysisError(f"artifact path does not exist: {selected}")
+        if selected.is_file():
+            paths = [selected]
+            base = selected.parent
+        else:
+            paths = sorted(path.resolve() for path in selected.rglob("record.json"))
+            base = selected
+        if not paths:
+            raise ArtifactAnalysisError(
+                f"no record.json artifacts found under: {selected}"
+            )
+        for path in paths:
+            try:
+                path.relative_to(base)
+            except ValueError as exc:
+                raise ArtifactAnalysisError(
+                    f"record.json symlink escapes the selected artifact root: {path}"
+                ) from exc
+
+        loaded = [_load_record(path, base=base) for path in paths]
+        if len(roots) > 1:
+            loaded = [
+                record.model_copy(
+                    update={
+                        "record_path": (
+                            f"root-{root_index + 1:04d}/{record.record_path}"
+                        )
+                    }
+                )
+                for record in loaded
+            ]
+        records.extend(loaded)
+
     by_run_id: dict[str, list[LoadedRecord]] = {}
     for record in records:
         by_run_id.setdefault(record.run_spec.run_id, []).append(record)
@@ -237,11 +268,190 @@ def registered_comparisons(
             bootstrap_resamples=bootstrap_resamples,
         )
     )
+    if any(
+        _value(row, "defense_arm") == "prompt_capability_only" for row in rows
+    ):
+        comparisons.extend(
+            (
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a1_prompt_capability_minus_capability_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "prompt_capability_only",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a2_full_minus_prompt_capability_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "full",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "prompt_capability_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+            )
+        )
+    if any(
+        _value(row, "defense_arm") == "capability_provenance_only" for row in rows
+    ):
+        comparisons.extend(
+            (
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a3_capability_provenance_minus_capability_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_provenance_only",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+                paired_comparison(
+                    provenance_rows,
+                    name=(
+                        "a4_full_minus_capability_provenance_attack_leakage"
+                        "__provenance_t5_t6"
+                    ),
+                    metric="secret_leakage",
+                    left_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "full",
+                    },
+                    right_selector={
+                        "content_condition": "attack",
+                        "defense_arm": "capability_provenance_only",
+                    },
+                    confidence=confidence,
+                    bootstrap_seed=bootstrap_seed,
+                    bootstrap_resamples=bootstrap_resamples,
+                ),
+            )
+        )
+    present_arms = {_value(row, "defense_arm") for row in rows}
+    if {"allow_all", "provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a5_provenance_only_minus_allow_all_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "provenance_only",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "allow_all",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"prompt_only", "prompt_provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a6_prompt_provenance_minus_prompt_only_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_provenance_only",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"full", "prompt_provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a7_full_minus_prompt_provenance_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "full",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "prompt_provenance_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+    if {"full", "provenance_only"}.issubset(present_arms):
+        comparisons.append(
+            paired_comparison(
+                provenance_rows,
+                name=(
+                    "a8_full_minus_provenance_only_attack_leakage"
+                    "__provenance_t5_t6"
+                ),
+                metric="secret_leakage",
+                left_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "full",
+                },
+                right_selector={
+                    "content_condition": "attack",
+                    "defense_arm": "provenance_only",
+                },
+                confidence=confidence,
+                bootstrap_seed=bootstrap_seed,
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
     return tuple(comparisons)
 
 
 def analyze_artifacts(
-    artifact_root: str | Path,
+    artifact_root: str | Path | Sequence[str | Path],
     output_dir: str | Path,
     *,
     expected_run_specs: Sequence[RunSpec] | None = None,
@@ -551,8 +761,8 @@ def _write_publication_plots(records: Sequence[LoadedRecord], output: Path) -> N
             "publication plots require the optional analysis dependency matplotlib"
         ) from exc
 
-    labels = ["Allow all", "Prompt only", "Capability", "Full"]
     defenses = list(DEFENSE_ORDER)
+    labels = [DEFENSE_LABELS[defense] for defense in defenses]
 
     def rates(
         condition: str, metric: str, ids: set[str] | None = None
@@ -756,6 +966,7 @@ def _sha256_file(path: Path) -> str:
 
 __all__ = [
     "ANALYSIS_METRICS",
+    "DEFENSE_LABELS",
     "AnalysisReport",
     "ArtifactAnalysisError",
     "LoadedRecord",

@@ -42,6 +42,22 @@ python scripts/generate_red_corpus.py \
 python scripts/validate_red_corpus.py data/frozen/red_corpus_qwen3_v1
 ```
 
+The independent hardened follow-up uses the separate system prompt and an
+explicit context-only validation profile. It is already frozen in this
+repository; to regenerate it on a new destination, pass:
+
+```bash
+python scripts/generate_red_corpus.py \
+  --backend vllm --model qwen3-vl-8b \
+  --system-prompt configs/prompts/red_agent_hardened_system.txt \
+  --validation-profile hardened \
+  --output data/frozen/red_corpus_qwen3_hardened_v1
+```
+
+The hardened profile allows an address only when it is already present in the
+scenario's synthetic context. It does not broaden the strict profile used by
+the original formal corpus.
+
 Generation is atomic and refuses an existing destination. Every content file is
 made read-only, `manifest.json` hashes the exact tracked file set, and
 `manifest.sha256` seals the manifest. Verification rejects modified, missing,

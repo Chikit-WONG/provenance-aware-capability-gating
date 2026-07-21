@@ -7,9 +7,9 @@ import json
 import random
 from itertools import product
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Literal, Mapping, Sequence
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .schemas import (
     ContentCondition,
@@ -23,6 +23,45 @@ from .schemas import (
 FORMAL_SEEDS = (4313, 4314, 4315)
 RANDOMIZATION_SEED = 4313
 EXPECTED_FORMAL_RUNS = 216
+FORMAL_DEFENSE_ARMS = (
+    DefenseArm.ALLOW_ALL,
+    DefenseArm.PROMPT_ONLY,
+    DefenseArm.CAPABILITY_ONLY,
+    DefenseArm.FULL,
+)
+ABLATION_DEFENSE_ARMS = (DefenseArm.PROMPT_CAPABILITY_ONLY,)
+CAPABILITY_PROVENANCE_DEFENSE_ARMS = (DefenseArm.CAPABILITY_PROVENANCE_ONLY,)
+ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS = (
+    DefenseArm.PROVENANCE_ONLY,
+    DefenseArm.PROMPT_PROVENANCE_ONLY,
+)
+HARDENED_DEFENSE_ARMS = (
+    DefenseArm.PROMPT_CAPABILITY_ONLY,
+    DefenseArm.FULL,
+)
+HARDENED_MISSING_BASELINE_DEFENSE_ARMS = (
+    DefenseArm.ALLOW_ALL,
+    DefenseArm.PROMPT_ONLY,
+)
+HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS = (
+    DefenseArm.CAPABILITY_ONLY,
+    DefenseArm.CAPABILITY_PROVENANCE_ONLY,
+)
+HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS = (
+    DefenseArm.PROVENANCE_ONLY,
+    DefenseArm.PROMPT_PROVENANCE_ONLY,
+)
+
+PLAN_KIND_DEFENSE_ARMS = {
+    "formal": FORMAL_DEFENSE_ARMS,
+    "provenance_ablation": ABLATION_DEFENSE_ARMS,
+    "capability_provenance_ablation": CAPABILITY_PROVENANCE_DEFENSE_ARMS,
+    "original_provenance_completion": ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS,
+    "hardened_followup": HARDENED_DEFENSE_ARMS,
+    "hardened_missing_baseline": HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+    "hardened_missing_capability": HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+    "hardened_missing_provenance_prompt": HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+}
 
 
 class FrozenRunPlanManifest(BaseModel):
@@ -39,6 +78,27 @@ class FrozenRunPlanManifest(BaseModel):
     model_config_hash: str
     corpus_manifest_sha256: str
     input_sha256: dict[str, str] = Field(default_factory=dict)
+    plan_kind: Literal[
+        "formal",
+        "provenance_ablation",
+        "capability_provenance_ablation",
+        "original_provenance_completion",
+        "hardened_followup",
+        "hardened_missing_baseline",
+        "hardened_missing_capability",
+        "hardened_missing_provenance_prompt",
+    ] = "formal"
+    defense_arms: tuple[DefenseArm, ...] = FORMAL_DEFENSE_ARMS
+
+    @model_validator(mode="after")
+    def defense_arms_match_plan_kind(self) -> "FrozenRunPlanManifest":
+        expected_arms = PLAN_KIND_DEFENSE_ARMS[self.plan_kind]
+        if self.defense_arms != expected_arms:
+            raise ValueError(
+                f"{self.plan_kind} defense arms must be "
+                f"{tuple(arm.value for arm in expected_arms)}"
+            )
+        return self
 
 
 def build_formal_plan(
@@ -50,12 +110,131 @@ def build_formal_plan(
 ) -> tuple[RunSpec, ...]:
     """Build and once-shuffle the complete paired Cartesian design."""
 
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=FORMAL_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_ablation_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the prompt-plus-capability provenance-ablation plan."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=ABLATION_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_capability_provenance_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the no-prompt capability-plus-provenance contrast plan."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=CAPABILITY_PROVENANCE_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_original_provenance_completion_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the original-corpus completion plan for the two no-cap arms."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_hardened_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the paired hardened-corpus Full versus Prompt+Capability plan."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=HARDENED_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_hardened_missing_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    defense_arms: Sequence[DefenseArm],
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build one registered 108-cell paired plan for hardened missing arms."""
+
+    arms = tuple(defense_arms)
+    allowed = (
+        HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+        HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+        HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+    )
+    if arms not in allowed:
+        raise ValueError(
+            "hardened missing plan arms must be one of the three registered paired tuples"
+        )
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=arms,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def _build_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    defense_arms: Sequence[DefenseArm],
+    formal_seeds: Sequence[int],
+    randomization_seed: int,
+) -> tuple[RunSpec, ...]:
     scenario_ids = tuple(item.scenario_id for item in scenarios)
     if len(scenario_ids) != 6 or len(set(scenario_ids)) != 6:
         raise ValueError("the formal plan requires six unique scenarios")
     seeds = tuple(int(seed) for seed in formal_seeds)
     if len(seeds) != 3 or len(set(seeds)) != 3:
         raise ValueError("the formal plan requires three unique paired seeds")
+    arms = tuple(defense_arms)
     model_hash = stable_model_hash(model_config)
     records = [
         RunSpec(
@@ -69,7 +248,7 @@ def build_formal_plan(
         for scenario_id, condition, arm, (repetition, seed) in product(
             scenario_ids,
             tuple(ContentCondition),
-            tuple(DefenseArm),
+            arms,
             tuple(enumerate(seeds)),
         )
     ]
@@ -79,6 +258,7 @@ def build_formal_plan(
         expected_scenario_ids=scenario_ids,
         expected_seeds=seeds,
         expected_model_config_hash=model_hash,
+        expected_defense_arms=arms,
     )
     return tuple(records)
 
@@ -92,6 +272,17 @@ def freeze_formal_plan(
     input_sha256: Mapping[str, str] | None = None,
     formal_seeds: Sequence[int] = FORMAL_SEEDS,
     randomization_seed: int = RANDOMIZATION_SEED,
+    plan_kind: Literal[
+        "formal",
+        "provenance_ablation",
+        "capability_provenance_ablation",
+        "original_provenance_completion",
+        "hardened_followup",
+        "hardened_missing_baseline",
+        "hardened_missing_capability",
+        "hardened_missing_provenance_prompt",
+    ] = "formal",
+    defense_arms: Sequence[DefenseArm] = FORMAL_DEFENSE_ARMS,
 ) -> FrozenRunPlanManifest:
     """Write an immutable JSONL plan and its hash manifest.
 
@@ -99,12 +290,7 @@ def freeze_formal_plan(
     re-randomization after any victim-model result has been observed.
     """
 
-    root = Path(output_dir)
-    root.mkdir(parents=True, exist_ok=False)
-    plan_path = root / "run_plan.jsonl"
     encoded = _encode_plan(records)
-    with plan_path.open("xb") as handle:
-        handle.write(encoded)
     manifest = FrozenRunPlanManifest(
         plan_sha256=_sha256_bytes(encoded),
         record_count=len(records),
@@ -113,7 +299,14 @@ def freeze_formal_plan(
         model_config_hash=model_config_hash,
         corpus_manifest_sha256=corpus_manifest_sha256,
         input_sha256=dict(sorted((input_sha256 or {}).items())),
+        plan_kind=plan_kind,
+        defense_arms=tuple(defense_arms),
     )
+    root = Path(output_dir)
+    root.mkdir(parents=True, exist_ok=False)
+    plan_path = root / "run_plan.jsonl"
+    with plan_path.open("xb") as handle:
+        handle.write(encoded)
     with (root / "manifest.json").open("x", encoding="utf-8") as handle:
         json.dump(
             manifest.model_dump(mode="json"),
@@ -152,6 +345,7 @@ def verify_frozen_plan(
         expected_scenario_ids=expected_scenario_ids,
         expected_seeds=manifest.formal_seeds,
         expected_model_config_hash=manifest.model_config_hash,
+        expected_defense_arms=manifest.defense_arms,
     )
     return manifest, records
 
@@ -175,17 +369,21 @@ def validate_formal_plan(
     expected_scenario_ids: Sequence[str],
     expected_seeds: Sequence[int] = FORMAL_SEEDS,
     expected_model_config_hash: str | None = None,
+    expected_defense_arms: Sequence[DefenseArm] = FORMAL_DEFENSE_ARMS,
 ) -> None:
     """Reject missing, duplicate, added, or configuration-drifted cells."""
 
     rows = tuple(records)
+    scenario_ids = tuple(expected_scenario_ids)
+    seeds = tuple(expected_seeds)
+    arms = tuple(expected_defense_arms)
     expected_cells = {
         (scenario_id, condition, arm, seed, repetition)
         for scenario_id, condition, arm, (repetition, seed) in product(
-            tuple(expected_scenario_ids),
+            scenario_ids,
             tuple(ContentCondition),
-            tuple(DefenseArm),
-            tuple(enumerate(tuple(expected_seeds))),
+            arms,
+            tuple(enumerate(seeds)),
         )
     }
     actual_cells = {
@@ -214,9 +412,12 @@ def validate_formal_plan(
         row.model_config_hash != expected_model_config_hash for row in rows
     ):
         raise ValueError("run plan contains model configuration drift")
-    if len(rows) != EXPECTED_FORMAL_RUNS:
+    expected_record_count = (
+        len(scenario_ids) * len(tuple(ContentCondition)) * len(arms) * len(seeds)
+    )
+    if len(rows) != expected_record_count:
         raise ValueError(
-            f"expected {EXPECTED_FORMAL_RUNS} formal runs, found {len(rows)}"
+            f"expected {expected_record_count} runs, found {len(rows)}"
         )
 
 
@@ -247,10 +448,22 @@ def _sha256_bytes(value: bytes) -> str:
 
 
 __all__ = [
+    "ABLATION_DEFENSE_ARMS",
+    "CAPABILITY_PROVENANCE_DEFENSE_ARMS",
+    "HARDENED_DEFENSE_ARMS",
+    "HARDENED_MISSING_BASELINE_DEFENSE_ARMS",
+    "HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS",
+    "HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS",
     "EXPECTED_FORMAL_RUNS",
+    "FORMAL_DEFENSE_ARMS",
     "FORMAL_SEEDS",
     "FrozenRunPlanManifest",
     "RANDOMIZATION_SEED",
+    "build_ablation_plan",
+    "build_capability_provenance_plan",
+    "build_hardened_plan",
+    "build_hardened_missing_plan",
+    "build_original_provenance_completion_plan",
     "build_formal_plan",
     "freeze_formal_plan",
     "load_run_plan",

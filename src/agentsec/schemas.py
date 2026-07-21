@@ -43,6 +43,10 @@ class DefenseArm(str, Enum):
     ALLOW_ALL = "allow_all"
     PROMPT_ONLY = "prompt_only"
     CAPABILITY_ONLY = "capability_only"
+    PROVENANCE_ONLY = "provenance_only"
+    PROMPT_PROVENANCE_ONLY = "prompt_provenance_only"
+    CAPABILITY_PROVENANCE_ONLY = "capability_provenance_only"
+    PROMPT_CAPABILITY_ONLY = "prompt_capability_only"
     FULL = "full"
 
 

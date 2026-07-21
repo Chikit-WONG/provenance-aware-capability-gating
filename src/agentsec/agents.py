@@ -418,7 +418,10 @@ class ActionAgent:
                             ),
                         )
                     blocked_signatures.add(signature)
-                    if self.defense_arm is DefenseArm.FULL:
+                    if self.defense_arm in (
+                        DefenseArm.PROMPT_CAPABILITY_ONLY,
+                        DefenseArm.FULL,
+                    ):
                         recovery_pending = True
 
         raise AgentStepLimitError(
@@ -427,7 +430,12 @@ class ActionAgent:
 
 
 def _system_prompt(base: str, defense_arm: DefenseArm) -> str:
-    if defense_arm in (DefenseArm.PROMPT_ONLY, DefenseArm.FULL):
+    if defense_arm in (
+        DefenseArm.PROMPT_ONLY,
+        DefenseArm.PROMPT_PROVENANCE_ONLY,
+        DefenseArm.PROMPT_CAPABILITY_ONLY,
+        DefenseArm.FULL,
+    ):
         return base + UNTRUSTED_DATA_WARNING
     return base
 

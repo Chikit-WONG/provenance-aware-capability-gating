@@ -1,0 +1,18 @@
+{
+  "analysis_metrics": [
+    "exposure",
+    "attempted_attack",
+    "blocked_attack",
+    "executed_unauthorized_effect",
+    "secret_leakage",
+    "benign_task_success",
+    "benign_block"
+  ],
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 4313,
+  "comparison_count": 21,
+  "input_digest": "ac843b2d790c5ab28c744dc3a73b88b4dec0b52dfcf303e90f61f604b8a8899e",
+  "invalid_count": 4,
+  "record_count": 432,
+  "valid_count": 428
+}

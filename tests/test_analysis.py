@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import contextlib
+import importlib.util
+import io
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from agentsec.analysis import (
     ArtifactAnalysisError,
@@ -67,6 +72,15 @@ def write_record(path: Path, value: dict[str, object]) -> None:
     (path / "record.json").write_text(
         json.dumps(value, sort_keys=True) + "\n", encoding="utf-8"
     )
+
+
+def load_analysis_cli():
+    path = Path(__file__).parents[1] / "scripts" / "analyze_results.py"
+    spec = importlib.util.spec_from_file_location("analyze_results_cli", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class ArtifactLoadingTests(unittest.TestCase):
@@ -153,8 +167,69 @@ class ArtifactLoadingTests(unittest.TestCase):
             with self.assertRaisesRegex(ArtifactAnalysisError, "missing=1"):
                 validate_records_against_plan(records, (first, second))
 
+    def test_duplicate_run_ids_across_artifact_roots_are_rejected(self) -> None:
+        run_spec = make_run_spec()
+        with tempfile.TemporaryDirectory() as temporary:
+            first_root = Path(temporary) / "formal"
+            second_root = Path(temporary) / "ablation"
+            write_record(first_root / "one", complete_record(run_spec))
+            write_record(second_root / "two", complete_record(run_spec))
+            with self.assertRaisesRegex(ArtifactAnalysisError, "attempt ambiguity"):
+                load_artifact_records((first_root, second_root))
+
 
 class PublicationAnalysisTests(unittest.TestCase):
+    def test_cli_combines_repeated_artifact_roots_and_verified_plans(self) -> None:
+        module = load_analysis_cli()
+        first_spec = make_run_spec(scenario="T1")
+        second_spec = make_run_spec(
+            scenario="T5", defense=DefenseArm.PROMPT_CAPABILITY_ONLY
+        )
+        report = Mock()
+        report.model_dump.return_value = {"record_count": 2}
+        argv = [
+            "analyze_results.py",
+            "--artifact-root",
+            "formal-artifacts",
+            "--artifact-root",
+            "ablation-artifacts",
+            "--plan-dir",
+            "formal-plan",
+            "--plan-dir",
+            "ablation-plan",
+            "--output-dir",
+            "combined-analysis",
+            "--no-plots",
+        ]
+        with (
+            patch.object(sys, "argv", argv),
+            patch.object(
+                module,
+                "verify_frozen_plan",
+                side_effect=((Mock(), (first_spec,)), (Mock(), (second_spec,))),
+            ) as verify,
+            patch.object(module, "analyze_artifacts", return_value=report) as analyze,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(module.main(), 0)
+
+        self.assertEqual(
+            [call.args[0] for call in verify.call_args_list],
+            [Path("formal-plan"), Path("ablation-plan")],
+        )
+        self.assertEqual(
+            analyze.call_args.args,
+            (
+                [Path("formal-artifacts"), Path("ablation-artifacts")],
+                Path("combined-analysis"),
+            ),
+        )
+        self.assertEqual(
+            analyze.call_args.kwargs["expected_run_specs"],
+            (first_spec, second_spec),
+        )
+        self.assertFalse(analyze.call_args.kwargs["generate_plots"])
+
     def test_analysis_emits_json_csv_latex_manifest_and_registered_contrasts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "artifacts"
@@ -246,6 +321,188 @@ class PublicationAnalysisTests(unittest.TestCase):
         self.assertEqual(h1.valid_pair_n, 2)
         self.assertIsNotNone(h1.risk_difference_ci)
         self.assertIsNotNone(h1.valid_risk_difference_ci)
+
+    def test_ablation_records_conditionally_add_registered_provenance_contrasts(
+        self,
+    ) -> None:
+        rows = []
+        for defense, leakage in (
+            ("capability_only", True),
+            ("prompt_capability_only", False),
+            ("full", False),
+        ):
+            rows.append(
+                {
+                    "run_id": f"attack-{defense}",
+                    "scenario_id": "T5",
+                    "content_condition": "attack",
+                    "defense_arm": defense,
+                    "seed": 4313,
+                    "repetition": 0,
+                    "model_config_hash": "ablation-hash",
+                    "valid": True,
+                    "secret_leakage": leakage,
+                    "executed_unauthorized_effect": leakage,
+                    "benign_task_success": True,
+                }
+            )
+
+        names = {
+            item.name
+            for item in registered_comparisons(rows, bootstrap_resamples=20)
+        }
+        self.assertIn(
+            "a1_prompt_capability_minus_capability_attack_leakage__provenance_t5_t6",
+            names,
+        )
+        self.assertIn(
+            "a2_full_minus_prompt_capability_attack_leakage__provenance_t5_t6",
+            names,
+        )
+        old_only = [
+            row for row in rows if row["defense_arm"] != "prompt_capability_only"
+        ]
+        self.assertEqual(
+            len(registered_comparisons(old_only, bootstrap_resamples=20)),
+            13,
+        )
+
+    def test_capability_provenance_arm_adds_isolated_provenance_contrasts(self) -> None:
+        rows = []
+        for defense, leakage in (
+            ("capability_only", True),
+            ("capability_provenance_only", False),
+            ("full", False),
+        ):
+            rows.append(
+                {
+                    "run_id": f"attack-{defense}",
+                    "scenario_id": "T5",
+                    "content_condition": "attack",
+                    "defense_arm": defense,
+                    "seed": 4313,
+                    "repetition": 0,
+                    "model_config_hash": "provenance-hash",
+                    "valid": True,
+                    "secret_leakage": leakage,
+                }
+            )
+        names = {
+            item.name
+            for item in registered_comparisons(rows, bootstrap_resamples=20)
+        }
+        self.assertIn(
+            "a3_capability_provenance_minus_capability_attack_leakage"
+            "__provenance_t5_t6",
+            names,
+        )
+        self.assertIn(
+            "a4_full_minus_capability_provenance_attack_leakage"
+            "__provenance_t5_t6",
+            names,
+        )
+
+    def test_complete_factorial_adds_provenance_only_contrasts(self) -> None:
+        rows = []
+        for defense, leakage in (
+            ("allow_all", True),
+            ("prompt_only", True),
+            ("capability_only", True),
+            ("provenance_only", False),
+            ("prompt_provenance_only", False),
+            ("capability_provenance_only", False),
+            ("prompt_capability_only", False),
+            ("full", False),
+        ):
+            rows.append(
+                {
+                    "run_id": f"factorial-{defense}",
+                    "scenario_id": "T5",
+                    "content_condition": "attack",
+                    "defense_arm": defense,
+                    "seed": 4313,
+                    "repetition": 0,
+                    "model_config_hash": "factorial-hash",
+                    "valid": True,
+                    "secret_leakage": leakage,
+                    "executed_unauthorized_effect": leakage,
+                    "benign_task_success": True,
+                }
+            )
+        names = {
+            item.name
+            for item in registered_comparisons(rows, bootstrap_resamples=20)
+        }
+        self.assertTrue(
+            {
+                "a5_provenance_only_minus_allow_all_attack_leakage"
+                "__provenance_t5_t6",
+                "a6_prompt_provenance_minus_prompt_only_attack_leakage"
+                "__provenance_t5_t6",
+                "a7_full_minus_prompt_provenance_attack_leakage"
+                "__provenance_t5_t6",
+                "a8_full_minus_provenance_only_attack_leakage"
+                "__provenance_t5_t6",
+            }.issubset(names)
+        )
+
+    def test_analysis_combines_verified_roots_and_generates_five_arm_plots(self) -> None:
+        formal_specs = (
+            make_run_spec(
+                scenario="T5",
+                condition=ContentCondition.ATTACK,
+                defense=DefenseArm.CAPABILITY_ONLY,
+            ),
+            make_run_spec(
+                scenario="T5",
+                condition=ContentCondition.ATTACK,
+                defense=DefenseArm.FULL,
+            ),
+        )
+        ablation_specs = (
+            make_run_spec(
+                scenario="T5",
+                condition=ContentCondition.ATTACK,
+                defense=DefenseArm.PROMPT_CAPABILITY_ONLY,
+            ),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            formal_root = Path(temporary) / "formal"
+            ablation_root = Path(temporary) / "ablation"
+            for index, run_spec in enumerate(formal_specs):
+                write_record(
+                    formal_root / str(index),
+                    complete_record(run_spec, secret_leakage=index == 0),
+                )
+            write_record(
+                ablation_root / "0",
+                complete_record(ablation_specs[0], secret_leakage=False),
+            )
+
+            output = Path(temporary) / "analysis"
+            report = analyze_artifacts(
+                (formal_root, ablation_root),
+                output,
+                expected_run_specs=formal_specs + ablation_specs,
+                generate_plots=True,
+                bootstrap_resamples=20,
+            )
+
+            self.assertEqual(report.record_count, 3)
+            self.assertEqual(report.comparison_count, 15)
+            records = json.loads((output / "records.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                {row["defense_arm"] for row in records},
+                {"capability_only", "prompt_capability_only", "full"},
+            )
+            self.assertEqual(len({row["record_path"] for row in records}), 3)
+            self.assertTrue(
+                {
+                    "security_outcomes.png",
+                    "utility_outcomes.png",
+                    "task_family_outcomes.png",
+                }.issubset(report.output_files)
+            )
 
 
 def pilot_fixture() -> list[dict[str, object]]:

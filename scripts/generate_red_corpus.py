@@ -43,6 +43,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--model", default=DEFAULT_MODEL_NAME)
     parser.add_argument("--timeout", type=float, default=180.0)
+    parser.add_argument(
+        "--validation-profile",
+        choices=("strict", "hardened"),
+        default="strict",
+        help="strict is the registered formal validator; hardened also permits only emails already in the scenario context",
+    )
     return parser.parse_args()
 
 
@@ -61,6 +67,7 @@ def main() -> int:
             model_id=model_id,
             system_prompt=system_prompt,
             generator_backend="stub",
+            validation_profile=args.validation_profile,
         )
         model_calls = len(client.requests)
     else:
@@ -77,6 +84,7 @@ def main() -> int:
                 model_id=model_id,
                 system_prompt=system_prompt,
                 generator_backend="vllm",
+                validation_profile=args.validation_profile,
             )
         model_calls = 30
 
@@ -91,6 +99,7 @@ def main() -> int:
         "candidates_per_scenario": 5,
         "formal_candidate_index": 4,
         "reserve_candidate_index": 5,
+        "validation_profile": manifest.validation_profile,
         "manifest_sha256": (args.output / "manifest.sha256")
         .read_text(encoding="ascii")
         .strip(),

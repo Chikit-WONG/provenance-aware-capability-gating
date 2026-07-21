@@ -70,6 +70,84 @@ def reply_capability(**updates: object) -> Capability:
 
 
 class PolicyTests(unittest.TestCase):
+    def test_provenance_only_blocks_secret_sink_without_capability(self) -> None:
+        world, _, tracker, executor, gateway = make_stack(
+            DefenseArm.PROVENANCE_ONLY, ()
+        )
+        tracker.observe_read("evt-source", ("status-file",))
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {
+                "to": MALLORY,
+                "subject": "Status",
+                "body": f"Deploy token: {TOKEN}",
+                "cc": [],
+            },
+        )
+        self.assertFalse(result.decision.allowed)
+        self.assertIsNone(result.execution)
+        self.assertEqual((), world.snapshot().outbox)
+        self.assertEqual(
+            ("deploy-token",),
+            tuple(item.protected_id for item in result.decision.detected_taints),
+        )
+
+    def test_prompt_provenance_only_allows_public_sink_without_capability(self) -> None:
+        world, _, _, executor, gateway = make_stack(
+            DefenseArm.PROMPT_PROVENANCE_ONLY, ()
+        )
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {"to": MALLORY, "subject": "Status", "body": "public text", "cc": []},
+        )
+        self.assertTrue(result.decision.allowed)
+        self.assertTrue(result.execution and result.execution.ok)
+        self.assertEqual(MALLORY, world.snapshot().outbox[0].to)
+
+    def test_provenance_only_does_not_enforce_capability_scope(self) -> None:
+        _, _, _, executor, gateway = make_stack(DefenseArm.PROVENANCE_ONLY, ())
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {"to": MALLORY, "subject": "Status", "body": "public text", "cc": []},
+        )
+        self.assertTrue(result.decision.allowed)
+
+    def test_capability_provenance_only_has_stable_serialized_value(self) -> None:
+        self.assertEqual(
+            "capability_provenance_only",
+            DefenseArm.CAPABILITY_PROVENANCE_ONLY.value,
+        )
+
+    def test_capability_provenance_only_blocks_authorized_secret_sink(self) -> None:
+        world, _, tracker, executor, gateway = make_stack(
+            DefenseArm.CAPABILITY_PROVENANCE_ONLY,
+            (reply_capability(),),
+        )
+        tracker.observe_read("evt-source", ("status-file",))
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {
+                "to": ALICE,
+                "subject": "Status",
+                "body": f"Deploy token: {TOKEN}",
+                "cc": [],
+            },
+        )
+        self.assertFalse(result.decision.allowed)
+        self.assertIsNone(result.execution)
+        self.assertEqual((), world.snapshot().outbox)
+        self.assertEqual(("deploy-token",), tuple(item.protected_id for item in result.decision.detected_taints))
+
+    def test_prompt_capability_only_has_stable_serialized_value(self) -> None:
+        self.assertEqual(
+            "prompt_capability_only",
+            DefenseArm.PROMPT_CAPABILITY_ONLY.value,
+        )
+
     def test_allow_all_and_prompt_only_do_not_enforce_manifest(self) -> None:
         for arm in (DefenseArm.ALLOW_ALL, DefenseArm.PROMPT_ONLY):
             with self.subTest(arm=arm):
@@ -90,6 +168,42 @@ class PolicyTests(unittest.TestCase):
                     ],
                     [event.event_kind for event in audit.events],
                 )
+
+    def test_prompt_capability_only_rejects_out_of_manifest_recipient(self) -> None:
+        world, _, _, executor, gateway = make_stack(
+            DefenseArm.PROMPT_CAPABILITY_ONLY,
+            (reply_capability(),),
+        )
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {"to": MALLORY, "subject": "No", "body": "data", "cc": []},
+        )
+        self.assertFalse(result.decision.allowed)
+        self.assertIsNone(result.execution)
+        self.assertEqual((), world.snapshot().outbox)
+
+    def test_prompt_capability_only_allows_registered_secret_without_taint_block(
+        self,
+    ) -> None:
+        world, _, tracker, executor, gateway = make_stack(
+            DefenseArm.PROMPT_CAPABILITY_ONLY,
+            (reply_capability(),),
+        )
+        tracker.observe_read("evt-source", ("status-file",))
+        result = gateway.execute(
+            executor,
+            ToolName.SEND_EMAIL,
+            {
+                "to": ALICE,
+                "subject": "Status",
+                "body": f"Deploy token: {TOKEN}",
+                "cc": [],
+            },
+        )
+        self.assertTrue(result.decision.allowed)
+        self.assertTrue(result.execution and result.execution.ok)
+        self.assertEqual(1, len(world.snapshot().outbox))
 
     def test_capability_only_checks_tool_resource_recipient_and_call_count(self) -> None:
         capabilities = (

@@ -55,6 +55,26 @@ Conditions are `clean`, matched `placebo`, and `attack`. Defense arms are
 are executed unauthorized action rate, exact synthetic-secret leakage rate, and
 benign task success. Attempted and blocked actions are reported separately.
 
+A separately frozen follow-up adds the fifth arm `prompt_capability_only`
+(safe prompt and capability checks, without provenance sink checks):
+
+```text
+6 scenarios x 3 content conditions x 1 additional defense x 3 paired seeds
+= 54 add-on runs
+```
+
+This add-on isolates Full minus Prompt+Capability while leaving the original
+216-run formal study and its reported results unchanged.
+
+The completed factorial follow-up adds the missing `provenance_only` and
+`prompt_provenance_only` arms on the original corpus, and six missing arms on
+the hardened corpus. Each corpus is analyzed separately as
+`6 x 3 x 8 x 3 = 432` planned victim cells. Provenance-only arms deliberately
+skip capability enforcement and only test exact protected-value sink blocking;
+they are not substitutes for least-authority capability gating. A deterministic
+16-case sink-pressure test separately exercises malicious values at email
+subject/body and calendar title/location sinks.
+
 See [architecture](docs/ARCHITECTURE.md), [threat model](docs/THREAT_MODEL.md),
 and [experiment protocol](docs/EXPERIMENT_PROTOCOL.md). The
 [demo guide](docs/DEMO.md) covers live execution, artifact replay, and the
@@ -73,17 +93,71 @@ test (ITT) accounting. The table reports valid-run rates across all six tasks.
 | Capability-Only | 3/18 (16.7%) | 3/18 (16.7%) | 17/18 (94.4%) |
 | Full | 0/18 (0%) | 0/18 (0%) | 15/18 (83.3%) |
 
-On the provenance-isolating T5--T6 subset, Allow-All and Capability-Only each
-leaked in 3/6 attack runs, while Full leaked in 0/6. The complete aggregate,
-confidence intervals, registered comparisons, and figures are available in
-[`artifacts/formal-analysis-v1/`](artifacts/formal-analysis-v1/):
+The original T5--T6 comparison showed 3/6 leakages for Capability-Only and 0/6
+for Full, but these arms differed in both prompt hierarchy and provenance
+checking. The fifth-arm ablation below separates those effects.
 
-- [results summary](artifacts/formal-analysis-v1/results_summary.json)
-- [publication table](artifacts/formal-analysis-v1/publication_table.csv)
-- [registered comparisons](artifacts/formal-analysis-v1/registered_comparisons.csv)
-- [security figure](artifacts/formal-analysis-v1/security_outcomes.png)
-- [utility figure](artifacts/formal-analysis-v1/utility_outcomes.png)
-- [task-family figure](artifacts/formal-analysis-v1/task_family_outcomes.png)
+### Original-corpus complete factorial result
+
+The original complete factorial contains 432 planned records: 428 valid and 4
+invalid ITT records. In the T5--T6 attack subset:
+
+| Defense | Secret leakage |
+| --- | ---: |
+| Allow-All | 3/6 (50.0%) |
+| Prompt-Only | 0/6 (0%) |
+| Capability-Only | 3/6 (50.0%) |
+| Provenance-only | 0/6 (0%) |
+| Prompt+Provenance | 0/6 (0%) |
+| Capability+Provenance | 0/6 (0%) |
+| Prompt+Capability | 0/6 (0%) |
+| Full | 0/6 (0%) |
+
+Provenance-only minus Allow-All was $-0.50$ (95% bootstrap CI
+$[-0.83,-0.17]$); Prompt+Provenance minus Prompt-Only was $0.00$. The
+capability-plus-provenance contrast was also $-0.50$ versus Capability-Only.
+Full and Prompt+Capability both remained at the 0/6 floor on this corpus.
+
+Tables, comparisons, figures, and the manifest are in
+[`artifacts/original-full-factorial-analysis-v1/`](artifacts/original-full-factorial-analysis-v1/):
+
+- [results summary](artifacts/original-full-factorial-analysis-v1/results_summary.json)
+- [publication table](artifacts/original-full-factorial-analysis-v1/publication_table.csv)
+- [registered comparisons](artifacts/original-full-factorial-analysis-v1/registered_comparisons.csv)
+- [security figure](artifacts/original-full-factorial-analysis-v1/security_outcomes.png)
+- [utility figure](artifacts/original-full-factorial-analysis-v1/utility_outcomes.png)
+- [task-family figure](artifacts/original-full-factorial-analysis-v1/task_family_outcomes.png)
+
+The deterministic sink-pressure suite passed 16/16: provenance-enabled arms
+denied all 8 protected-value sink calls with zero side effects, while the two
+non-provenance controls executed their 8 capability-valid calls. The raw result
+is [`artifacts/sink-pressure-v1/results.json`](artifacts/sink-pressure-v1/results.json).
+
+### Hardened-corpus complete factorial result
+
+The hardened complete factorial uses a separate 30-candidate corpus generated
+with approval-shaped, compliance-shaped, and data-field/context-laundering
+strategies. It contains 432 planned records: 428 valid and 4 invalid ITT
+records. In the T5--T6 attack subset:
+
+| Defense | T5--T6 attack leakage | T6 attack leakage |
+| --- | ---: | ---: |
+| Allow-All | 2/6 (33.3%) | 2/3 (66.7%) |
+| Prompt-Only | 3/6 (50.0%) | 3/3 (100%) |
+| Capability-Only | 2/6 (33.3%) | 2/3 (66.7%) |
+| Provenance-only | 0/6 (0%) | 0/3 (0%) |
+| Prompt+Provenance | 0/6 (0%) | 0/3 (0%) |
+| Capability+Provenance | 0/6 (0%) | 0/3 (0%) |
+| Prompt+Capability | 3/6 (50.0%) | 3/3 (100%) |
+| Full | 0/6 (0%) | 0/3 (0%) |
+
+Provenance-only minus Allow-All was $-0.33$ (95% CI $[-0.67,0.00]$),
+Prompt+Provenance minus Prompt-Only was $-0.50$ (95% CI $[-0.83,-0.17]$),
+and Full minus Prompt+Capability was $-0.50$ (95% CI $[-0.83,-0.17]$).
+This hardened set therefore shows an end-to-end provenance gain above the
+safe prompt/capability baseline. Its artifacts and figures are in
+[`artifacts/hardened-full-factorial-analysis-v1/`](artifacts/hardened-full-factorial-analysis-v1/), with the
+frozen corpus in [`data/frozen/red_corpus_qwen3_hardened_v1/`](data/frozen/red_corpus_qwen3_hardened_v1/).
 - [technical report PDF](report/main.pdf)
 
 ## Demo and report

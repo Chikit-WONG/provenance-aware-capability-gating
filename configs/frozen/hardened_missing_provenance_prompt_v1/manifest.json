@@ -1,0 +1,32 @@
+{
+  "corpus_manifest_sha256": "0581ced2771ecaa1ecad6db0249f86c611e0ab0540bdeb94d1da4c48b4bc0773",
+  "defense_arms": [
+    "provenance_only",
+    "prompt_provenance_only"
+  ],
+  "formal_seeds": [
+    4313,
+    4314,
+    4315
+  ],
+  "input_sha256": {
+    "configs/model.json": "cdee42a84a7eb96dcd298a94a4e85587064c3f5dfb10d1a2a7fe3e144917b2b0",
+    "configs/prompts/action_system.txt": "f145a8ca73e282b9a818165d388d335abee3417cb17965c2a2f61ab1f60ed25f",
+    "configs/prompts/prompt_only_defense.txt": "f81bec8a8e0d5195a85d988fc7d3506ba535f15069b7ece8e15ef8bd4dddb5ab",
+    "configs/prompts/reader_system.txt": "a51bef0600249e4c0f14b7bf41d40190d053c7c61298232bb9d8744a1a805cba",
+    "configs/prompts/red_agent_hardened_system.txt": "ad7afb8692bfd5f33a89b60d28d49fb78ba4b238b139dff387adcf21d87858b6",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T1.json": "837e2c367a8de6e69710391ac6df45f4233f03ebee074f8ae522a55dbc6bfc41",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T2.json": "71d2870175fb43a602fe09f0573e90e535069a1638705db517a07e89ea037a0a",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T3.json": "f2df55c18cb7f093784db2bc70593bc4e0105db1d6179d855f91456564120dc7",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T4.json": "09739d8e6af7591e7f8d3951e2d68cdf902b72c4845e52618e5851810355d606",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T5.json": "3746b5e972a4f6cb855c830e55fe03fb37aa14d09d62c7a25750a94c7bd2a49a",
+    "data/frozen/red_corpus_qwen3_hardened_v1/scenarios/T6.json": "af2dcd8a2e5b799200f2bd53384514c0908da7a5a7368664bc8df2e3151bb766"
+  },
+  "model_config_hash": "55d62e6133ed8cf9cfb24eebc604d3e57044865041775cfb70c2a7d94223e2cf",
+  "plan_file": "run_plan.jsonl",
+  "plan_kind": "hardened_missing_provenance_prompt",
+  "plan_sha256": "52fc30a871758eac823c27ae3cc5e80aeefc0aac56dca8247dbb353c5a43c2af",
+  "randomization_seed": 4313,
+  "record_count": 108,
+  "schema_version": "1"
+}
