@@ -31,10 +31,37 @@ FORMAL_DEFENSE_ARMS = (
 )
 ABLATION_DEFENSE_ARMS = (DefenseArm.PROMPT_CAPABILITY_ONLY,)
 CAPABILITY_PROVENANCE_DEFENSE_ARMS = (DefenseArm.CAPABILITY_PROVENANCE_ONLY,)
+ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS = (
+    DefenseArm.PROVENANCE_ONLY,
+    DefenseArm.PROMPT_PROVENANCE_ONLY,
+)
 HARDENED_DEFENSE_ARMS = (
     DefenseArm.PROMPT_CAPABILITY_ONLY,
     DefenseArm.FULL,
 )
+HARDENED_MISSING_BASELINE_DEFENSE_ARMS = (
+    DefenseArm.ALLOW_ALL,
+    DefenseArm.PROMPT_ONLY,
+)
+HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS = (
+    DefenseArm.CAPABILITY_ONLY,
+    DefenseArm.CAPABILITY_PROVENANCE_ONLY,
+)
+HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS = (
+    DefenseArm.PROVENANCE_ONLY,
+    DefenseArm.PROMPT_PROVENANCE_ONLY,
+)
+
+PLAN_KIND_DEFENSE_ARMS = {
+    "formal": FORMAL_DEFENSE_ARMS,
+    "provenance_ablation": ABLATION_DEFENSE_ARMS,
+    "capability_provenance_ablation": CAPABILITY_PROVENANCE_DEFENSE_ARMS,
+    "original_provenance_completion": ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS,
+    "hardened_followup": HARDENED_DEFENSE_ARMS,
+    "hardened_missing_baseline": HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+    "hardened_missing_capability": HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+    "hardened_missing_provenance_prompt": HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+}
 
 
 class FrozenRunPlanManifest(BaseModel):
@@ -55,21 +82,17 @@ class FrozenRunPlanManifest(BaseModel):
         "formal",
         "provenance_ablation",
         "capability_provenance_ablation",
+        "original_provenance_completion",
         "hardened_followup",
+        "hardened_missing_baseline",
+        "hardened_missing_capability",
+        "hardened_missing_provenance_prompt",
     ] = "formal"
     defense_arms: tuple[DefenseArm, ...] = FORMAL_DEFENSE_ARMS
 
     @model_validator(mode="after")
     def defense_arms_match_plan_kind(self) -> "FrozenRunPlanManifest":
-        expected_arms = (
-            FORMAL_DEFENSE_ARMS
-            if self.plan_kind == "formal"
-            else ABLATION_DEFENSE_ARMS
-            if self.plan_kind == "provenance_ablation"
-            else CAPABILITY_PROVENANCE_DEFENSE_ARMS
-            if self.plan_kind == "capability_provenance_ablation"
-            else HARDENED_DEFENSE_ARMS
-        )
+        expected_arms = PLAN_KIND_DEFENSE_ARMS[self.plan_kind]
         if self.defense_arms != expected_arms:
             raise ValueError(
                 f"{self.plan_kind} defense arms must be "
@@ -132,6 +155,24 @@ def build_capability_provenance_plan(
     )
 
 
+def build_original_provenance_completion_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build the original-corpus completion plan for the two no-cap arms."""
+
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
 def build_hardened_plan(
     scenarios: Sequence[ScenarioSpec],
     model_config: Mapping[str, Any] | BaseModel,
@@ -145,6 +186,35 @@ def build_hardened_plan(
         scenarios,
         model_config,
         defense_arms=HARDENED_DEFENSE_ARMS,
+        formal_seeds=formal_seeds,
+        randomization_seed=randomization_seed,
+    )
+
+
+def build_hardened_missing_plan(
+    scenarios: Sequence[ScenarioSpec],
+    model_config: Mapping[str, Any] | BaseModel,
+    *,
+    defense_arms: Sequence[DefenseArm],
+    formal_seeds: Sequence[int] = FORMAL_SEEDS,
+    randomization_seed: int = RANDOMIZATION_SEED,
+) -> tuple[RunSpec, ...]:
+    """Build one registered 108-cell paired plan for hardened missing arms."""
+
+    arms = tuple(defense_arms)
+    allowed = (
+        HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+        HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+        HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+    )
+    if arms not in allowed:
+        raise ValueError(
+            "hardened missing plan arms must be one of the three registered paired tuples"
+        )
+    return _build_plan(
+        scenarios,
+        model_config,
+        defense_arms=arms,
         formal_seeds=formal_seeds,
         randomization_seed=randomization_seed,
     )
@@ -206,7 +276,11 @@ def freeze_formal_plan(
         "formal",
         "provenance_ablation",
         "capability_provenance_ablation",
+        "original_provenance_completion",
         "hardened_followup",
+        "hardened_missing_baseline",
+        "hardened_missing_capability",
+        "hardened_missing_provenance_prompt",
     ] = "formal",
     defense_arms: Sequence[DefenseArm] = FORMAL_DEFENSE_ARMS,
 ) -> FrozenRunPlanManifest:
@@ -377,6 +451,9 @@ __all__ = [
     "ABLATION_DEFENSE_ARMS",
     "CAPABILITY_PROVENANCE_DEFENSE_ARMS",
     "HARDENED_DEFENSE_ARMS",
+    "HARDENED_MISSING_BASELINE_DEFENSE_ARMS",
+    "HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS",
+    "HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS",
     "EXPECTED_FORMAL_RUNS",
     "FORMAL_DEFENSE_ARMS",
     "FORMAL_SEEDS",
@@ -385,6 +462,8 @@ __all__ = [
     "build_ablation_plan",
     "build_capability_provenance_plan",
     "build_hardened_plan",
+    "build_hardened_missing_plan",
+    "build_original_provenance_completion_plan",
     "build_formal_plan",
     "freeze_formal_plan",
     "load_run_plan",

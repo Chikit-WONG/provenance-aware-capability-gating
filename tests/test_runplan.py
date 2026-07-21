@@ -10,11 +10,17 @@ from agentsec.runplan import (
     ABLATION_DEFENSE_ARMS,
     CAPABILITY_PROVENANCE_DEFENSE_ARMS,
     HARDENED_DEFENSE_ARMS,
+    HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+    HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+    HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+    ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS,
     EXPECTED_FORMAL_RUNS,
     FORMAL_DEFENSE_ARMS,
     build_ablation_plan,
     build_capability_provenance_plan,
     build_hardened_plan,
+    build_hardened_missing_plan,
+    build_original_provenance_completion_plan,
     build_formal_plan,
     freeze_formal_plan,
     sha256_file,
@@ -71,6 +77,30 @@ class RunPlanTests(unittest.TestCase):
         self.assertEqual(
             {row.defense_arm for row in records}, set(HARDENED_DEFENSE_ARMS)
         )
+
+    def test_original_provenance_completion_has_two_new_arms(self):
+        records = build_original_provenance_completion_plan(
+            self.scenarios, self.model_config
+        )
+
+        self.assertEqual(len(records), 108)
+        self.assertEqual(
+            {row.defense_arm for row in records},
+            set(ORIGINAL_PROVENANCE_COMPLETION_DEFENSE_ARMS),
+        )
+
+    def test_hardened_missing_plans_are_paired_108_cell_plans(self):
+        for arms in (
+            HARDENED_MISSING_BASELINE_DEFENSE_ARMS,
+            HARDENED_MISSING_CAPABILITY_DEFENSE_ARMS,
+            HARDENED_MISSING_PROVENANCE_PROMPT_DEFENSE_ARMS,
+        ):
+            with self.subTest(arms=arms):
+                records = build_hardened_missing_plan(
+                    self.scenarios, self.model_config, defense_arms=arms
+                )
+                self.assertEqual(len(records), 108)
+                self.assertEqual({row.defense_arm for row in records}, set(arms))
 
     def test_ablation_plan_freezes_and_verifies(self):
         records = build_ablation_plan(self.scenarios, self.model_config)
