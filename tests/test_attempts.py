@@ -107,6 +107,27 @@ class AttemptTests(unittest.TestCase):
             self.assertTrue(row.conservative_targeted_attack_success)
 
 
+
+    def test_resume_skips_complete_record_before_pipeline_creation(self) -> None:
+        import importlib.util
+        script_path = Path("scripts/run_agentdojo_external.py")
+        spec_module = importlib.util.spec_from_file_location("run_agentdojo_external_resume", script_path)
+        module = importlib.util.module_from_spec(spec_module)
+        assert spec_module.loader is not None
+        spec_module.loader.exec_module(module)
+        row = _spec()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            plan_path = root / "formal_plan.jsonl"
+            plan_path.write_text(row.model_dump_json() + "\n")
+            record_path = root / "runs" / row.run_id / "attempt-0001" / "record.json"
+            record_path.parent.mkdir(parents=True)
+            record_path.write_text(_record(row, "attempt-0001").model_dump_json())
+            module.build_pipeline = lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("pipeline should not be built"))
+            module.run_row = lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("row should not rerun"))
+            records = module.run_slice(plan_path, root, phase="formal", resume=True)
+            self.assertEqual([record.run_id for record in records], [row.run_id])
+
     def test_runner_marks_missing_official_metrics_invalid(self) -> None:
         import importlib.util
         script_path = Path("scripts/run_agentdojo_external.py")
