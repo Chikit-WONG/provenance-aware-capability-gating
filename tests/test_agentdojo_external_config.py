@@ -22,6 +22,7 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertEqual(config["temperature"], 0.0)
         self.assertEqual(config["served_model_name"], "qwen3-vl-8b")
         self.assertTrue(Path(config["model_path"]).is_absolute())
+        self.assertEqual(config["tool_output_format"], "json")
 
 
 if __name__ == "__main__":
