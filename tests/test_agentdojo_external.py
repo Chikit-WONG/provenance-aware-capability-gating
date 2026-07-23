@@ -195,6 +195,10 @@ class AgentDojoExternalTests(unittest.TestCase):
         overlap["development_pair_ids"] = tuple(overlap["formal_pair_ids"][:1]) + tuple(overlap["development_pair_ids"][1:])
         with self.assertRaisesRegex(ValidationError, "disjoint|partition"):
             AgentDojoFrozenManifest(**overlap)
+        reordered = _valid_manifest_fields()
+        reordered["selected_pair_ids"] = tuple(reordered["selected_pair_ids"][1:2]) + tuple(reordered["selected_pair_ids"][0:1]) + tuple(reordered["selected_pair_ids"][2:])
+        with self.assertRaisesRegex(ValidationError, "first two|formal partition"):
+            AgentDojoFrozenManifest(**reordered)
         unknown = _valid_manifest_fields()
         unknown_key = canonical_pair("unknown-user", "unknown-injection").canonical_key
         unknown["formal_pair_ids"] = tuple(unknown["formal_pair_ids"][:-1]) + (unknown_key,)

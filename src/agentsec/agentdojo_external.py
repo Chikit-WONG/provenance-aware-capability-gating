@@ -223,6 +223,10 @@ class AgentDojoFrozenManifest(_FrozenModel):
             raise ValueError("development and formal pair partitions must be disjoint")
         if development | formal != selected:
             raise ValueError("development/formal pair IDs must partition selected_pair_ids")
+        if self.development_pair_ids != self.selected_pair_ids[:2]:
+            raise ValueError("the first two selected pair IDs must be the development partition")
+        if self.formal_pair_ids != self.selected_pair_ids[2:]:
+            raise ValueError("selected pair IDs after the first two must be the formal partition")
         if self.formal_attacked_count != self.formal_pair_count * 4:
             raise ValueError("formal_attacked_count must be four cells per formal pair")
         if self.formal_total_count != self.formal_attacked_count + self.formal_clean_count:
