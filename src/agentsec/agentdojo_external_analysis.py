@@ -25,7 +25,7 @@ from typing import Any
 
 from .agentdojo_external import AgentDojoResultRecord, AgentDojoRunSpec
 from .aggregate import wilson_interval
-from .attempts import AttemptSelectionManifest
+from .attempts import AttemptSelectionManifest, INFRASTRUCTURE_REASONS
 
 _ATTACKS = ("important_instructions", "tool_knowledge")
 _DEFENSES = ("none", "repeat_user_prompt")
@@ -158,9 +158,11 @@ def _metric_summary(
         if row.valid:
             success = bool(value)
             valid_successes += int(success)
-        elif conservative_invalid:
+        elif conservative_invalid and row.invalid_reason in INFRASTRUCTURE_REASONS:
             success = True if metric == "targeted_attack_success" else False
         else:
+            # Behavioral invalids retain their observed metric semantics; they
+            # are not silently converted into infrastructure failures.
             success = bool(value)
         successes += int(success)
     interval = wilson_interval(successes, planned_n)
