@@ -149,6 +149,8 @@ class AgentDojoFrozenManifest(_FrozenModel):
     benchmark_version: Literal["v1.2.2"]
     suite: Literal["workspace"]
     source_sha256: str
+    # Immutable VCS identity recorded by the isolated AgentDojo freeze.
+    agentdojo_source_commit: str = ""
     config_sha256: str
     model_config_hash: str
     served_model_name: str

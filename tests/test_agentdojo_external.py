@@ -313,18 +313,67 @@ class AgentDojoExternalTests(unittest.TestCase):
             def fake_enumerator(*_args: object) -> tuple[list[AgentDojoPair], list[dict[str, object]]]:
                 return candidates, screening
 
-            with patch("scripts.freeze_agentdojo_external._agentdojo_version", return_value="0.1.35"):
+            # The production contract binds the exact approved checkpoint; use a
+            # temporary fixture by patching that constant only inside this unit test.
+            with (
+                patch("scripts.freeze_agentdojo_external._agentdojo_version", return_value="0.1.35"),
+                patch("scripts.freeze_agentdojo_external.EXPECTED_CHECKPOINT_PATH", str(checkpoint)),
+                patch("socket.create_connection", side_effect=AssertionError("freeze must not open a socket")),
+            ):
                 summary = freeze_slice(config_path, root / "frozen", enumerator=fake_enumerator)
                 self.assertEqual(summary["selected_pair_count"], 18)
                 self.assertEqual(summary["development_pair_count"], 2)
                 self.assertEqual(summary["formal_pair_count"], 16)
                 self.assertLessEqual(summary["formal_total_count"], 96)
-                self.assertTrue(verify_slice(root / "frozen")["verified"])
+                self.assertTrue(verify_slice(root / "frozen", config_path)["verified"])
                 with self.assertRaises(FileExistsError):
                     freeze_slice(config_path, root / "frozen", enumerator=fake_enumerator)
             manifest = json.loads((root / "frozen" / "manifest.json").read_text(encoding="utf-8"))
             for field in ("screening_sha256", "selected_pairs_sha256", "environment_sha256"):
                 self.assertRegex(manifest[field], r"^[0-9a-f]{64}$")
+
+    def test_freeze_persists_screening_exclusions_and_rejects_config_drift(self) -> None:
+        from scripts.freeze_agentdojo_external import _validate_config, freeze_slice
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint"
+            checkpoint.mkdir()
+            (checkpoint / "config.json").write_text("{}\n", encoding="utf-8")
+            config = {
+                "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+                "agentdojo_tag": "v0.1.35", "attacks": ["important_instructions", "tool_knowledge"],
+                "benchmark_version": "v1.2.2", "defenses": ["none", "repeat_user_prompt"],
+                "model_display_name": "Qwen", "model_path": str(checkpoint),
+                "served_model_name": "qwen3-vl-8b", "suite": "workspace",
+                "temperature": 0.0, "tool_output_format": "json",
+            }
+            for key, bad in (("temperature", 0.2), ("tool_output_format", "text"), ("attacks", ["tool_knowledge"]), ("served_model_name", "other")):
+                mutated = dict(config); mutated[key] = bad
+                with self.assertRaises(ValueError):
+                    with patch("scripts.freeze_agentdojo_external.EXPECTED_CHECKPOINT_PATH", str(checkpoint)):
+                        _validate_config(mutated)
+            candidates = _candidates(24)
+            excluded = candidates[-1].model_copy(update={"runnable": False, "exclusion_reason": "tool_knowledge: empty injection dictionary"})
+            candidates[-1] = excluded
+            screening = [{
+                "canonical_key": pair.canonical_key, "canonical_sha256": pair.canonical_sha256,
+                "user_task_id": pair.user_task_id, "injection_task_id": pair.injection_task_id,
+                "runnable": pair.runnable, "exclusion_reason": pair.exclusion_reason,
+                "attacks": {"important_instructions": {"nonempty": pair.runnable}, "tool_knowledge": {"nonempty": pair.runnable}},
+            } for pair in candidates]
+            config_path = root / "config.json"
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+            with (
+                patch("scripts.freeze_agentdojo_external.EXPECTED_CHECKPOINT_PATH", str(checkpoint)),
+                patch("socket.create_connection", side_effect=AssertionError("freeze must not open a socket")),
+            ):
+                summary = freeze_slice(config_path, root / "frozen", enumerator=lambda *_: (candidates, screening))
+            self.assertEqual(summary["screened_pair_count"], 24)
+            screening_rows = [json.loads(line) for line in (root / "frozen" / "screening.jsonl").read_text().splitlines()]
+            excluded_rows = [row for row in screening_rows if not row["runnable"]]
+            self.assertEqual(len(excluded_rows), 1)
+            self.assertIn("empty injection dictionary", excluded_rows[0]["exclusion_reason"])
 
     def test_checkpoint_fingerprint_is_recursive_and_mtime_independent(self) -> None:
         from scripts.freeze_agentdojo_external import checkpoint_fingerprint
