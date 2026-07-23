@@ -132,3 +132,6 @@ allow/deny conclusion when deciding whether an unsafe effect occurred.
 Before model runs, deterministic stubs and a null audit must prove that no-op,
 benign success, attempted/blocked attack, executed effect, secret leak, timeout,
 and parse failure are distinguished correctly.
+
+The planned native AgentDojo external slice and its blocked freeze status are
+recorded in [EXTERNAL_VALIDATION.md](EXTERNAL_VALIDATION.md).
