@@ -387,6 +387,7 @@ def freeze_slice(
         screening_sha256=sha256_bytes(screening_bytes),
         selected_pairs_sha256=sha256_bytes(selected_bytes),
         environment_sha256=sha256_bytes(environment_text),
+        screened_pair_count=len(screening),
     )
     _exclusive_write(
         output_dir / "manifest.json",
@@ -445,6 +446,8 @@ def verify_slice(output_dir: Path, config_path: Path) -> dict[str, Any]:
         raise ValueError("manifest pair counts do not match selected_pairs.jsonl")
     screening_rows = [json.loads(line) for line in (output_dir / "screening.jsonl").read_text(encoding="utf-8").splitlines() if line]
     screening_by_key = {row.get("canonical_key"): row for row in screening_rows}
+    if manifest.screened_pair_count and len(screening_rows) != manifest.screened_pair_count:
+        raise ValueError("manifest screened_pair_count does not match screening.jsonl")
     if len(screening_by_key) != len(screening_rows):
         raise ValueError("screening.jsonl contains duplicate canonical keys")
     for pair in selected:
@@ -480,10 +483,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verify", type=Path, metavar="OUTPUT_DIR")
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
-    if (args.config is None) == (args.verify is None):
-        parser.error("provide --config for freeze, or --verify OUTPUT_DIR together with --config")
+    if args.verify is None and args.config is None:
+        parser.error("provide --config for freeze, or --verify OUTPUT_DIR")
     if args.verify is not None:
-        print(json.dumps(verify_slice(args.verify, args.config), sort_keys=True))
+        config_path = args.config or (PROJECT_ROOT / "configs/external/agentdojo_external_v1.json")
+        print(json.dumps(verify_slice(args.verify, config_path), sort_keys=True))
         return 0
     if args.output_dir is None:
         parser.error("--output-dir is required when freezing")

@@ -185,6 +185,7 @@ class AgentDojoFrozenManifest(_FrozenModel):
     screening_sha256: str = ""
     selected_pairs_sha256: str = ""
     environment_sha256: str = ""
+    screened_pair_count: int = Field(default=0, ge=0)
 
 
     @field_validator(
