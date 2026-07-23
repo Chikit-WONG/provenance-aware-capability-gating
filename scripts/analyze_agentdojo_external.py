@@ -20,7 +20,7 @@ def _rows(path: Path):
 def _load_records(path: Path, plans, selection):
     """Load either an aggregate JSONL file or append-only run artifact root."""
     if not path.is_dir():
-        return [AgentDojoResultRecord.model_validate(row) for row in _rows(path)], None
+        raise ValueError("--records must be an append-only artifact root so selected record hashes can be verified")
     records = []
     hashes = {}
     for row in plans:
@@ -51,9 +51,8 @@ def main(argv=None):
     records, per_record_hashes = _load_records(args.records, plans, selection)
     validate_formal_records(records, plans, selection, actual_plan_hash, record_hashes=per_record_hashes)
     selection_hash = _sha(args.attempt_selection)
-    input_hashes = {"plan": actual_plan_hash, "records": _sha(args.records), "attempt_selection": selection_hash}
-    if per_record_hashes:
-        input_hashes.update({f"record:{run_id}": digest for run_id, digest in per_record_hashes.items()})
+    input_hashes = {"plan": actual_plan_hash, "attempt_selection": selection_hash}
+    input_hashes.update({f"record:{run_id}": digest for run_id, digest in (per_record_hashes or {}).items()})
     print(json.dumps(write_analysis_bundle(records, args.output_dir, plan_hash=actual_plan_hash, attempt_selection_hash=selection_hash, input_record_hashes=input_hashes), sort_keys=True))
     return 0
 if __name__ == "__main__": raise SystemExit(main())
