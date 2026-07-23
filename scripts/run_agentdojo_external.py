@@ -129,25 +129,20 @@ def _call_task(function: Callable[..., Any], pipeline: Any, suite: Any, row: Age
 
     injection_ids = [row.injection_task_id] if row.injection_task_id is not None else []
     kwargs = {"force_rerun": False}
-    # The pinned API uses (suite, pipeline, user_task_id, injection_task_ids),
-    # but accepting a named form keeps this adapter usable with minor API
-    # spelling differences in the isolated environment.
-    try:
-        if row.attack == "none":
-            return function(suite, pipeline, row.user_task_id, **kwargs)
-        return function(suite, pipeline, row.user_task_id, injection_ids, **kwargs)
-    except TypeError as first_error:
-        try:
-            if row.attack == "none":
-                return function(pipeline, suite, row.user_task_id, **kwargs)
-            return function(pipeline, suite, row.user_task_id, injection_ids, **kwargs)
-        except TypeError:
-            raise first_error
+    # The pinned API uses (suite, pipeline, user_task_id, injection_task_ids).
+    # Call it exactly once: a TypeError may be an ordinary model/tool failure,
+    # and retrying with swapped positional arguments would duplicate inference.
+    if row.attack == "none":
+        return function(suite, pipeline, row.user_task_id, **kwargs)
+    return function(suite, pipeline, row.user_task_id, injection_ids, **kwargs)
 
 
 def _extract_metrics(value: Any) -> tuple[bool | None, bool | None, str]:
     """Extract utility/security/error while retaining opaque native output."""
 
+    if isinstance(value, (tuple, list)) and len(value) >= 2:
+        utility, security = value[0], value[1]
+        return (None if utility is None else bool(utility), None if security is None else bool(security), "")
     if isinstance(value, Mapping):
         utility = value.get("utility", value.get("utility_score"))
         security = value.get("security", value.get("targeted_attack_success"))
@@ -208,6 +203,12 @@ def run_row(
         if error_text:
             valid = False
             invalid_reason = "official_trace_error"
+        elif row.attack != "none" and (utility is None or security is None):
+            valid = False
+            invalid_reason = "official_result_missing_metric"
+        elif row.attack == "none" and utility is None:
+            valid = False
+            invalid_reason = "official_result_missing_metric"
     except BaseException as exc:  # persist complete wrapper evidence for all failures
         valid = False
         invalid_reason = _failure_reason(exc)
@@ -252,8 +253,6 @@ def run_slice(
     pipelines: dict[str, Any] = {}
     outputs: list[AgentDojoResultRecord] = []
     for row in selected:
-        arm = row.defense
-        pipeline = pipelines.setdefault(arm, build_pipeline(arm, port=port))
         record_path = Path(artifact_root) / "runs" / row.run_id / attempt_id / "record.json"
         if resume and record_path.is_file():
             try:
@@ -263,6 +262,11 @@ def run_slice(
                     continue
             except Exception:
                 pass
+        arm = row.defense
+        pipeline = pipelines.get(arm)
+        if pipeline is None:
+            pipeline = build_pipeline(arm, port=port)
+            pipelines[arm] = pipeline
         outputs.append(run_row(row, pipeline=pipeline, artifact_root=artifact_root, attempt_id=attempt_id))
     return outputs
 

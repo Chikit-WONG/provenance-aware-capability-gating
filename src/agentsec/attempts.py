@@ -118,10 +118,10 @@ class AttemptSelection(_FrozenModel):
 
     @model_validator(mode="after")
     def validate_selection(self) -> "AttemptSelection":
-        if self.initial_status == AttemptStatus.COMPLETE and not self.initial_record_sha256:
-            raise ValueError("complete initial attempts require initial_record_sha256")
-        if self.initial_status != AttemptStatus.COMPLETE and self.initial_record_sha256:
-            raise ValueError("non-complete initial attempts cannot have a record hash")
+        if self.initial_status in {AttemptStatus.COMPLETE, AttemptStatus.INVALID} and not self.initial_record_sha256:
+            raise ValueError("present initial attempts require initial_record_sha256")
+        if self.initial_status == AttemptStatus.MISSING and self.initial_record_sha256:
+            raise ValueError("missing initial attempts cannot have a record hash")
 
         if self.recovered_attempt is None:
             if self.recovered_status is not None or self.recovered_record_sha256:
@@ -130,21 +130,21 @@ class AttemptSelection(_FrozenModel):
                 raise ValueError("recovered_reason requires recovered_attempt=attempt-0002")
         else:
             if self.initial_status == AttemptStatus.COMPLETE:
-                raise ValueError("a complete initial attempt cannot have a recovery")
+                raise ValueError("a valid initial attempt cannot have a recovery")
             if not self.recovered_reason:
                 raise ValueError("recovered attempt requires a declared infrastructure reason")
             normalize_infrastructure_reason(self.recovered_reason)
-            if self.recovered_status == AttemptStatus.COMPLETE and not self.recovered_record_sha256:
-                raise ValueError("complete recovered attempts require recovered_record_sha256")
-            if self.recovered_status != AttemptStatus.COMPLETE and self.recovered_record_sha256:
-                raise ValueError("non-complete recovered attempts cannot have a record hash")
+            if self.recovered_status in {AttemptStatus.COMPLETE, AttemptStatus.INVALID} and not self.recovered_record_sha256:
+                raise ValueError("present recovered attempts require recovered_record_sha256")
+            if self.recovered_status == AttemptStatus.MISSING and self.recovered_record_sha256:
+                raise ValueError("missing recovered attempts cannot have a record hash")
 
         if self.selected_attempt is None:
             if self.selected_record_sha256:
                 raise ValueError("selected_record_sha256 requires selected_attempt")
         elif self.selected_attempt == "attempt-0001":
-            if self.initial_status != AttemptStatus.COMPLETE:
-                raise ValueError("selected initial attempt must be complete")
+            if self.initial_status not in {AttemptStatus.COMPLETE, AttemptStatus.INVALID}:
+                raise ValueError("selected initial attempt must be present")
             if self.selected_record_sha256 != self.initial_record_sha256:
                 raise ValueError("selected hash must match selected initial record")
         elif self.selected_attempt == "attempt-0002":
@@ -294,7 +294,7 @@ def build_attempt_selection(
         if initial_path.is_file():
             try:
                 initial_record, initial_hash = _load_record(initial_path, spec)
-                initial_status = AttemptStatus.COMPLETE
+                initial_status = AttemptStatus.COMPLETE if initial_record.valid else AttemptStatus.INVALID
                 initial_reason = initial_record.invalid_reason or initial_record.error
             except Exception as exc:  # retain evidence but do not select malformed data
                 initial_status = AttemptStatus.INVALID
@@ -320,7 +320,7 @@ def build_attempt_selection(
         if recovery_reason and recovery_path.exists():
             try:
                 recovery_record, recovery_hash = _load_record(recovery_path, spec)
-                recovery_status = AttemptStatus.COMPLETE
+                recovery_status = AttemptStatus.COMPLETE if recovery_record.valid else AttemptStatus.INVALID
             except Exception:
                 recovery_status = AttemptStatus.INVALID
         elif recovery_reason:
@@ -339,8 +339,13 @@ def build_attempt_selection(
             and initial_record is not None
             and initial_record.invalid_reason
             and recovery_reason
+            and recovery_status == AttemptStatus.COMPLETE
             and recovery_record is not None
-        ) or (selected_attempt is None and recovery_record is not None):
+        ) or (
+            selected_attempt is None
+            and recovery_status == AttemptStatus.COMPLETE
+            and recovery_record is not None
+        ):
             selected_attempt = "attempt-0002"
             selected_hash = recovery_hash
             selected_record = recovery_record

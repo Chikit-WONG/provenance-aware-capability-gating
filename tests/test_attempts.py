@@ -93,6 +93,59 @@ class AttemptTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             _record(_spec(attack="none"), "attempt-0001", targeted_attack_success=True)
 
+    def test_invalid_recovery_is_not_selected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            spec = _spec()
+            for attempt, valid, reason in (("attempt-0001", False, "model_timeout"), ("attempt-0002", False, "model_timeout")):
+                path = root / spec.run_id / attempt / "record.json"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(_record(spec, attempt, valid=valid, invalid_reason=reason, utility=None, targeted_attack_success=None, official_security_value=None, error="timeout").model_dump_json())
+            row = build_attempt_selection([spec], root).rows[0]
+            self.assertEqual(row.recovered_status, AttemptStatus.INVALID)
+            self.assertEqual(row.selected_attempt, "attempt-0001")
+            self.assertTrue(row.conservative_targeted_attack_success)
+
+
+    def test_runner_marks_missing_official_metrics_invalid(self) -> None:
+        import importlib.util
+        script_path = Path("scripts/run_agentdojo_external.py")
+        spec_module = importlib.util.spec_from_file_location("run_agentdojo_external_metrics", script_path)
+        module = importlib.util.module_from_spec(spec_module)
+        assert spec_module.loader is not None
+        spec_module.loader.exec_module(module)
+
+        class Logger:
+            def __init__(self, _path: str) -> None:
+                pass
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+        module._output_logger = lambda: Logger
+        row = _spec()
+        fake_functions = (lambda *_args, **_kwargs: {"utility": None, "security": None}, lambda *_args, **_kwargs: {}, object())
+        with tempfile.TemporaryDirectory() as temp:
+            result = module.run_row(row, pipeline=object(), artifact_root=temp, suite_functions=fake_functions)
+            self.assertFalse(result.valid)
+            self.assertEqual(result.invalid_reason, "official_result_missing_metric")
+
+    def test_native_task_type_error_is_called_once(self) -> None:
+        import importlib.util
+        script_path = Path("scripts/run_agentdojo_external.py")
+        spec = importlib.util.spec_from_file_location("run_agentdojo_external", script_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+        calls = []
+        def native(*args: object, **kwargs: object) -> object:
+            calls.append((args, kwargs))
+            raise TypeError("native failure")
+        with self.assertRaises(TypeError):
+            module._call_task(native, object(), object(), _spec())
+        self.assertEqual(len(calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
