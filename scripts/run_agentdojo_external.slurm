@@ -15,6 +15,8 @@ ATTEMPT_ID="${4:-attempt-0001}"
 if [[ "${PHASE}" == formal && -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
   START_INDEX=$((SLURM_ARRAY_TASK_ID * LIMIT))
 fi
+MODEL_PATH="/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct"
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${PROJECT_ROOT}/artifacts/agentdojo-external-v1}"
 FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PROJECT_ROOT}/configs/frozen/agentdojo_external_v1}"
