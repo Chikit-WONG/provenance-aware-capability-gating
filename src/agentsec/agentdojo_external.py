@@ -140,6 +140,113 @@ class AgentDojoRunSpec(_FrozenModel):
         return {**value, "run_id": f"adj-{digest}"}
 
 
+class AgentDojoResultRecord(_FrozenModel):
+    """Project-owned wrapper around one untouched AgentDojo result."""
+
+    phase: Literal["development", "formal"]
+    user_task_id: str
+    injection_task_id: str | None
+    attack: Literal["none", "important_instructions", "tool_knowledge"]
+    defense: Literal["none", "repeat_user_prompt"]
+    model_config_hash: str
+    run_id: str
+    attempt_id: Literal["attempt-0001", "attempt-0002"]
+    valid: bool
+    invalid_reason: str = ""
+    utility: bool | None = None
+    targeted_attack_success: bool | None = None
+    official_security_value: bool | None = None
+    official_trace_path: str = ""
+    trace_sha256: str = ""
+    duration_seconds: float = Field(default=0.0, ge=0.0)
+    error: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def unpack_run_spec(cls, value: Any) -> Any:
+        if not isinstance(value, Mapping) or "run_spec" not in value:
+            return value
+        data = dict(value)
+        nested = data.pop("run_spec")
+        nested_data = nested.model_dump() if isinstance(nested, AgentDojoRunSpec) else dict(nested)
+        for key, item in nested_data.items():
+            data.setdefault(key, item)
+        return data
+
+    @field_validator("run_id", "user_task_id")
+    @classmethod
+    def nonempty_ids(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("AgentDojo result identifiers cannot be blank")
+        return value
+
+    @field_validator("injection_task_id")
+    @classmethod
+    def valid_injection_id(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("injection_task_id cannot be blank")
+        return value
+
+    @field_validator("model_config_hash")
+    @classmethod
+    def valid_model_hash(cls, value: str) -> str:
+        if len(value) != 64 or any(char not in _HEX64 for char in value):
+            raise ValueError("model_config_hash must be a lowercase SHA-256 hex digest")
+        return value
+
+    @field_validator("trace_sha256")
+    @classmethod
+    def valid_trace_hash(cls, value: str) -> str:
+        if value and (len(value) != 64 or any(char not in _HEX64 for char in value)):
+            raise ValueError("trace_sha256 must be a lowercase SHA-256 hex digest")
+        return value
+
+    @field_validator("attempt_id")
+    @classmethod
+    def valid_attempt(cls, value: str) -> str:
+        if value not in {"attempt-0001", "attempt-0002"}:
+            raise ValueError("attempt_id must be attempt-0001 or attempt-0002")
+        return value
+
+    @model_validator(mode="after")
+    def validate_metric_semantics(self) -> "AgentDojoResultRecord":
+        if self.attack == "none":
+            if self.injection_task_id is not None:
+                raise ValueError("clean AgentDojo result cannot have injection_task_id")
+            if self.targeted_attack_success is not None:
+                raise ValueError("clean AgentDojo result must have targeted_attack_success=None")
+            if self.official_security_value is not None:
+                raise ValueError("clean AgentDojo result must have official_security_value=None")
+        else:
+            if self.injection_task_id is None:
+                raise ValueError("attacked AgentDojo result requires injection_task_id")
+            if self.targeted_attack_success != self.official_security_value:
+                raise ValueError("targeted_attack_success must equal official_security_value for attacked cells")
+        if self.valid and self.invalid_reason:
+            raise ValueError("valid AgentDojo result cannot carry invalid_reason")
+        if self.valid and self.error:
+            raise ValueError("non-empty AgentDojo error must make the result invalid")
+        if not self.valid and not self.invalid_reason and not self.error:
+            raise ValueError("invalid AgentDojo result requires invalid_reason or error")
+        return self
+
+    @property
+    def run_spec(self) -> AgentDojoRunSpec:
+        return AgentDojoRunSpec(
+            phase=self.phase,
+            user_task_id=self.user_task_id,
+            injection_task_id=self.injection_task_id,
+            attack=self.attack,
+            defense=self.defense,
+            model_config_hash=self.model_config_hash,
+            run_id=self.run_id,
+        )
+
+    @property
+    def security(self) -> bool | None:
+        return self.official_security_value
+
+
 class AgentDojoFrozenManifest(_FrozenModel):
     """Identity and coverage record written alongside frozen JSONL plans."""
 
@@ -539,6 +646,7 @@ def plan_jsonl(rows: Sequence[AgentDojoRunSpec]) -> str:
 __all__ = [
     "AgentDojoFrozenManifest",
     "AgentDojoPair",
+    "AgentDojoResultRecord",
     "AgentDojoRunSpec",
     "build_development_plan",
     "build_formal_plan",
