@@ -11,8 +11,12 @@ from agentsec.agentdojo_external import (
     build_formal_plan,
     canonical_pair,
     select_agentdojo_pairs,
+    validate_agentdojo_model_binding,
     validate_agentdojo_plan,
 )
+
+
+_MODEL_HASH = "e" * 64
 
 
 def _candidates(count: int = 24) -> list[AgentDojoPair]:
@@ -22,6 +26,35 @@ def _candidates(count: int = 24) -> list[AgentDojoPair]:
     ]
 
 
+def _valid_manifest_fields() -> dict[str, object]:
+    selected = select_agentdojo_pairs(_candidates(24))
+    development = selected[:2]
+    formal = selected[2:]
+    formal_clean_count = 2 * len({pair.user_task_id for pair in formal})
+    return {
+        "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+        "agentdojo_tag": "v0.1.35",
+        "benchmark_version": "v1.2.2",
+        "suite": "workspace",
+        "source_sha256": "a" * 64,
+        "config_sha256": "b" * 64,
+        "model_config_hash": _MODEL_HASH,
+        "served_model_name": "qwen3-vl-8b",
+        "model_checkpoint_path": "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct",
+        "selected_pair_ids": tuple(pair.canonical_key for pair in selected),
+        "development_pair_ids": tuple(pair.canonical_key for pair in development),
+        "formal_pair_ids": tuple(pair.canonical_key for pair in formal),
+        "development_plan_sha256": "c" * 64,
+        "formal_plan_sha256": "d" * 64,
+        "selected_pair_count": 18,
+        "development_pair_count": 2,
+        "formal_pair_count": 16,
+        "formal_attacked_count": 64,
+        "formal_clean_count": formal_clean_count,
+        "formal_total_count": 64 + formal_clean_count,
+    }
+
+
 class AgentDojoExternalTests(unittest.TestCase):
     def test_canonical_pair_uses_frozen_workspace_key(self) -> None:
         pair = canonical_pair("u1", "i2")
@@ -29,6 +62,17 @@ class AgentDojoExternalTests(unittest.TestCase):
         self.assertEqual(pair.canonical_key, key)
         self.assertEqual(pair.canonical_sha256, hashlib.sha256(key.encode()).hexdigest())
         self.assertTrue(pair.runnable)
+
+    def test_pair_rejects_mismatched_key_or_hash(self) -> None:
+        pair = canonical_pair("u1", "i2")
+        key_data = pair.model_dump()
+        key_data["canonical_key"] = "workspace:v1.2.2:u1:wrong"
+        with self.assertRaisesRegex(ValidationError, "canonical_key"):
+            AgentDojoPair.model_validate(key_data)
+        hash_data = pair.model_dump()
+        hash_data["canonical_sha256"] = "f" * 64
+        with self.assertRaisesRegex(ValidationError, "canonical_sha256"):
+            AgentDojoPair.model_validate(hash_data)
 
     def test_selection_is_order_independent_and_uses_three_passes(self) -> None:
         candidates = [
@@ -57,8 +101,6 @@ class AgentDojoExternalTests(unittest.TestCase):
         shuffled = select_agentdojo_pairs(list(reversed(candidates)))
         self.assertEqual([item.canonical_key for item in selected], [item.canonical_key for item in shuffled])
         self.assertEqual(len(selected), 18)
-        self.assertNotEqual(selected[0].user_task_id, selected[1].user_task_id)
-        self.assertNotEqual(selected[0].injection_task_id, selected[1].injection_task_id)
         self.assertEqual(len({item.user_task_id for item in selected[:2]}), 2)
         self.assertEqual(len({item.injection_task_id for item in selected[:2]}), 2)
 
@@ -75,8 +117,8 @@ class AgentDojoExternalTests(unittest.TestCase):
     def test_matrix_counts_and_unique_run_ids(self) -> None:
         selected = select_agentdojo_pairs(_candidates(24))
         development, formal = selected[:2], selected[2:]
-        development_plan = build_development_plan(development)
-        formal_plan = build_formal_plan(formal)
+        development_plan = build_development_plan(development, _MODEL_HASH)
+        formal_plan = build_formal_plan(formal, _MODEL_HASH)
         formal_attacked = [row for row in formal_plan if row.attack != "none"]
         formal_clean = [row for row in formal_plan if row.attack == "none"]
         self.assertEqual(len(formal_attacked), 64)
@@ -85,91 +127,97 @@ class AgentDojoExternalTests(unittest.TestCase):
         self.assertEqual({row.attack for row in formal_attacked}, {"important_instructions", "tool_knowledge"})
         self.assertEqual({row.defense for row in formal_attacked}, {"none", "repeat_user_prompt"})
         self.assertEqual({row.attack for row in formal_clean}, {"none"})
+        self.assertEqual({row.model_config_hash for row in (*development_plan, *formal_plan)}, {_MODEL_HASH})
         all_rows = (*development_plan, *formal_plan)
         self.assertEqual(len({row.run_id for row in all_rows}), len(all_rows))
         self.assertEqual({row.phase for row in development_plan}, {"development"})
         self.assertEqual({row.phase for row in formal_plan}, {"formal"})
 
-    def test_formal_validator_rejects_duplicate_missing_and_added_cells(self) -> None:
+    def test_builders_require_exact_partition_sizes(self) -> None:
+        selected = select_agentdojo_pairs(_candidates(24))
+        with self.assertRaisesRegex(ValueError, "exactly 2"):
+            build_development_plan(selected[:1], _MODEL_HASH)
+        with self.assertRaisesRegex(ValueError, "exactly 16"):
+            build_formal_plan(selected[:15], _MODEL_HASH)
+
+    def test_formal_validator_rejects_duplicate_missing_added_and_model_drift(self) -> None:
         selected = select_agentdojo_pairs(_candidates(24))
         formal = selected[2:]
-        rows = build_formal_plan(formal)
-        validate_agentdojo_plan(rows, formal)
+        rows = build_formal_plan(formal, _MODEL_HASH)
+        validate_agentdojo_plan(rows, formal, _MODEL_HASH)
         with self.assertRaisesRegex(ValueError, "duplicate"):
-            validate_agentdojo_plan([*rows, rows[0]], formal)
+            validate_agentdojo_plan([*rows, rows[0]], formal, _MODEL_HASH)
         with self.assertRaisesRegex(ValueError, "missing"):
-            validate_agentdojo_plan(rows[:-1], formal)
+            validate_agentdojo_plan(rows[:-1], formal, _MODEL_HASH)
         added = AgentDojoRunSpec(
             phase="formal",
             user_task_id=formal[0].user_task_id,
             injection_task_id="not-a-selected-injection",
             attack="important_instructions",
             defense="none",
+            model_config_hash=_MODEL_HASH,
         )
         with self.assertRaisesRegex(ValueError, "unexpected|added|selected"):
-            validate_agentdojo_plan([*rows, added], formal)
+            validate_agentdojo_plan([*rows, added], formal, _MODEL_HASH)
+        drifted = rows[0].model_dump()
+        drifted["model_config_hash"] = "f" * 64
+        with self.assertRaisesRegex(ValueError, "model_config_hash"):
+            validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH)
 
     def test_strict_frozen_models_reject_unknown_fields_and_are_immutable(self) -> None:
+        pair = canonical_pair("u", "i")
+        pair_data = pair.model_dump()
+        pair_data["unexpected"] = True
         with self.assertRaises(ValidationError):
-            AgentDojoPair(
-                canonical_key="k",
-                canonical_sha256="h",
-                user_task_id="u",
-                injection_task_id="i",
-                runnable=True,
-                unexpected=True,
-            )
+            AgentDojoPair.model_validate(pair_data)
         row = AgentDojoRunSpec(
             phase="formal",
             user_task_id="u",
             injection_task_id=None,
             attack="none",
             defense="none",
+            model_config_hash=_MODEL_HASH,
         )
         self.assertTrue(row.run_id.startswith("adj-"))
         with self.assertRaises(ValidationError):
             row.attack = "tool_knowledge"
 
-    def test_manifest_requires_pinned_revision_and_hashes(self) -> None:
-        manifest = AgentDojoFrozenManifest(
-            agentdojo_commit="a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
-            agentdojo_tag="v0.1.35",
-            benchmark_version="v1.2.2",
-            suite="workspace",
-            source_sha256="a" * 64,
-            config_sha256="b" * 64,
-            development_pair_keys=("u1:i1", "u2:i2"),
-            formal_pair_keys=("u3:i3",),
-            development_plan_sha256="c" * 64,
-            formal_plan_sha256="d" * 64,
-            selected_pair_count=3,
-            development_pair_count=2,
-            formal_pair_count=1,
-            formal_attacked_count=4,
-            formal_clean_count=2,
-            formal_total_count=6,
-        )
+    def test_manifest_requires_exact_partition_and_model_identity(self) -> None:
+        manifest = AgentDojoFrozenManifest(**_valid_manifest_fields())
         self.assertEqual(manifest.schema_version, "1")
-        self.assertEqual(manifest.formal_total_count, 6)
+        self.assertEqual(manifest.selected_pair_count, 18)
+        self.assertEqual(manifest.formal_total_count, 64 + manifest.formal_clean_count)
+        wrong_count = _valid_manifest_fields()
+        wrong_count["selected_pair_count"] = 17
+        with self.assertRaisesRegex(ValidationError, "exactly 18"):
+            AgentDojoFrozenManifest(**wrong_count)
+        overlap = _valid_manifest_fields()
+        overlap["development_pair_ids"] = tuple(overlap["formal_pair_ids"][:1]) + tuple(overlap["development_pair_ids"][1:])
+        with self.assertRaisesRegex(ValidationError, "disjoint|partition"):
+            AgentDojoFrozenManifest(**overlap)
+        unknown = _valid_manifest_fields()
+        unknown_key = canonical_pair("unknown-user", "unknown-injection").canonical_key
+        unknown["formal_pair_ids"] = tuple(unknown["formal_pair_ids"][:-1]) + (unknown_key,)
+        with self.assertRaisesRegex(ValidationError, "partition|selected"):
+            AgentDojoFrozenManifest(**unknown)
+        invalid_hash = _valid_manifest_fields()
+        invalid_hash["model_config_hash"] = "not-a-sha256"
         with self.assertRaises(ValidationError):
-            AgentDojoFrozenManifest(
-                agentdojo_commit="wrong",
-                agentdojo_tag="v0.1.35",
-                benchmark_version="v1.2.2",
-                suite="workspace",
-                source_sha256="a" * 64,
-                config_sha256="b" * 64,
-                development_pair_keys=(),
-                formal_pair_keys=(),
-                development_plan_sha256="c" * 64,
-                formal_plan_sha256="d" * 64,
-                selected_pair_count=0,
-                development_pair_count=0,
-                formal_pair_count=0,
-                formal_attacked_count=0,
-                formal_clean_count=0,
-                formal_total_count=0,
-            )
+            AgentDojoFrozenManifest(**invalid_hash)
+        validate_agentdojo_model_binding(
+            manifest,
+            _MODEL_HASH,
+            "qwen3-vl-8b",
+            "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct",
+        )
+        with self.assertRaisesRegex(ValueError, "model_config_hash"):
+            validate_agentdojo_model_binding(manifest, "f" * 64, "qwen3-vl-8b", manifest.model_checkpoint_path)
+        with self.assertRaisesRegex(ValueError, "served_model_name"):
+            validate_agentdojo_model_binding(manifest, _MODEL_HASH, "other-model", manifest.model_checkpoint_path)
+        no_checkpoint = _valid_manifest_fields()
+        no_checkpoint["model_checkpoint_path"] = "relative/model"
+        with self.assertRaises(ValidationError):
+            AgentDojoFrozenManifest(**no_checkpoint)
 
 
 if __name__ == "__main__":

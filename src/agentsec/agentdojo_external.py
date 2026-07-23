@@ -61,6 +61,16 @@ class AgentDojoPair(_FrozenModel):
             raise ValueError("canonical_sha256 must be a lowercase SHA-256 hex digest")
         return value
 
+    @model_validator(mode="after")
+    def enforce_canonical_identity(self) -> "AgentDojoPair":
+        expected_key = f"workspace:v1.2.2:{self.user_task_id}:{self.injection_task_id}"
+        if self.canonical_key != expected_key:
+            raise ValueError("canonical_key does not match the workspace:v1.2.2 pair identity")
+        expected_hash = hashlib.sha256(expected_key.encode("utf-8")).hexdigest()
+        if self.canonical_sha256 != expected_hash:
+            raise ValueError("canonical_sha256 does not match canonical_key")
+        return self
+
 
 class AgentDojoRunSpec(_FrozenModel):
     """One cell in the development or formal native AgentDojo matrix."""
@@ -70,6 +80,7 @@ class AgentDojoRunSpec(_FrozenModel):
     injection_task_id: str | None
     attack: Literal["none", "important_instructions", "tool_knowledge"]
     defense: Literal["none", "repeat_user_prompt"]
+    model_config_hash: str
     run_id: str = ""
 
     @field_validator("user_task_id")
@@ -84,6 +95,13 @@ class AgentDojoRunSpec(_FrozenModel):
     def require_injection_task_id_when_present(cls, value: str | None) -> str | None:
         if value is not None and not value.strip():
             raise ValueError("injection_task_id cannot be blank")
+        return value
+
+    @field_validator("model_config_hash")
+    @classmethod
+    def require_model_config_hash(cls, value: str) -> str:
+        if len(value) != 64 or any(char not in _HEX64 for char in value):
+            raise ValueError("model_config_hash must be a lowercase SHA-256 hex digest")
         return value
 
     @model_validator(mode="after")
@@ -120,6 +138,14 @@ class AgentDojoFrozenManifest(_FrozenModel):
     suite: Literal["workspace"]
     source_sha256: str
     config_sha256: str
+    model_config_hash: str
+    served_model_name: str
+    model_checkpoint_path: str = Field(
+        validation_alias=AliasChoices("model_checkpoint_path", "model_path")
+    )
+    selected_pair_ids: tuple[str, ...] = Field(
+        validation_alias=AliasChoices("selected_pair_ids", "selected_pair_keys")
+    )
     development_pair_ids: tuple[str, ...] = Field(
         validation_alias=AliasChoices("development_pair_ids", "development_pair_keys")
     )
@@ -144,6 +170,7 @@ class AgentDojoFrozenManifest(_FrozenModel):
     @field_validator(
         "source_sha256",
         "config_sha256",
+        "model_config_hash",
         "development_plan_sha256",
         "formal_plan_sha256",
     )
@@ -153,23 +180,49 @@ class AgentDojoFrozenManifest(_FrozenModel):
             raise ValueError("manifest hashes must be lowercase SHA-256 hex digests")
         return value
 
-    @field_validator("development_pair_ids", "formal_pair_ids")
+    @field_validator("served_model_name", "model_checkpoint_path")
     @classmethod
-    def require_unique_pair_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+    def require_model_identity(cls, value: str, info: Any) -> str:
+        if not value.strip():
+            raise ValueError("model identity fields cannot be blank")
+        if info.field_name == "model_checkpoint_path" and not value.startswith("/"):
+            raise ValueError("model_checkpoint_path must be absolute")
+        return value
+
+    @field_validator("selected_pair_ids", "development_pair_ids", "formal_pair_ids")
+    @classmethod
+    def require_unique_canonical_pair_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
         if len(value) != len(set(value)):
             raise ValueError("manifest pair IDs must be unique")
         if any(not item.strip() for item in value):
             raise ValueError("manifest pair IDs cannot be blank")
+        for item in value:
+            suffix = item.removeprefix(_PAIR_KEY_PREFIX)
+            if not item.startswith(_PAIR_KEY_PREFIX) or suffix.count(":") != 1:
+                raise ValueError("manifest pair IDs must be canonical workspace:v1.2.2 keys")
         return value
 
     @model_validator(mode="after")
     def validate_manifest_coverage(self) -> "AgentDojoFrozenManifest":
-        if self.selected_pair_count != self.development_pair_count + self.formal_pair_count:
-            raise ValueError("selected_pair_count must equal development_pair_count + formal_pair_count")
+        if self.selected_pair_count != 18:
+            raise ValueError("selected_pair_count must be exactly 18")
+        if self.development_pair_count != 2:
+            raise ValueError("development_pair_count must be exactly 2")
+        if self.formal_pair_count != 16:
+            raise ValueError("formal_pair_count must be exactly 16")
+        if len(self.selected_pair_ids) != 18:
+            raise ValueError("selected_pair_ids must contain exactly 18 canonical keys")
         if self.development_pair_count != len(self.development_pair_ids):
             raise ValueError("development_pair_count does not match development_pair_ids")
         if self.formal_pair_count != len(self.formal_pair_ids):
             raise ValueError("formal_pair_count does not match formal_pair_ids")
+        selected = set(self.selected_pair_ids)
+        development = set(self.development_pair_ids)
+        formal = set(self.formal_pair_ids)
+        if development & formal:
+            raise ValueError("development and formal pair partitions must be disjoint")
+        if development | formal != selected:
+            raise ValueError("development/formal pair IDs must partition selected_pair_ids")
         if self.formal_attacked_count != self.formal_pair_count * 4:
             raise ValueError("formal_attacked_count must be four cells per formal pair")
         if self.formal_total_count != self.formal_attacked_count + self.formal_clean_count:
@@ -191,6 +244,23 @@ class AgentDojoFrozenManifest(_FrozenModel):
         """Backward-compatible spelling used by early freeze drafts."""
 
         return self.formal_pair_ids
+
+
+def validate_agentdojo_model_binding(
+    manifest: AgentDojoFrozenManifest,
+    model_config_hash: str,
+    served_model_name: str,
+    model_checkpoint_path: str,
+) -> None:
+    """Reject execution when the victim identity differs from the freeze."""
+
+    expected_hash = _require_model_config_hash(model_config_hash)
+    if manifest.model_config_hash != expected_hash:
+        raise ValueError("AgentDojo manifest model_config_hash mismatch")
+    if manifest.served_model_name != served_model_name:
+        raise ValueError("AgentDojo manifest served_model_name mismatch")
+    if manifest.model_checkpoint_path != model_checkpoint_path:
+        raise ValueError("AgentDojo manifest model_checkpoint_path mismatch")
 
 
 def canonical_pair(user_task_id: str, injection_task_id: str) -> AgentDojoPair:
@@ -284,12 +354,26 @@ def select_agentdojo_pairs(
     return selected
 
 
-def _expected_plan(pairs: Sequence[AgentDojoPair], phase: Literal["development", "formal"]) -> list[AgentDojoRunSpec]:
+def _require_model_config_hash(value: str) -> str:
+    if len(value) != 64 or any(char not in _HEX64 for char in value):
+        raise ValueError("model_config_hash must be a lowercase SHA-256 hex digest")
+    return value
+
+
+def _expected_plan(
+    pairs: Sequence[AgentDojoPair],
+    phase: Literal["development", "formal"],
+    model_config_hash: str,
+) -> list[AgentDojoRunSpec]:
     normalized = [_coerce_pair(pair) for pair in pairs]
+    expected_pair_count = 2 if phase == "development" else 16
+    if len(normalized) != expected_pair_count:
+        raise ValueError(f"{phase} AgentDojo plan requires exactly {expected_pair_count} pairs")
     if any(not pair.runnable for pair in normalized):
         raise ValueError("run plans can only use runnable AgentDojo pairs")
     if len({pair.canonical_key for pair in normalized}) != len(normalized):
         raise ValueError("duplicate AgentDojo pair in run-plan input")
+    model_config_hash = _require_model_config_hash(model_config_hash)
     rows: list[AgentDojoRunSpec] = []
     for pair in normalized:
         for attack in _ATTACKS:
@@ -301,6 +385,7 @@ def _expected_plan(pairs: Sequence[AgentDojoPair], phase: Literal["development",
                         injection_task_id=pair.injection_task_id,
                         attack=attack,
                         defense=defense,
+                        model_config_hash=model_config_hash,
                     )
                 )
     users = sorted({pair.user_task_id for pair in normalized})
@@ -313,26 +398,32 @@ def _expected_plan(pairs: Sequence[AgentDojoPair], phase: Literal["development",
                     injection_task_id=None,
                     attack="none",
                     defense=defense,
+                    model_config_hash=model_config_hash,
                 )
             )
     return rows
 
 
-def build_development_plan(pairs: Sequence[AgentDojoPair]) -> list[AgentDojoRunSpec]:
+def build_development_plan(
+    pairs: Sequence[AgentDojoPair], model_config_hash: str
+) -> list[AgentDojoRunSpec]:
     """Build the separate eight-cell-per-pair development plan."""
 
-    return _expected_plan(pairs, "development")
+    return _expected_plan(pairs, "development", model_config_hash)
 
 
-def build_formal_plan(pairs: Sequence[AgentDojoPair]) -> list[AgentDojoRunSpec]:
+def build_formal_plan(
+    pairs: Sequence[AgentDojoPair], model_config_hash: str
+) -> list[AgentDojoRunSpec]:
     """Build the exact attacked-plus-clean formal plan for frozen pairs."""
 
-    return _expected_plan(pairs, "formal")
+    return _expected_plan(pairs, "formal", model_config_hash)
 
 
 def validate_agentdojo_plan(
     rows: Sequence[AgentDojoRunSpec | Mapping[str, Any]],
     pairs: Sequence[AgentDojoPair],
+    model_config_hash: str,
     phase: Literal["development", "formal"] = "formal",
 ) -> None:
     """Reject duplicate, missing, or added cells in a native plan.
@@ -342,8 +433,11 @@ def validate_agentdojo_plan(
     and the original paired cell is simultaneously reported as missing.
     """
 
-    expected = _expected_plan(pairs, phase)
+    expected = _expected_plan(pairs, phase, model_config_hash)
+    expected_model_config_hash = _require_model_config_hash(model_config_hash)
     actual = [AgentDojoRunSpec.model_validate(row) for row in rows]
+    if any(row.model_config_hash != expected_model_config_hash for row in actual):
+        raise ValueError("AgentDojo run plan model_config_hash mismatch")
     actual_keys = [
         (row.phase, row.user_task_id, row.injection_task_id, row.attack, row.defense)
         for row in actual
@@ -387,6 +481,7 @@ __all__ = [
     "build_formal_plan",
     "canonical_pair",
     "plan_jsonl",
+    "validate_agentdojo_model_binding",
     "select_agentdojo_pairs",
     "validate_agentdojo_plan",
 ]
