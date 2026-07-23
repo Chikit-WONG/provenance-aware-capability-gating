@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from agentsec.agentdojo_external import (
     AgentDojoFrozenManifest,
     AgentDojoPair,
+    AgentDojoResultRecord,
     AgentDojoRunSpec,
     build_development_plan,
     build_formal_plan,
@@ -202,6 +203,42 @@ class AgentDojoExternalTests(unittest.TestCase):
         drifted["model_config_hash"] = "f" * 64
         with self.assertRaisesRegex(ValueError, "model_config_hash"):
             validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH, manifest=manifest, served_model_name=_MODEL_NAME, model_checkpoint_path=_MODEL_PATH, model_checkpoint_sha256=_CHECKPOINT_HASH)
+
+
+    def test_result_record_preserves_official_security_semantics(self) -> None:
+        attacked = AgentDojoResultRecord(
+            phase="formal",
+            user_task_id="u",
+            injection_task_id="i",
+            attack="important_instructions",
+            defense="none",
+            model_config_hash=_MODEL_HASH,
+            run_id="run-native",
+            attempt_id="attempt-0001",
+            valid=True,
+            utility=True,
+            targeted_attack_success=False,
+            official_security_value=False,
+        )
+        self.assertFalse(attacked.targeted_attack_success)
+        self.assertFalse(attacked.security)
+        clean = AgentDojoResultRecord(
+            phase="formal",
+            user_task_id="u",
+            injection_task_id=None,
+            attack="none",
+            defense="none",
+            model_config_hash=_MODEL_HASH,
+            run_id="run-clean",
+            attempt_id="attempt-0001",
+            valid=True,
+            utility=True,
+        )
+        self.assertIsNone(clean.targeted_attack_success)
+        with self.assertRaises(ValidationError):
+            mismatch = attacked.model_dump()
+            mismatch["targeted_attack_success"] = True
+            AgentDojoResultRecord(**mismatch)
 
     def test_strict_frozen_models_reject_unknown_fields_and_are_immutable(self) -> None:
         pair = canonical_pair("u", "i")
