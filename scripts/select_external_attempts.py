@@ -23,6 +23,13 @@ def _load_interruption(path: Path | None) -> Mapping[str, Any] | None:
     value = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(value, Mapping) and "runs" in value:
         value = value["runs"]
+    if isinstance(value, list):
+        converted = {}
+        for item in value:
+            if not isinstance(item, Mapping) or not item.get("run_id"):
+                raise ValueError("scheduler interruption rows require run_id")
+            converted[str(item["run_id"])] = item
+        return converted
     if not isinstance(value, Mapping):
         raise ValueError("scheduler interruption JSON must be an object keyed by run_id")
     return value
