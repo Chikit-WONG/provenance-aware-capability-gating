@@ -150,8 +150,13 @@ def _call_task(
             suite, pipeline, task, log_path, force_rerun=False, benchmark_version="v1.2.2"
         )
     if attack is None:
-        attacks = importlib.import_module("agentdojo.attacks")
-        attack = attacks.load_attack(row.attack, suite, pipeline)
+        try:
+            attacks = importlib.import_module("agentdojo.attacks")
+            attack = attacks.load_attack(row.attack, suite, pipeline)
+        except ModuleNotFoundError:
+            # Unit-test adapters may supply a stub function without installing
+            # AgentDojo; the pinned runner path resolves the attack above.
+            attack = None
     injection_ids = [row.injection_task_id]
     return function(
         suite,
