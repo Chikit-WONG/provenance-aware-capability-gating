@@ -146,12 +146,23 @@ def _call_task(
     task = suite.get_user_task_by_id(row.user_task_id) if hasattr(suite, "get_user_task_by_id") else row.user_task_id
     log_path = logdir if logdir is not None else None
     if row.attack == "none":
-        return function(suite, pipeline, task, log_path, False, "v1.2.2")
+        return function(
+            suite, pipeline, task, log_path, force_rerun=False, benchmark_version="v1.2.2"
+        )
     if attack is None:
         attacks = importlib.import_module("agentdojo.attacks")
         attack = attacks.load_attack(row.attack, suite, pipeline)
     injection_ids = [row.injection_task_id]
-    return function(suite, pipeline, task, attack, log_path, False, injection_ids, "v1.2.2")
+    return function(
+        suite,
+        pipeline,
+        task,
+        attack,
+        log_path,
+        force_rerun=False,
+        injection_tasks=injection_ids,
+        benchmark_version="v1.2.2",
+    )
 
 
 def _extract_metrics(value: Any) -> tuple[bool | None, bool | None, str]:
