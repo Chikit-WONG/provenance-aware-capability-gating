@@ -78,6 +78,7 @@ def validate_formal_records(
     plan_rows: Sequence[AgentDojoRunSpec | Mapping[str, Any]],
     selection_manifest: AttemptSelectionManifest | Mapping[str, Any],
     plan_hash: str,
+    record_hashes: Mapping[str, str] | None = None,
 ) -> list[AgentDojoResultRecord]:
     """Validate exact formal coverage and selected-attempt identity.
 
@@ -132,6 +133,10 @@ def validate_formal_records(
                 f"record attempt {record.attempt_id} is not selected attempt "
                 f"{selection.selected_attempt} for {record.run_id}"
             )
+        if record_hashes is not None:
+            actual_hash = record_hashes.get(record.run_id)
+            if actual_hash != selection.selected_record_sha256:
+                raise ValueError(f"selected record hash mismatch for {record.run_id}")
         parsed.append(record)
     missing = sorted(set(expected) - seen)
     if missing:
@@ -381,7 +386,10 @@ def write_analysis_bundle(
         "records.json": record_rows,
         "records.csv": record_rows,
         "attack_summary.json": attack_rows,
-        "attack_summary.csv": _flatten_metric_rows(attack_rows, "targeted_asr"),
+        "attack_summary.csv": [
+            {**base, **{f"utility_under_attack_{key}": value for key, value in row["utility_under_attack"].items()}}
+            for row, base in ((row, {**flat, "attack": row["attack"], "defense": row["defense"]}) for row, flat in zip(attack_rows, _flatten_metric_rows(attack_rows, "targeted_asr"), strict=True))
+        ],
         "clean_utility.json": clean_rows,
         "clean_utility.csv": _flatten_metric_rows(clean_rows, "utility_without_attack"),
         "publication_table.tex": _publication_tex(report),
