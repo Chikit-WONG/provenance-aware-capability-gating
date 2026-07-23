@@ -167,6 +167,25 @@ def _failure_reason(error: BaseException) -> str:
     return "agentdojo_execution_error"
 
 
+_KNOWN_RESULT_REASONS = {
+    "model_timeout",
+    "local_endpoint_transport_failure",
+    "scheduler_termination",
+    "artifact_write_interruption",
+    "tool_call_parse_error",
+    "refusal",
+    "no_op",
+    "evaluator_false",
+    "defense_block",
+    "agent_protocol_error",
+}
+
+
+def _result_reason(error_text: str) -> str:
+    value = str(error_text or "").strip()
+    return value if value in _KNOWN_RESULT_REASONS else "official_trace_error"
+
+
 def run_row(
     row: AgentDojoRunSpec,
     *,
@@ -202,7 +221,7 @@ def run_row(
         utility, security, error_text = _extract_metrics(native)
         if error_text:
             valid = False
-            invalid_reason = "official_trace_error"
+            invalid_reason = _result_reason(error_text)
         elif row.attack != "none" and (utility is None or security is None):
             valid = False
             invalid_reason = "official_result_missing_metric"
