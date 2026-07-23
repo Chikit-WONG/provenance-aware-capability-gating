@@ -179,6 +179,11 @@ class AgentDojoFrozenManifest(_FrozenModel):
     formal_attacked_count: int = Field(ge=0)
     formal_clean_count: int = Field(ge=0)
     formal_total_count: int = Field(ge=0)
+    # Optional digests keep older fixtures valid while freezing every artifact.
+    screening_sha256: str = ""
+    selected_pairs_sha256: str = ""
+    environment_sha256: str = ""
+
 
     @field_validator(
         "source_sha256",
@@ -187,9 +192,14 @@ class AgentDojoFrozenManifest(_FrozenModel):
         "model_checkpoint_sha256",
         "development_plan_sha256",
         "formal_plan_sha256",
+        "screening_sha256",
+        "selected_pairs_sha256",
+        "environment_sha256",
     )
     @classmethod
     def require_sha256(cls, value: str) -> str:
+        if value == "":
+            return value
         if len(value) != 64 or any(char not in _HEX64 for char in value):
             raise ValueError("manifest hashes must be lowercase SHA-256 hex digests")
         return value

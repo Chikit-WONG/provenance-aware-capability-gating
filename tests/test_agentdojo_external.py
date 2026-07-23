@@ -1,4 +1,8 @@
 import hashlib
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 import unittest
 
 from pydantic import ValidationError
@@ -269,6 +273,87 @@ class AgentDojoExternalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "model_checkpoint_sha256"):
             validate_agentdojo_model_binding(manifest, _MODEL_HASH, _MODEL_NAME, _MODEL_PATH, "a" * 64)
 
+
+    def test_freeze_cli_writes_hashed_artifacts_and_is_exclusive(self) -> None:
+        from scripts.freeze_agentdojo_external import freeze_slice, verify_slice
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint"
+            checkpoint.mkdir()
+            (checkpoint / "config.json").write_text("{}\n", encoding="utf-8")
+            config_path = root / "config.json"
+            config_path.write_text(json.dumps({
+                "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+                "agentdojo_tag": "v0.1.35",
+                "attacks": ["important_instructions", "tool_knowledge"],
+                "benchmark_version": "v1.2.2",
+                "defenses": ["none", "repeat_user_prompt"],
+                "model_display_name": "Qwen",
+                "model_path": str(checkpoint),
+                "served_model_name": "qwen3-vl-8b",
+                "suite": "workspace",
+                "temperature": 0.0,
+                "tool_output_format": "json",
+            }), encoding="utf-8")
+            candidates = _candidates(24)
+            screening = [{
+                "canonical_key": pair.canonical_key,
+                "canonical_sha256": pair.canonical_sha256,
+                "user_task_id": pair.user_task_id,
+                "injection_task_id": pair.injection_task_id,
+                "runnable": pair.runnable,
+                "exclusion_reason": pair.exclusion_reason,
+                "attacks": {
+                    "important_instructions": {"nonempty": True},
+                    "tool_knowledge": {"nonempty": True},
+                },
+            } for pair in candidates]
+
+            def fake_enumerator(*_args: object) -> tuple[list[AgentDojoPair], list[dict[str, object]]]:
+                return candidates, screening
+
+            with patch("scripts.freeze_agentdojo_external._agentdojo_version", return_value="0.1.35"):
+                summary = freeze_slice(config_path, root / "frozen", enumerator=fake_enumerator)
+                self.assertEqual(summary["selected_pair_count"], 18)
+                self.assertEqual(summary["development_pair_count"], 2)
+                self.assertEqual(summary["formal_pair_count"], 16)
+                self.assertLessEqual(summary["formal_total_count"], 96)
+                self.assertTrue(verify_slice(root / "frozen")["verified"])
+                with self.assertRaises(FileExistsError):
+                    freeze_slice(config_path, root / "frozen", enumerator=fake_enumerator)
+            manifest = json.loads((root / "frozen" / "manifest.json").read_text(encoding="utf-8"))
+            for field in ("screening_sha256", "selected_pairs_sha256", "environment_sha256"):
+                self.assertRegex(manifest[field], r"^[0-9a-f]{64}$")
+
+    def test_checkpoint_fingerprint_is_recursive_and_mtime_independent(self) -> None:
+        from scripts.freeze_agentdojo_external import checkpoint_fingerprint
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "nested").mkdir()
+            (root / "b").write_bytes(b"b")
+            (root / "nested" / "a").write_bytes(b"a")
+            first = checkpoint_fingerprint(root)
+            (root / "nested" / "a").touch()
+            self.assertEqual(first, checkpoint_fingerprint(root))
+            (root / "nested" / "a").write_bytes(b"changed")
+            self.assertNotEqual(first, checkpoint_fingerprint(root))
+
+    def test_official_attack_compatibility_registration_when_installed(self) -> None:
+        try:
+            from agentdojo.agent_pipeline import AgentPipeline
+            from agentdojo.attacks import load_attack
+            from agentdojo.models import MODEL_NAMES
+            from agentdojo.task_suite import get_suite
+        except ModuleNotFoundError:
+            self.skipTest("AgentDojo is available only in the isolated benchmark environment")
+        suite = get_suite("v1.2.2", "workspace")
+        pipeline = AgentPipeline([])
+        pipeline.name = "qwen3-vl-8b"
+        MODEL_NAMES["qwen3-vl-8b"] = "Qwen"
+        self.assertIsNotNone(load_attack("important_instructions", suite, pipeline))
+        self.assertIsNotNone(load_attack("tool_knowledge", suite, pipeline))
 
 if __name__ == "__main__":
     unittest.main()
