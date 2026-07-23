@@ -298,6 +298,7 @@ def build_attempt_selection(
                 initial_reason = initial_record.invalid_reason or initial_record.error
             except Exception as exc:  # retain evidence but do not select malformed data
                 initial_status = AttemptStatus.INVALID
+                initial_hash = record_sha256(initial_path)
                 initial_reason = f"record_schema_error: {type(exc).__name__}: {exc}"
         else:
             initial_status = AttemptStatus.MISSING
@@ -313,7 +314,10 @@ def build_attempt_selection(
                 recovery_reason = normalize_infrastructure_reason(initial_record.invalid_reason)
             except ValueError:
                 recovery_reason = ""
-        if not recovery_reason and initial_status != AttemptStatus.COMPLETE:
+        # Scheduler declarations are authoritative only when no initial
+        # wrapper exists.  A behavioral invalid reason on an existing record
+        # must not be overwritten by an unrelated scheduler label.
+        if not recovery_reason and initial_status == AttemptStatus.MISSING:
             recovery_reason = _interruption_reason(interruptions, spec.run_id)
         if recovery_path.exists() and not recovery_reason:
             raise ValueError(f"attempt-0002 exists without a declared infrastructure reason for {spec.run_id}")
@@ -323,6 +327,7 @@ def build_attempt_selection(
                 recovery_status = AttemptStatus.COMPLETE if recovery_record.valid else AttemptStatus.INVALID
             except Exception:
                 recovery_status = AttemptStatus.INVALID
+                recovery_hash = record_sha256(recovery_path)
         elif recovery_reason:
             recovery_status = AttemptStatus.MISSING
         else:

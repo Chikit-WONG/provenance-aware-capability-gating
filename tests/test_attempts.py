@@ -93,6 +93,31 @@ class AttemptTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             _record(_spec(attack="none"), "attempt-0001", targeted_attack_success=True)
 
+
+
+    def test_scheduler_label_cannot_override_behavioral_invalid_reason(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            spec = _spec()
+            path = root / spec.run_id / "attempt-0001" / "record.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(_record(spec, "attempt-0001", valid=False, invalid_reason="tool_call_parse_error", error="bad").model_dump_json())
+            row = build_attempt_selection([spec], root, interruptions={spec.run_id: "scheduler_termination"}).rows[0]
+            self.assertIsNone(row.recovered_attempt)
+            self.assertEqual(row.selected_attempt, "attempt-0001")
+
+    def test_partial_initial_record_is_retained_with_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            spec = _spec()
+            path = root / spec.run_id / "attempt-0001" / "record.json"
+            path.parent.mkdir(parents=True)
+            path.write_text("{\"run_id\":\"partial\"}\n")
+            row = build_attempt_selection([spec], root).rows[0]
+            self.assertEqual(row.initial_status, AttemptStatus.INVALID)
+            self.assertRegex(row.initial_record_sha256, r"^[0-9a-f]{64}$")
+            self.assertIsNone(row.selected_attempt)
+
     def test_invalid_recovery_is_not_selected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -146,7 +171,7 @@ class AttemptTests(unittest.TestCase):
 
         module._output_logger = lambda: Logger
         row = _spec()
-        fake_functions = (lambda *_args, **_kwargs: {"utility": None, "security": None}, lambda *_args, **_kwargs: {}, object())
+        fake_functions = (lambda *_args, **_kwargs: {"utility": None, "security": None}, lambda *_args, **_kwargs: {}, object(), object())
         with tempfile.TemporaryDirectory() as temp:
             result = module.run_row(row, pipeline=object(), artifact_root=temp, suite_functions=fake_functions)
             self.assertFalse(result.valid)
@@ -164,7 +189,7 @@ class AttemptTests(unittest.TestCase):
             calls.append((args, kwargs))
             raise TypeError("native failure")
         with self.assertRaises(TypeError):
-            module._call_task(native, object(), object(), _spec())
+            module._call_task(native, object(), object(), _spec(), attack=object())
         self.assertEqual(len(calls), 1)
 
 

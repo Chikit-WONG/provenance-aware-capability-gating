@@ -101,15 +101,19 @@ def build_pipeline(arm: str, *, port: int) -> Any:
     return pipeline
 
 
-def _benchmark_functions() -> tuple[Callable[..., Any], Callable[..., Any], Any]:
-    """Resolve the official task functions without the Cartesian suite helper."""
+def _benchmark_functions(pipeline: Any | None = None, attack_name: str | None = None) -> tuple[Any, Any, Any, Any | None]:
+    """Resolve the official task functions and suite/attack objects lazily."""
 
     benchmark = importlib.import_module("agentdojo.benchmark")
     with_injection = getattr(benchmark, "run_task_with_injection_tasks")
     without_injection = getattr(benchmark, "run_task_without_injection_tasks")
     suite_module = importlib.import_module("agentdojo.task_suite")
     suite = suite_module.get_suite("v1.2.2", "workspace")
-    return with_injection, without_injection, suite
+    attack = None
+    if pipeline is not None and attack_name and attack_name != "none":
+        attacks = importlib.import_module("agentdojo.attacks")
+        attack = attacks.load_attack(attack_name, suite, pipeline)
+    return with_injection, without_injection, suite, attack
 
 
 def _output_logger() -> Any:
@@ -124,17 +128,30 @@ def _output_logger() -> Any:
     raise ImportError("AgentDojo OutputLogger is unavailable")
 
 
-def _call_task(function: Callable[..., Any], pipeline: Any, suite: Any, row: AgentDojoRunSpec) -> Any:
-    """Call a native task function while preserving force_rerun=False."""
+def _call_task(
+    function: Callable[..., Any],
+    pipeline: Any,
+    suite: Any,
+    row: AgentDojoRunSpec,
+    *,
+    attack: Any | None = None,
+    logdir: Path | None = None,
+) -> Any:
+    """Call one pinned AgentDojo task function exactly once.
 
-    injection_ids = [row.injection_task_id] if row.injection_task_id is not None else []
-    kwargs = {"force_rerun": False}
-    # The pinned API uses (suite, pipeline, user_task_id, injection_task_ids).
-    # Call it exactly once: a TypeError may be an ordinary model/tool failure,
-    # and retrying with swapped positional arguments would duplicate inference.
+    AgentDojo 0.1.35 takes task objects, an attack object, a log directory,
+    and a force-rerun flag.  The injection list is deliberately one element.
+    """
+
+    task = suite.get_user_task_by_id(row.user_task_id) if hasattr(suite, "get_user_task_by_id") else row.user_task_id
+    log_path = logdir if logdir is not None else None
     if row.attack == "none":
-        return function(suite, pipeline, row.user_task_id, **kwargs)
-    return function(suite, pipeline, row.user_task_id, injection_ids, **kwargs)
+        return function(suite, pipeline, task, log_path, False, "v1.2.2")
+    if attack is None:
+        attacks = importlib.import_module("agentdojo.attacks")
+        attack = attacks.load_attack(row.attack, suite, pipeline)
+    injection_ids = [row.injection_task_id]
+    return function(suite, pipeline, task, attack, log_path, False, injection_ids, "v1.2.2")
 
 
 def _extract_metrics(value: Any) -> tuple[bool | None, bool | None, str]:
@@ -142,6 +159,10 @@ def _extract_metrics(value: Any) -> tuple[bool | None, bool | None, str]:
 
     if isinstance(value, (tuple, list)) and len(value) >= 2:
         utility, security = value[0], value[1]
+        if isinstance(utility, Mapping):
+            utility = next(iter(utility.values()), None)
+        if isinstance(security, Mapping):
+            security = next(iter(security.values()), None)
         return (None if utility is None else bool(utility), None if security is None else bool(security), "")
     if isinstance(value, Mapping):
         utility = value.get("utility", value.get("utility_score"))
@@ -211,12 +232,16 @@ def run_row(
     valid = True
     try:
         with _output_logger()(str(trace_root)):
-            with_injection, without_injection, suite = suite_functions or _benchmark_functions()
+            resolved = suite_functions or _benchmark_functions(pipeline, row.attack)
+            with_injection, without_injection, suite = resolved[:3]
+            attack = resolved[3] if len(resolved) > 3 else None
             native = _call_task(
                 with_injection if row.attack != "none" else without_injection,
                 pipeline,
                 suite,
                 row,
+                attack=attack,
+                logdir=trace_root,
             )
         utility, security, error_text = _extract_metrics(native)
         if error_text:
