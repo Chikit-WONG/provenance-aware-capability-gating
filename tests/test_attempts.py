@@ -112,6 +112,19 @@ class AttemptTests(unittest.TestCase):
             self.assertEqual(row.recovered_attempt, "attempt-0002")
             self.assertEqual(row.selected_attempt, "attempt-0002")
 
+
+    def test_scheduler_interruption_rows_reject_duplicate_run_ids(self) -> None:
+        import importlib.util
+        script_path = Path("scripts/select_external_attempts.py")
+        spec_module = importlib.util.spec_from_file_location("select_external_attempts_duplicates", script_path)
+        module = importlib.util.module_from_spec(spec_module)
+        assert spec_module.loader is not None
+        spec_module.loader.exec_module(module)
+        path = Path(tempfile.mkdtemp()) / "interruptions.json"
+        path.write_text(json.dumps([{"run_id": "r", "reason": "scheduler_termination"}, {"run_id": "r", "reason": "artifact_write_interruption"}]))
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            module._load_interruption(path)
+
     def test_scheduler_label_cannot_override_behavioral_invalid_reason(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
