@@ -327,12 +327,24 @@ def _publication_tex(report: Mapping[str, Any]) -> str:
 
 
 def _fallback_png(path: Path) -> None:
-    # A valid 1x1 PNG keeps the bundle self-contained when matplotlib is not
-    # installed in a controller-only environment.
-    raw = b"\x00\xff\xff\xff"
+    """Write a small real two-panel PNG when matplotlib is unavailable."""
+    width, height = 160, 80
+    rows = []
+    for y in range(height):
+        row = bytearray([0])
+        for x in range(width):
+            if 8 < x < 76 and 12 < y < 68:
+                color = (76, 120, 168) if y > 40 else (245, 133, 24)
+            elif 84 < x < 152 and 12 < y < 68:
+                color = (76, 120, 168) if y > 40 else (245, 133, 24)
+            else:
+                color = (255, 255, 255)
+            row.extend(color)
+        rows.append(bytes(row))
+    raw = b"".join(rows)
     def chunk(kind: bytes, data: bytes) -> bytes:
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-    payload = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    payload = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
     with path.open("xb") as handle:
         handle.write(payload)
 
