@@ -458,13 +458,13 @@ def build_formal_plan(
 def validate_agentdojo_plan(
     rows: Sequence[AgentDojoRunSpec | Mapping[str, Any]],
     pairs: Sequence[AgentDojoPair],
-    model_config_hash: str | None = None,
+    model_config_hash: str,
     phase: Literal["development", "formal"] = "formal",
     *,
     manifest: AgentDojoFrozenManifest | None = None,
-    served_model_name: str | None = None,
-    model_checkpoint_path: str | None = None,
-    model_checkpoint_sha256: str | None = None,
+    served_model_name: str,
+    model_checkpoint_path: str,
+    model_checkpoint_sha256: str,
 ) -> None:
     """Reject duplicate, missing, or added cells in a native plan.
 
@@ -473,29 +473,17 @@ def validate_agentdojo_plan(
     and the original paired cell is simultaneously reported as missing.
     """
 
-    if manifest is not None:
-        expected_model_config_hash = model_config_hash or manifest.model_config_hash
-        served_model_name = served_model_name or manifest.served_model_name
-        model_checkpoint_path = model_checkpoint_path or manifest.model_checkpoint_path
-        model_checkpoint_sha256 = model_checkpoint_sha256 or manifest.model_checkpoint_sha256
-    elif (
-        model_config_hash is None
-        or served_model_name is None
-        or model_checkpoint_path is None
-        or model_checkpoint_sha256 is None
-    ):
-        raise ValueError(
-            "mandatory AgentDojo model binding requires a manifest or explicit model identity arguments"
-        )
-    else:
-        expected_model_config_hash = model_config_hash
+    # Runtime identity values are required even when a manifest is supplied.
+    # The manifest is the frozen expected identity; these explicit arguments
+    # are the observed victim identity and therefore cannot self-compare.
     validate_agentdojo_model_binding(
         manifest,
-        expected_model_config_hash,
+        model_config_hash,
         served_model_name,
         model_checkpoint_path,
         model_checkpoint_sha256,
     )
+    expected_model_config_hash = model_config_hash
     expected = _expected_plan(pairs, phase, expected_model_config_hash)
     actual = [AgentDojoRunSpec.model_validate(row) for row in rows]
     if any(row.model_config_hash != expected_model_config_hash for row in actual):

@@ -148,7 +148,7 @@ class AgentDojoExternalTests(unittest.TestCase):
         selected = select_agentdojo_pairs(_candidates(24))
         formal = selected[2:]
         rows = build_formal_plan(formal, _MODEL_HASH)
-        with self.assertRaisesRegex(ValueError, "mandatory AgentDojo model binding"):
+        with self.assertRaises(TypeError):
             validate_agentdojo_plan(rows, formal, _MODEL_HASH)
         validate_agentdojo_plan(
             rows,
@@ -159,11 +159,31 @@ class AgentDojoExternalTests(unittest.TestCase):
             model_checkpoint_sha256=_CHECKPOINT_HASH,
         )
         manifest = AgentDojoFrozenManifest(**_valid_manifest_fields())
-        validate_agentdojo_plan(rows, formal, _MODEL_HASH, manifest=manifest)
+        with self.assertRaises(TypeError):
+            validate_agentdojo_plan(rows, formal, _MODEL_HASH, manifest=manifest)
+        validate_agentdojo_plan(
+            rows,
+            formal,
+            _MODEL_HASH,
+            manifest=manifest,
+            served_model_name=_MODEL_NAME,
+            model_checkpoint_path=_MODEL_PATH,
+            model_checkpoint_sha256=_CHECKPOINT_HASH,
+        )
+        with self.assertRaisesRegex(ValueError, "model_checkpoint_path"):
+            validate_agentdojo_plan(
+                rows,
+                formal,
+                _MODEL_HASH,
+                manifest=manifest,
+                served_model_name=_MODEL_NAME,
+                model_checkpoint_path="/tmp/drifted-checkpoint",
+                model_checkpoint_sha256=_CHECKPOINT_HASH,
+            )
         with self.assertRaisesRegex(ValueError, "duplicate"):
-            validate_agentdojo_plan([*rows, rows[0]], formal, _MODEL_HASH, manifest=manifest)
+            validate_agentdojo_plan([*rows, rows[0]], formal, _MODEL_HASH, manifest=manifest, served_model_name=_MODEL_NAME, model_checkpoint_path=_MODEL_PATH, model_checkpoint_sha256=_CHECKPOINT_HASH)
         with self.assertRaisesRegex(ValueError, "missing"):
-            validate_agentdojo_plan(rows[:-1], formal, _MODEL_HASH, manifest=manifest)
+            validate_agentdojo_plan(rows[:-1], formal, _MODEL_HASH, manifest=manifest, served_model_name=_MODEL_NAME, model_checkpoint_path=_MODEL_PATH, model_checkpoint_sha256=_CHECKPOINT_HASH)
         added = AgentDojoRunSpec(
             phase="formal",
             user_task_id=formal[0].user_task_id,
@@ -173,11 +193,11 @@ class AgentDojoExternalTests(unittest.TestCase):
             model_config_hash=_MODEL_HASH,
         )
         with self.assertRaisesRegex(ValueError, "unexpected|added|selected"):
-            validate_agentdojo_plan([*rows, added], formal, _MODEL_HASH, manifest=manifest)
+            validate_agentdojo_plan([*rows, added], formal, _MODEL_HASH, manifest=manifest, served_model_name=_MODEL_NAME, model_checkpoint_path=_MODEL_PATH, model_checkpoint_sha256=_CHECKPOINT_HASH)
         drifted = rows[0].model_dump()
         drifted["model_config_hash"] = "f" * 64
         with self.assertRaisesRegex(ValueError, "model_config_hash"):
-            validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH, manifest=manifest)
+            validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH, manifest=manifest, served_model_name=_MODEL_NAME, model_checkpoint_path=_MODEL_PATH, model_checkpoint_sha256=_CHECKPOINT_HASH)
 
     def test_strict_frozen_models_reject_unknown_fields_and_are_immutable(self) -> None:
         pair = canonical_pair("u", "i")
