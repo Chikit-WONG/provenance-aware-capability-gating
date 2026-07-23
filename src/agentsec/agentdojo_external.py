@@ -29,6 +29,18 @@ _DEFENSES = ("none", "repeat_user_prompt")
 _HEX64 = set("0123456789abcdef")
 
 
+def _parse_canonical_pair_key(value: str) -> tuple[str, str]:
+    """Parse a canonical key and reject empty or ambiguous ID suffixes."""
+
+    if not value.startswith(_PAIR_KEY_PREFIX):
+        raise ValueError("manifest pair IDs must use workspace:v1.2.2 prefix")
+    suffix = value[len(_PAIR_KEY_PREFIX):]
+    parts = suffix.split(":")
+    if len(parts) != 2 or any(not part for part in parts):
+        raise ValueError("canonical pair IDs require nonempty user and injection IDs")
+    return parts[0], parts[1]
+
+
 class _FrozenModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -63,10 +75,10 @@ class AgentDojoPair(_FrozenModel):
 
     @model_validator(mode="after")
     def enforce_canonical_identity(self) -> "AgentDojoPair":
-        expected_key = f"workspace:v1.2.2:{self.user_task_id}:{self.injection_task_id}"
-        if self.canonical_key != expected_key:
+        parsed_user, parsed_injection = _parse_canonical_pair_key(self.canonical_key)
+        if (parsed_user, parsed_injection) != (self.user_task_id, self.injection_task_id):
             raise ValueError("canonical_key does not match the workspace:v1.2.2 pair identity")
-        expected_hash = hashlib.sha256(expected_key.encode("utf-8")).hexdigest()
+        expected_hash = hashlib.sha256(self.canonical_key.encode("utf-8")).hexdigest()
         if self.canonical_sha256 != expected_hash:
             raise ValueError("canonical_sha256 does not match canonical_key")
         return self
@@ -143,6 +155,7 @@ class AgentDojoFrozenManifest(_FrozenModel):
     model_checkpoint_path: str = Field(
         validation_alias=AliasChoices("model_checkpoint_path", "model_path")
     )
+    model_checkpoint_sha256: str
     selected_pair_ids: tuple[str, ...] = Field(
         validation_alias=AliasChoices("selected_pair_ids", "selected_pair_keys")
     )
@@ -171,6 +184,7 @@ class AgentDojoFrozenManifest(_FrozenModel):
         "source_sha256",
         "config_sha256",
         "model_config_hash",
+        "model_checkpoint_sha256",
         "development_plan_sha256",
         "formal_plan_sha256",
     )
@@ -197,9 +211,7 @@ class AgentDojoFrozenManifest(_FrozenModel):
         if any(not item.strip() for item in value):
             raise ValueError("manifest pair IDs cannot be blank")
         for item in value:
-            suffix = item.removeprefix(_PAIR_KEY_PREFIX)
-            if not item.startswith(_PAIR_KEY_PREFIX) or suffix.count(":") != 1:
-                raise ValueError("manifest pair IDs must be canonical workspace:v1.2.2 keys")
+            _parse_canonical_pair_key(item)
         return value
 
     @model_validator(mode="after")
@@ -251,20 +263,35 @@ class AgentDojoFrozenManifest(_FrozenModel):
 
 
 def validate_agentdojo_model_binding(
-    manifest: AgentDojoFrozenManifest,
+    manifest: AgentDojoFrozenManifest | None,
     model_config_hash: str,
     served_model_name: str,
     model_checkpoint_path: str,
+    model_checkpoint_sha256: str,
 ) -> None:
-    """Reject execution when the victim identity differs from the freeze."""
+    """Reject execution when the victim identity differs from the freeze.
+
+    A manifest compares runtime identity against the frozen values.  When no
+    manifest is available, all four explicit identity values are still
+    validated, so callers cannot silently omit a checkpoint fingerprint.
+    """
 
     expected_hash = _require_model_config_hash(model_config_hash)
+    if not served_model_name.strip():
+        raise ValueError("served_model_name cannot be blank")
+    if not model_checkpoint_path.startswith("/"):
+        raise ValueError("model_checkpoint_path must be absolute")
+    _require_sha256(model_checkpoint_sha256, "model_checkpoint_sha256")
+    if manifest is None:
+        return
     if manifest.model_config_hash != expected_hash:
         raise ValueError("AgentDojo manifest model_config_hash mismatch")
     if manifest.served_model_name != served_model_name:
         raise ValueError("AgentDojo manifest served_model_name mismatch")
     if manifest.model_checkpoint_path != model_checkpoint_path:
         raise ValueError("AgentDojo manifest model_checkpoint_path mismatch")
+    if manifest.model_checkpoint_sha256 != model_checkpoint_sha256:
+        raise ValueError("AgentDojo manifest model_checkpoint_sha256 mismatch")
 
 
 def canonical_pair(user_task_id: str, injection_task_id: str) -> AgentDojoPair:
@@ -358,10 +385,14 @@ def select_agentdojo_pairs(
     return selected
 
 
-def _require_model_config_hash(value: str) -> str:
+def _require_sha256(value: str, field_name: str) -> str:
     if len(value) != 64 or any(char not in _HEX64 for char in value):
-        raise ValueError("model_config_hash must be a lowercase SHA-256 hex digest")
+        raise ValueError(f"{field_name} must be a lowercase SHA-256 hex digest")
     return value
+
+
+def _require_model_config_hash(value: str) -> str:
+    return _require_sha256(value, "model_config_hash")
 
 
 def _expected_plan(
@@ -427,8 +458,13 @@ def build_formal_plan(
 def validate_agentdojo_plan(
     rows: Sequence[AgentDojoRunSpec | Mapping[str, Any]],
     pairs: Sequence[AgentDojoPair],
-    model_config_hash: str,
+    model_config_hash: str | None = None,
     phase: Literal["development", "formal"] = "formal",
+    *,
+    manifest: AgentDojoFrozenManifest | None = None,
+    served_model_name: str | None = None,
+    model_checkpoint_path: str | None = None,
+    model_checkpoint_sha256: str | None = None,
 ) -> None:
     """Reject duplicate, missing, or added cells in a native plan.
 
@@ -437,8 +473,30 @@ def validate_agentdojo_plan(
     and the original paired cell is simultaneously reported as missing.
     """
 
-    expected = _expected_plan(pairs, phase, model_config_hash)
-    expected_model_config_hash = _require_model_config_hash(model_config_hash)
+    if manifest is not None:
+        expected_model_config_hash = model_config_hash or manifest.model_config_hash
+        served_model_name = served_model_name or manifest.served_model_name
+        model_checkpoint_path = model_checkpoint_path or manifest.model_checkpoint_path
+        model_checkpoint_sha256 = model_checkpoint_sha256 or manifest.model_checkpoint_sha256
+    elif (
+        model_config_hash is None
+        or served_model_name is None
+        or model_checkpoint_path is None
+        or model_checkpoint_sha256 is None
+    ):
+        raise ValueError(
+            "mandatory AgentDojo model binding requires a manifest or explicit model identity arguments"
+        )
+    else:
+        expected_model_config_hash = model_config_hash
+    validate_agentdojo_model_binding(
+        manifest,
+        expected_model_config_hash,
+        served_model_name,
+        model_checkpoint_path,
+        model_checkpoint_sha256,
+    )
+    expected = _expected_plan(pairs, phase, expected_model_config_hash)
     actual = [AgentDojoRunSpec.model_validate(row) for row in rows]
     if any(row.model_config_hash != expected_model_config_hash for row in actual):
         raise ValueError("AgentDojo run plan model_config_hash mismatch")

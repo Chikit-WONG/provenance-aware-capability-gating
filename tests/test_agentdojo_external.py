@@ -17,6 +17,9 @@ from agentsec.agentdojo_external import (
 
 
 _MODEL_HASH = "e" * 64
+_CHECKPOINT_HASH = "f" * 64
+_MODEL_NAME = "qwen3-vl-8b"
+_MODEL_PATH = "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct"
 
 
 def _candidates(count: int = 24) -> list[AgentDojoPair]:
@@ -39,8 +42,9 @@ def _valid_manifest_fields() -> dict[str, object]:
         "source_sha256": "a" * 64,
         "config_sha256": "b" * 64,
         "model_config_hash": _MODEL_HASH,
-        "served_model_name": "qwen3-vl-8b",
-        "model_checkpoint_path": "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct",
+        "served_model_name": _MODEL_NAME,
+        "model_checkpoint_path": _MODEL_PATH,
+        "model_checkpoint_sha256": _CHECKPOINT_HASH,
         "selected_pair_ids": tuple(pair.canonical_key for pair in selected),
         "development_pair_ids": tuple(pair.canonical_key for pair in development),
         "formal_pair_ids": tuple(pair.canonical_key for pair in formal),
@@ -144,11 +148,22 @@ class AgentDojoExternalTests(unittest.TestCase):
         selected = select_agentdojo_pairs(_candidates(24))
         formal = selected[2:]
         rows = build_formal_plan(formal, _MODEL_HASH)
-        validate_agentdojo_plan(rows, formal, _MODEL_HASH)
+        with self.assertRaisesRegex(ValueError, "mandatory AgentDojo model binding"):
+            validate_agentdojo_plan(rows, formal, _MODEL_HASH)
+        validate_agentdojo_plan(
+            rows,
+            formal,
+            _MODEL_HASH,
+            served_model_name=_MODEL_NAME,
+            model_checkpoint_path=_MODEL_PATH,
+            model_checkpoint_sha256=_CHECKPOINT_HASH,
+        )
+        manifest = AgentDojoFrozenManifest(**_valid_manifest_fields())
+        validate_agentdojo_plan(rows, formal, _MODEL_HASH, manifest=manifest)
         with self.assertRaisesRegex(ValueError, "duplicate"):
-            validate_agentdojo_plan([*rows, rows[0]], formal, _MODEL_HASH)
+            validate_agentdojo_plan([*rows, rows[0]], formal, _MODEL_HASH, manifest=manifest)
         with self.assertRaisesRegex(ValueError, "missing"):
-            validate_agentdojo_plan(rows[:-1], formal, _MODEL_HASH)
+            validate_agentdojo_plan(rows[:-1], formal, _MODEL_HASH, manifest=manifest)
         added = AgentDojoRunSpec(
             phase="formal",
             user_task_id=formal[0].user_task_id,
@@ -158,11 +173,11 @@ class AgentDojoExternalTests(unittest.TestCase):
             model_config_hash=_MODEL_HASH,
         )
         with self.assertRaisesRegex(ValueError, "unexpected|added|selected"):
-            validate_agentdojo_plan([*rows, added], formal, _MODEL_HASH)
+            validate_agentdojo_plan([*rows, added], formal, _MODEL_HASH, manifest=manifest)
         drifted = rows[0].model_dump()
         drifted["model_config_hash"] = "f" * 64
         with self.assertRaisesRegex(ValueError, "model_config_hash"):
-            validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH)
+            validate_agentdojo_plan([drifted, *rows[1:]], formal, _MODEL_HASH, manifest=manifest)
 
     def test_strict_frozen_models_reject_unknown_fields_and_are_immutable(self) -> None:
         pair = canonical_pair("u", "i")
@@ -211,17 +226,28 @@ class AgentDojoExternalTests(unittest.TestCase):
         validate_agentdojo_model_binding(
             manifest,
             _MODEL_HASH,
-            "qwen3-vl-8b",
-            "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct",
+            _MODEL_NAME,
+            _MODEL_PATH,
+            _CHECKPOINT_HASH,
         )
         with self.assertRaisesRegex(ValueError, "model_config_hash"):
-            validate_agentdojo_model_binding(manifest, "f" * 64, "qwen3-vl-8b", manifest.model_checkpoint_path)
+            validate_agentdojo_model_binding(manifest, "f" * 64, _MODEL_NAME, manifest.model_checkpoint_path, _CHECKPOINT_HASH)
         with self.assertRaisesRegex(ValueError, "served_model_name"):
-            validate_agentdojo_model_binding(manifest, _MODEL_HASH, "other-model", manifest.model_checkpoint_path)
+            validate_agentdojo_model_binding(manifest, _MODEL_HASH, "other-model", manifest.model_checkpoint_path, _CHECKPOINT_HASH)
         no_checkpoint = _valid_manifest_fields()
         no_checkpoint["model_checkpoint_path"] = "relative/model"
         with self.assertRaises(ValidationError):
             AgentDojoFrozenManifest(**no_checkpoint)
+        malformed = _valid_manifest_fields()
+        malformed["selected_pair_ids"] = ("workspace:v1.2.2::injection",) + tuple(malformed["selected_pair_ids"][1:])
+        with self.assertRaisesRegex(ValidationError, "nonempty"):
+            AgentDojoFrozenManifest(**malformed)
+        malformed = _valid_manifest_fields()
+        malformed["selected_pair_ids"] = ("workspace:v1.2.2:user:",) + tuple(malformed["selected_pair_ids"][1:])
+        with self.assertRaisesRegex(ValidationError, "nonempty"):
+            AgentDojoFrozenManifest(**malformed)
+        with self.assertRaisesRegex(ValueError, "model_checkpoint_sha256"):
+            validate_agentdojo_model_binding(manifest, _MODEL_HASH, _MODEL_NAME, _MODEL_PATH, "a" * 64)
 
 
 if __name__ == "__main__":
