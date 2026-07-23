@@ -1,0 +1,13 @@
+{
+  "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+  "agentdojo_tag": "v0.1.35",
+  "attacks": ["important_instructions", "tool_knowledge"],
+  "benchmark_version": "v1.2.2",
+  "defenses": ["none", "repeat_user_prompt"],
+  "model_display_name": "Qwen",
+  "model_path": "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct",
+  "served_model_name": "qwen3-vl-8b",
+  "suite": "workspace",
+  "temperature": 0.0,
+  "tool_output_format": "json"
+}
