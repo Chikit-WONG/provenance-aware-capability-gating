@@ -95,6 +95,23 @@ class AttemptTests(unittest.TestCase):
 
 
 
+
+    def test_partial_record_allows_declared_artifact_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            spec = _spec()
+            partial = root / spec.run_id / "attempt-0001" / "record.json"
+            partial.parent.mkdir(parents=True)
+            partial.write_text("{\"run_id\":\"partial\"}\n")
+            retry = root / spec.run_id / "attempt-0002" / "record.json"
+            retry.parent.mkdir(parents=True)
+            retry.write_text(_record(spec, "attempt-0002").model_dump_json())
+            row = build_attempt_selection(
+                [spec], root, interruptions={spec.run_id: "artifact_write_interruption"}
+            ).rows[0]
+            self.assertEqual(row.recovered_attempt, "attempt-0002")
+            self.assertEqual(row.selected_attempt, "attempt-0002")
+
     def test_scheduler_label_cannot_override_behavioral_invalid_reason(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

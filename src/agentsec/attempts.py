@@ -317,7 +317,13 @@ def build_attempt_selection(
         # Scheduler declarations are authoritative only when no initial
         # wrapper exists.  A behavioral invalid reason on an existing record
         # must not be overwritten by an unrelated scheduler label.
-        if not recovery_reason and initial_status == AttemptStatus.MISSING:
+        if (
+            not recovery_reason
+            and (
+                initial_status == AttemptStatus.MISSING
+                or initial_reason.startswith("record_schema_error:")
+            )
+        ):
             recovery_reason = _interruption_reason(interruptions, spec.run_id)
         if recovery_path.exists() and not recovery_reason:
             raise ValueError(f"attempt-0002 exists without a declared infrastructure reason for {spec.run_id}")
