@@ -159,6 +159,14 @@ class AttemptSelection(_FrozenModel):
         return self.selected_record_sha256
 
     @property
+    def itt_utility(self) -> bool | None:
+        return self.conservative_utility
+
+    @property
+    def itt_targeted_attack_success(self) -> bool | None:
+        return self.conservative_targeted_attack_success
+
+    @property
     def initial_complete(self) -> bool:
         return self.initial_status == AttemptStatus.COMPLETE
 
