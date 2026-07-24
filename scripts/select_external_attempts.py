@@ -54,6 +54,9 @@ def select_attempts(
         plan_path,
         records_root,
         interruptions=_load_interruption(Path(scheduler_interruption) if scheduler_interruption else None),
+        # A shared root may contain the separate development gate records;
+        # selection still enumerates and hashes only the requested plan rows.
+        allow_extra_runs=True,
     )
     write_manifest_exclusive(manifest, output_path)
     return {

@@ -268,6 +268,7 @@ def build_attempt_selection(
     *,
     interruptions: Mapping[str, Any] | None = None,
     plan_digest: str | None = None,
+    allow_extra_runs: bool = False,
 ) -> AttemptSelectionManifest:
     """Build a deterministic manifest from declared records, never inferring success."""
 
@@ -284,7 +285,7 @@ def build_attempt_selection(
             item.name for item in root.iterdir()
             if item.is_dir() and item.name not in expected_run_ids and item.name != "official-traces"
         )
-        if extras:
+        if extras and not allow_extra_runs:
             raise ValueError(f"artifact records contain run IDs missing from frozen plan: {extras!r}")
     selections: list[AttemptSelection] = []
     for spec in rows:

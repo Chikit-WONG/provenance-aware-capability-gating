@@ -128,6 +128,18 @@ class AttemptTests(unittest.TestCase):
             self.assertFalse(row.conservative_utility)
             self.assertIsNone(row.conservative_targeted_attack_success)
 
+    def test_formal_selection_can_ignore_development_records_in_shared_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            planned = _spec(run_id="formal-run")
+            extra = _spec(run_id="development-run")
+            for spec in (planned, extra):
+                path = root / spec.run_id / "attempt-0001" / "record.json"
+                path.parent.mkdir(parents=True)
+                path.write_text(_record(spec, "attempt-0001").model_dump_json())
+            manifest = build_attempt_selection([planned], root, allow_extra_runs=True)
+            self.assertEqual(manifest.rows[0].selected_attempt, "attempt-0001")
+
     def test_unregistered_reason_and_duplicate_plan_rejected(self) -> None:
         with self.assertRaises(ValueError):
             normalize_infrastructure_reason("refusal")
