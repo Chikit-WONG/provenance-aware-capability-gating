@@ -5,19 +5,30 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from .provenance import DetectedTaint, ExactTaintTracker, SENSITIVITY_RANK
+from .provenance import (
+    TRUST_RANK,
+    DetectedTaint,
+    ExactTaintTracker,
+    ProvenanceTag,
+    RuntimeProvenance,
+    SENSITIVITY_RANK,
+)
 from .schemas import (
+    ArgumentContract,
+    ArgumentRole,
     Capability,
     Decision,
     DefenseArm,
     EventKind,
     ParameterBound,
     Sensitivity,
+    ToolContract,
     ToolName,
+    TrustLevel,
 )
-from .tools import ToolExecutionResult, ToolExecutor
+from .tools import TOOL_ARGUMENT_MODELS, ToolExecutionResult, ToolExecutor
 from .world import AuditLog
 
 
@@ -30,6 +41,7 @@ class GatewayDecision(BaseModel):
     proposal_event_id: str
     policy_event_id: str
     detected_taints: tuple[DetectedTaint, ...] = ()
+    argument_provenance: dict[str, ProvenanceTag] = Field(default_factory=dict)
 
 
 class GuardedToolResult(BaseModel):
@@ -39,10 +51,113 @@ class GuardedToolResult(BaseModel):
     execution: ToolExecutionResult | None = None
 
 
-_RESOURCE_ARGUMENTS = ("email_id", "file_id", "event_id")
+# SELECTOR arguments whose values identify world entities.  "date" is included
+# so calendar searches are resource-scoped exactly the way the evaluator's
+# ground truth already counts them (evaluator._argument_resource_ids).
+_RESOURCE_ARGUMENTS = ("email_id", "file_id", "event_id", "date")
+
+# Authority-binding policy interface (PACT-style, arXiv:2605.11039): each tool
+# argument is assigned a semantic role.  TARGET arguments bind where authority
+# is directed and are constrained by ``allowed_recipients``; SELECTOR arguments
+# pick resources/dates and are constrained by ``allowed_resource_ids`` and
+# ``parameter_bounds``; CONTENT arguments may carry external data but are
+# scanned for registered protected values (the credential-egress check).  No
+# mock-office tool exposes COMMAND/CREDENTIAL parameters; those roles exist for
+# interface completeness.
+ARGUMENT_ROLES: dict[ToolName, dict[str, ArgumentRole]] = {
+    ToolName.SEARCH_EMAILS: {
+        "query": ArgumentRole.CONTENT,
+    },
+    ToolName.READ_EMAIL: {
+        "email_id": ArgumentRole.SELECTOR,
+    },
+    ToolName.READ_FILE: {
+        "file_id": ArgumentRole.SELECTOR,
+    },
+    ToolName.SEARCH_CALENDAR: {
+        "date": ArgumentRole.SELECTOR,
+    },
+    ToolName.SEND_EMAIL: {
+        "to": ArgumentRole.TARGET,
+        "cc": ArgumentRole.TARGET,
+        "subject": ArgumentRole.CONTENT,
+        "body": ArgumentRole.CONTENT,
+    },
+    ToolName.CREATE_CALENDAR_EVENT: {
+        "title": ArgumentRole.CONTENT,
+        "location": ArgumentRole.CONTENT,
+        "start": ArgumentRole.SELECTOR,
+        "end": ArgumentRole.SELECTOR,
+        "participants": ArgumentRole.TARGET,
+    },
+}
+
+
+ROLE_MINIMUM_TRUST: dict[ArgumentRole, TrustLevel] = {
+    ArgumentRole.TARGET: TrustLevel.USER,
+    ArgumentRole.COMMAND: TrustLevel.USER,
+    ArgumentRole.CREDENTIAL: TrustLevel.TRUSTED,
+    ArgumentRole.CONTENT: TrustLevel.EXTERNAL,
+    ArgumentRole.SELECTOR: TrustLevel.TOOL_OUTPUT,
+    ArgumentRole.CONTROL: TrustLevel.USER,
+}
+
+
+DEFAULT_TOOL_CONTRACTS: dict[ToolName, ToolContract] = {
+    tool: ToolContract(
+        tool=tool,
+        arguments={
+            name: ArgumentContract(
+                role=role,
+                minimum_trust=ROLE_MINIMUM_TRUST[role],
+            )
+            for name, role in arguments.items()
+        },
+    )
+    for tool, arguments in ARGUMENT_ROLES.items()
+}
+
+
+def validate_tool_contracts(
+    contracts: Mapping[ToolName, ToolContract],
+) -> None:
+    """Fail if a tool or schema argument lacks an explicit role contract."""
+
+    if set(contracts) != set(TOOL_ARGUMENT_MODELS):
+        missing = sorted(tool.value for tool in set(TOOL_ARGUMENT_MODELS) - set(contracts))
+        extra = sorted(tool.value for tool in set(contracts) - set(TOOL_ARGUMENT_MODELS))
+        raise ValueError(f"tool contract coverage mismatch; missing={missing}, extra={extra}")
+    for tool, argument_model in TOOL_ARGUMENT_MODELS.items():
+        contract = contracts[tool]
+        if contract.tool is not tool:
+            raise ValueError(f"contract key/tool mismatch for {tool.value}")
+        schema_fields = set(argument_model.model_fields)
+        contract_fields = set(contract.arguments)
+        if schema_fields != contract_fields:
+            missing = sorted(schema_fields - contract_fields)
+            extra = sorted(contract_fields - schema_fields)
+            raise ValueError(
+                f"argument contract coverage mismatch for {tool.value}; "
+                f"missing={missing}, extra={extra}"
+            )
+
+
+validate_tool_contracts(DEFAULT_TOOL_CONTRACTS)
+
+
+def fields_for_role(tool: ToolName, *roles: ArgumentRole) -> tuple[str, ...]:
+    """Return the declared argument names of ``tool`` carrying any of ``roles``."""
+
+    return tuple(
+        name for name, role in ARGUMENT_ROLES.get(tool, {}).items() if role in roles
+    )
+
+
+# Exact protected-value egress checks apply to CONTENT-role fields: external
+# data may flow there, registered protected values may not.
 _SINK_FIELDS: dict[ToolName, tuple[str, ...]] = {
-    ToolName.SEND_EMAIL: ("subject", "body"),
-    ToolName.CREATE_CALENDAR_EVENT: ("title", "location"),
+    tool: fields_for_role(tool, ArgumentRole.CONTENT)
+    for tool in (ToolName.SEND_EMAIL, ToolName.CREATE_CALENDAR_EVENT)
 }
 
 
@@ -146,6 +261,8 @@ class CapabilityGateway:
         capabilities: Iterable[Capability],
         audit_log: AuditLog,
         taint_tracker: ExactTaintTracker | None = None,
+        runtime_provenance: RuntimeProvenance | None = None,
+        tool_contracts: Mapping[ToolName, ToolContract] | None = None,
     ) -> None:
         self.defense_arm = DefenseArm(defense_arm)
         self.capabilities = tuple(capability.model_copy(deep=True) for capability in capabilities)
@@ -154,6 +271,12 @@ class CapabilityGateway:
             raise ValueError("capability_id values must be unique")
         self.audit_log = audit_log
         self.taint_tracker = taint_tracker or ExactTaintTracker()
+        self.runtime_provenance = runtime_provenance
+        self.tool_contracts = dict(tool_contracts or DEFAULT_TOOL_CONTRACTS)
+        if self.defense_arm is DefenseArm.PACT_L2:
+            validate_tool_contracts(self.tool_contracts)
+            if self.runtime_provenance is None:
+                self.runtime_provenance = RuntimeProvenance()
         self._call_counts = {identifier: 0 for identifier in identifiers}
 
     @property
@@ -246,8 +369,15 @@ class CapabilityGateway:
 
         failures: list[str] = []
         all_taints: tuple[DetectedTaint, ...] = ()
+        all_argument_provenance: dict[str, ProvenanceTag] = {}
         for capability in candidates:
             violations, taints = self._capability_violations(capability, tool_name, arguments)
+            argument_provenance: dict[str, ProvenanceTag] = {}
+            if self.defense_arm is DefenseArm.PACT_L2:
+                pact_violations, argument_provenance = self._pact_contract_violations(
+                    tool_name, arguments
+                )
+                violations.extend(pact_violations)
             if not violations:
                 self._call_counts[capability.capability_id] += 1
                 return self._record_decision(
@@ -259,11 +389,13 @@ class CapabilityGateway:
                     reason="capability checks passed",
                     capability_id=capability.capability_id,
                     taints=taints,
+                    argument_provenance=argument_provenance,
                 )
             failures.append(f"{capability.capability_id}: {'; '.join(violations)}")
             all_taints = tuple(
                 {taint.protected_id: taint for taint in (*all_taints, *taints)}.values()
             )
+            all_argument_provenance.update(argument_provenance)
 
         return self._record_decision(
             actor=actor,
@@ -273,6 +405,7 @@ class CapabilityGateway:
             allowed=False,
             reason=" | ".join(failures),
             taints=all_taints,
+            argument_provenance=all_argument_provenance,
         )
 
     # Common names used by orchestrators; both have the same consuming semantics.
@@ -331,6 +464,7 @@ class CapabilityGateway:
         if self.defense_arm in (
             DefenseArm.CAPABILITY_PROVENANCE_ONLY,
             DefenseArm.FULL,
+            DefenseArm.PACT_L2,
         ):
             taints = self.taint_tracker.scan_fields(
                 arguments, _SINK_FIELDS.get(tool, ())
@@ -348,6 +482,40 @@ class CapabilityGateway:
                     f"{capability.max_outbound_sensitivity.value}: {identifiers}"
                 )
         return violations, taints
+
+    def _pact_contract_violations(
+        self,
+        tool: ToolName,
+        arguments: Mapping[str, Any],
+    ) -> tuple[list[str], dict[str, ProvenanceTag]]:
+        """Apply role-specific provenance checks to every supplied argument."""
+
+        if self.runtime_provenance is None:
+            return ["PACT-L2 runtime provenance is unavailable"], {}
+        contract = self.tool_contracts.get(tool)
+        if contract is None:
+            return [f"no argument contract for tool {tool.value}"], {}
+
+        violations: list[str] = []
+        resolved: dict[str, ProvenanceTag] = {}
+        for name, value in arguments.items():
+            argument_contract = contract.arguments.get(name)
+            if argument_contract is None:
+                violations.append(f"argument {name} has no role contract")
+                continue
+            tag = self.runtime_provenance.resolve(
+                value,
+                role=argument_contract.role,
+            )
+            resolved[name] = tag
+            if TRUST_RANK[tag.trust] < TRUST_RANK[argument_contract.minimum_trust]:
+                origins = ", ".join(tag.origins) or "unknown"
+                violations.append(
+                    f"{argument_contract.role.value} argument {name} requires "
+                    f"{argument_contract.minimum_trust.value} trust, got "
+                    f"{tag.trust.value} from {origins}"
+                )
+        return violations, resolved
 
     def _provenance_violations(
         self,
@@ -378,6 +546,7 @@ class CapabilityGateway:
         reason: str,
         capability_id: str | None = None,
         taints: tuple[DetectedTaint, ...] = (),
+        argument_provenance: Mapping[str, ProvenanceTag] | None = None,
     ) -> GatewayDecision:
         provenance = self.taint_tracker.provenance_for(
             taints, parent_event_ids=(proposal_event_id,)
@@ -400,4 +569,5 @@ class CapabilityGateway:
             proposal_event_id=proposal_event_id,
             policy_event_id=event.event_id,
             detected_taints=taints,
+            argument_provenance=dict(argument_provenance or {}),
         )

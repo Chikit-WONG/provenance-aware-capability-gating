@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from threading import RLock
 from typing import Any, Iterable
 
@@ -88,7 +88,9 @@ def _parse_datetime(value: str) -> datetime:
     normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
     parsed = datetime.fromisoformat(normalized)
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        # Scenario timestamps are registered in Asia/Shanghai (+08:00); naive
+        # values follow that convention, matching policy.py and evaluator.py.
+        parsed = parsed.replace(tzinfo=timezone(timedelta(hours=8)))
     return parsed
 
 

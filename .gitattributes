@@ -1,0 +1,11 @@
+# Frozen plans, corpora, and manifests are verified by SHA-256 over file bytes.
+# Force LF so a Windows checkout (core.autocrlf=true) cannot break verification.
+*.json    text eol=lf
+*.jsonl   text eol=lf
+*.txt     text eol=lf
+*.sha256  text eol=lf
+*.sh      text eol=lf
+*.slurm   text eol=lf
+*.py      text eol=lf
+*.md      text eol=lf
+data/**/IMMUTABLE text eol=lf

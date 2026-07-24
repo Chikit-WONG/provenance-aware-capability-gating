@@ -6,7 +6,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from .provenance import ExactTaintTracker, join_provenance
+from .provenance import ExactTaintTracker, RuntimeProvenance, join_provenance
 from .schemas import Decision, EventKind, ToolName
 from .world import AuditLog, MockWorld
 
@@ -99,10 +99,12 @@ class ToolExecutor:
         world: MockWorld,
         audit_log: AuditLog,
         taint_tracker: ExactTaintTracker | None = None,
+        runtime_provenance: RuntimeProvenance | None = None,
     ) -> None:
         self.world = world
         self.audit_log = audit_log
         self.taint_tracker = taint_tracker
+        self.runtime_provenance = runtime_provenance
 
     def execute(
         self, tool: ToolName | str, arguments: dict[str, Any], actor: str = "action_agent"
@@ -126,7 +128,16 @@ class ToolExecutor:
         try:
             validated = argument_model.model_validate(arguments)
             handler: Callable[[_Arguments, str], ToolExecutionResult] = self._handlers[tool_name]
-            return handler(validated, actor)
+            result = handler(validated, actor)
+            if result.ok and self.runtime_provenance is not None:
+                event = self.audit_log.get(result.event_id)
+                if event.provenance is not None:
+                    self.runtime_provenance.observe_tool_output(
+                        result.output,
+                        event.provenance,
+                        origin=event.event_id,
+                    )
+            return result
         except (ValidationError, ValueError, KeyError) as error:
             event = self.audit_log.append(
                 EventKind.TOOL_ERROR,

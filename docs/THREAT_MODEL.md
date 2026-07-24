@@ -51,6 +51,28 @@ call count, and permitted outbound sensitivity. Automatically inferring correct
 capabilities from natural language is outside scope and would confound the
 security evaluation.
 
+## Position within related work
+
+The prototype sits between invocation-level and argument-level enforcement, in
+the terminology of argument-level provenance contracts (PACT,
+arXiv:2605.11039): capability gating is an L1-style capability check, while the
+exact protected-value sink check is a credential-egress rule over `content`-role
+arguments (see "Argument-level trust model" in ARCHITECTURE.md).  Compared with
+quarantine architectures such as CaMeL (arXiv:2503.18813) and IFC systems such
+as FIDES (arXiv:2505.23643), the prototype does not propagate taint through
+arbitrary dataflow; compared with programmable privilege control (Progent,
+arXiv:2504.11703) and provable defenses (MELON, arXiv:2502.05174), its policy
+is static per scenario.  Its distinguishing evaluation discipline is
+state-based outcome derivation (world-state diffs, not LLM judges), frozen
+hashed plans and corpora, matched placebos, and intention-to-test accounting.
+
+The optional `pact_l2` arm is a post-study mechanism extension, not a relabeling
+of the frozen `full` arm. It adds fail-closed role-specific trust checks and
+cross-step origin accumulation for explicitly observed or declared values.
+Because its resolver is structural rather than semantic, its guarantee is
+conditional on conservative registration of transformations. Its results must
+be stored and reported separately from every existing frozen experiment.
+
 ## Exclusions and responsible research
 
 - no real user, credential, account, service, or personal data;
@@ -60,4 +82,3 @@ security evaluation.
 - no claim that exact-literal tracking stops encoding, paraphrase, splitting,
   steganography, or unknown sensitive values;
 - no claim that results from one local 8B model generalize to all agents.
-

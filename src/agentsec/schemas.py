@@ -33,6 +33,32 @@ class Sensitivity(str, Enum):
     SECRET = "secret"
 
 
+class ArgumentRole(str, Enum):
+    """Semantic role of a tool argument; the authority-binding policy interface.
+
+    Inspired by argument-level provenance contracts (PACT, arXiv:2605.11039):
+    trust is a property of what each argument *does* within a call, not of the
+    invocation as a whole.  Untrusted content may legitimately fill CONTENT
+    arguments while never being allowed to bind TARGET/COMMAND/CREDENTIAL ones.
+    """
+
+    TARGET = "target"  # authority-bearing destinations (recipients, attendees, URLs)
+    COMMAND = "command"  # executable commands or queries
+    CREDENTIAL = "credential"  # secrets, tokens, passwords
+    CONTENT = "content"  # payload text that may legitimately carry external data
+    SELECTOR = "selector"  # object/resource selection (ids, dates)
+    CONTROL = "control"  # behavior-modifying flags
+
+
+class TrustLevel(str, Enum):
+    """Provenance trust lattice: TRUSTED > USER > TOOL_OUTPUT > EXTERNAL."""
+
+    TRUSTED = "trusted"
+    USER = "user"
+    TOOL_OUTPUT = "tool_output"
+    EXTERNAL = "external"
+
+
 class ContentCondition(str, Enum):
     CLEAN = "clean"
     PLACEBO = "placebo"
@@ -48,6 +74,9 @@ class DefenseArm(str, Enum):
     CAPABILITY_PROVENANCE_ONLY = "capability_provenance_only"
     PROMPT_CAPABILITY_ONLY = "prompt_capability_only"
     FULL = "full"
+    # Experimental PACT-inspired argument-role monitor. It is intentionally
+    # excluded from every frozen historical run-plan tuple in runplan.py.
+    PACT_L2 = "pact_l2"
 
 
 class ToolName(str, Enum):
@@ -105,6 +134,31 @@ class ParameterBound(_FrozenModel):
         if self.allowed_values is not None and len(self.allowed_values) == 0:
             raise ValueError("allowed_values cannot be empty")
         return self
+
+
+class ArgumentContract(_FrozenModel):
+    """Role-specific trust requirement for one tool argument."""
+
+    role: ArgumentRole
+    minimum_trust: TrustLevel
+
+
+class ToolContract(_FrozenModel):
+    """Fail-closed argument contract for one structured tool."""
+
+    tool: ToolName
+    arguments: dict[str, ArgumentContract]
+
+    @field_validator("arguments")
+    @classmethod
+    def require_arguments(
+        cls, value: dict[str, ArgumentContract]
+    ) -> dict[str, ArgumentContract]:
+        if not value:
+            raise ValueError("tool contract must declare at least one argument")
+        if any(not name.strip() for name in value):
+            raise ValueError("tool contract argument names cannot be blank")
+        return value
 
 
 class Capability(_FrozenModel):

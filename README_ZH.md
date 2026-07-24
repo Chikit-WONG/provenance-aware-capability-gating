@@ -12,6 +12,19 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 完成率？** 本项目不声称解决一般语义信息流安全；Full 防御只追踪已注册的精确合成
 敏感值，编码、释义或拆分后的逃逸属于明确局限。
 
+Gateway 的策略接口为参数级别：每个工具参数带有语义角色（`target` / `content` /
+`selector` 等，仿照参数级 provenance 契约 [PACT](https://arxiv.org/abs/2605.11039)），
+收件人、资源选择符与内容字段分别由不同规则约束（见
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 的"Argument-level trust model"一节）。
+该扩展不改变任何冻结场景下的判定，已发表结果对当前代码仍然成立。
+
+另有一个实验性的 `pact_l2` 防御臂，将角色映射落实为真正的 fail-closed 参数契约：
+它记录用户输入、带标签的工具输出和显式派生值，在执行前按参数角色检查最低信任级别，
+并保留跨步骤来源。该防御臂属于正式研究完成后的机制扩展，不进入任何既有冻结计划或
+结果表。实现边界见 [系统架构](docs/ARCHITECTURE.md)，相关论文与项目映射见
+[相关工作](docs/RELATED_WORK.md)。
+
+
 ## 已固定的关键选择
 
 - 使用已有本地模型 `Qwen3-VL-8B-Instruct`，不额外下载模型；

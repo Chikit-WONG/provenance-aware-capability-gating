@@ -79,6 +79,57 @@ Tool reads produce structured resource events. Exposure is proved only by a
 successful `read_email` event and an Action-Agent context event containing its
 event ID, never by searching raw transcript text for a marker.
 
+## Argument-level trust model
+
+Following the authority-binding view of argument-level provenance contracts
+(PACT, arXiv:2605.11039), every tool argument is assigned a semantic role
+(`policy.ARGUMENT_ROLES`). Trust is enforced per argument, not per invocation:
+
+| Role | Meaning | Enforcement |
+| --- | --- | --- |
+| `target` | authority-bearing destinations (`to`, `cc`, `participants`) | `allowed_recipients` allow-list |
+| `selector` | resource/date selection (`email_id`, `file_id`, `date`, `start`, `end`) | `allowed_resource_ids` and `parameter_bounds` |
+| `content` | payload text that may carry external data (`subject`, `body`, `title`, `location`, `query`) | exact registered protected-value egress check |
+| `command` / `credential` / `control` | reserved roles | no mock-office tool exposes them |
+
+Exact protected-value sink checks apply only to `content` fields: external data
+may flow there, registered protected values may not. Untrusted content must
+never bind a `target` argument, which the recipient allow-list enforces.
+
+Provenance vocabulary follows the same lattice
+(`provenance.TrustLevel`: TRUSTED > USER > TOOL_OUTPUT > EXTERNAL) with a
+conservative merge (`merge_tags`: union origins, fail-low trust). The frozen
+evaluated arms remain at L1 (capability-level) plus exact credential egress on
+`content` fields. `ExactTaintTracker` implements that historical enforcement
+and its semantics have not changed.
+
+An experimental, non-frozen `pact_l2` arm now exercises the role map as a real
+runtime contract. `RuntimeProvenance` records trusted user input, provenance-
+labelled tool outputs, and explicitly declared transformations. Before a tool
+executes, every supplied argument is resolved and compared with its role's
+minimum trust:
+
+| Role | Minimum trust in `pact_l2` |
+| --- | --- |
+| `target`, `command`, `control` | `USER` |
+| `credential` | `TRUSTED` |
+| `selector` | `TOOL_OUTPUT` |
+| `content` | `EXTERNAL` |
+
+Tool contracts are checked against the Pydantic tool schemas at startup. A
+missing tool or argument declaration fails closed. Empty optional target
+collections are treated as trusted absence rather than attacker-controlled
+authority. Explicit user values take precedence for authority-bearing roles,
+so an attacker cannot downgrade a destination merely by repeating it.
+
+The deployment resolver is intentionally small: it recognizes exact values,
+substrings, email local-part aliases such as "Alice" ->
+`alice@example.test`, and transformations registered through
+`observe_derived`. Unknown authority-bearing values fail low. It does not
+claim semantic provenance for arbitrary paraphrase, encoding, splitting, or
+model-internal computation. Full semantic inference and an L3 scoped
+trusted-discharge path remain future work.
+
 ## Defense arms
 
 - `allow_all`: no prompt or gateway defense.
@@ -90,6 +141,9 @@ event ID, never by searching raw transcript text for a marker.
   blocked-action recovery as `full`, but without provenance sink checks.
 - `full`: capability checks plus immutable provenance and exact registered
   protected-value source-to-sink checks.
+- `pact_l2`: experimental capability + exact egress + role-specific runtime
+  provenance checks. It is excluded from all historical frozen plans and
+  published result tables.
 
 The full arm intentionally detects exact registered synthetic values. Encoded,
 paraphrased, split, or otherwise transformed secrets are documented limitations.

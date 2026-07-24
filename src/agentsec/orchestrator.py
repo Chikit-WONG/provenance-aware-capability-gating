@@ -27,7 +27,7 @@ from .model_client import (
     ToolCallParseError,
 )
 from .policy import CapabilityGateway
-from .provenance import ExactTaintTracker
+from .provenance import ExactTaintTracker, RuntimeProvenance
 from .schemas import (
     AuditEvent,
     EventKind,
@@ -119,12 +119,20 @@ class ExperimentOrchestrator:
         world_before = world.snapshot()
         audit_log = AuditLog()
         taint_tracker = ExactTaintTracker(scenario.protected_values)
-        executor = ToolExecutor(world, audit_log, taint_tracker)
+        runtime_provenance = RuntimeProvenance()
+        runtime_provenance.observe_user_input(scenario.user_request)
+        executor = ToolExecutor(
+            world,
+            audit_log,
+            taint_tracker,
+            runtime_provenance=runtime_provenance,
+        )
         gateway = CapabilityGateway(
             run_spec.defense_arm,
             scenario.capabilities,
             audit_log,
             taint_tracker,
+            runtime_provenance=runtime_provenance,
         )
 
         reader_result: ReaderResult | None = None

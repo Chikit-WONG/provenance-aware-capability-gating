@@ -336,6 +336,12 @@ class ActionAgent:
             provenance=context_provenance,
             success=True,
         )
+        if self.gateway.runtime_provenance is not None and reader_result.summary:
+            self.gateway.runtime_provenance.observe_derived(
+                reader_result.summary,
+                evidence_json,
+                origin=context_event.event_id,
+            )
 
         messages: list[dict[str, Any]] = [
             {
@@ -421,6 +427,7 @@ class ActionAgent:
                     if self.defense_arm in (
                         DefenseArm.PROMPT_CAPABILITY_ONLY,
                         DefenseArm.FULL,
+                        DefenseArm.PACT_L2,
                     ):
                         recovery_pending = True
 

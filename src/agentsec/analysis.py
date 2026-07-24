@@ -35,7 +35,14 @@ DEFENSE_LABELS = {
     "capability_provenance_only": "Capability + provenance",
     "prompt_capability_only": "Prompt + capability",
     "full": "Full",
+    "pact_l2": "PACT-L2 (experimental)",
 }
+# Keep historical publication figures byte-layout compatible. Experimental
+# arms remain available to loaders and summary tables but require a separate
+# explicitly labelled figure rather than silently changing published plots.
+PUBLICATION_DEFENSES = tuple(
+    defense for defense in DEFENSE_LABELS if defense != DefenseArm.PACT_L2.value
+)
 EXPECTED_ARTIFACT_FILES = {
     "run_spec": "run_spec.json",
     "world_before": "world_before.json",
@@ -761,7 +768,7 @@ def _write_publication_plots(records: Sequence[LoadedRecord], output: Path) -> N
             "publication plots require the optional analysis dependency matplotlib"
         ) from exc
 
-    defenses = list(DEFENSE_ORDER)
+    defenses = list(PUBLICATION_DEFENSES)
     labels = [DEFENSE_LABELS[defense] for defense in defenses]
 
     def rates(

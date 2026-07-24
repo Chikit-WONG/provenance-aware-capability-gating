@@ -22,7 +22,16 @@ information-flow security.
 - A **Reader Agent** searches and reads a local mock inbox.
 - An **Action Agent** receives the Reader summary and exact retrieved evidence,
   then proposes calls to a mock file vault, calendar, and outbox.
-- A deterministic **Capability Gateway** checks every Action-Agent call.
+- A deterministic **Capability Gateway** checks every Action-Agent call. Its
+  policy interface is argument-level: each tool argument carries a semantic
+  role (`target` / `content` / `selector` / …) in the style of argument-level
+  provenance contracts ([PACT](https://arxiv.org/abs/2605.11039)), so
+  recipients, resource selectors, and payload fields are constrained by
+  different rules (see "Argument-level trust model" in
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- An experimental `pact_l2` arm turns that interface into an executable,
+  fail-closed argument contract with cross-step origin accumulation. It is a
+  post-study extension and is not included in any historical result table.
 - An independent evaluator derives outcomes from the before/after world state
   and structured audit events.
 - A **Red Agent** generates payloads only during dataset preparation. Formal
@@ -197,6 +206,13 @@ report/             final technical report sources
 - No-op and refusal are valid behavioral outcomes, not infrastructure failures.
 - A blocked attack is not counted as a successful attack.
 - The formal run plan is randomized once, frozen, and hashed before execution.
+- Frozen artifacts are pinned to LF via `.gitattributes`; a Windows checkout
+  with `core.autocrlf=true` would otherwise change file bytes and fail
+  SHA-256 verification.
+
+The mechanism's relationship to PACT, FIDES, CaMeL, Progent, AgentSecBench,
+AgentDojo, and adaptive evaluation work is documented in
+[`docs/RELATED_WORK.md`](docs/RELATED_WORK.md).
 
 ## AI-use disclosure
 
