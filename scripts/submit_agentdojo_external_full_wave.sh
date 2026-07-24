@@ -16,7 +16,7 @@ for suite in workspace travel banking slack; do
     AGENTDOJO_FROZEN_ROOT="${FROZEN_ROOT}" AGENTDOJO_ARTIFACT_ROOT="${suite_artifacts}" AGENTDOJO_SUITE="${suite}" \
       sbatch "${ROOT}/scripts/run_agentdojo_external.slurm" development 0 "$(awk 'NF{n++} END{print n+0}' "${plan}")" attempt-0001 "${suite}"
   else
-    AGENTDOJO_FROZEN_ROOT="${FROZEN_ROOT}" AGENTDOJO_ARTIFACT_ROOT="${suite_artifacts}" AGENTDOJO_SUITE="${suite}" \
+    AGENTDOJO_FROZEN_ROOT="${FROZEN_ROOT}/${suite}" AGENTDOJO_ARTIFACT_ROOT="${suite_artifacts}" \
       bash "${ROOT}/scripts/submit_agentdojo_external_wave.sh" formal "${plan}" "${LIMIT}" "${SHARD_START}" "${WAVE_SHARDS}"
   fi
 done

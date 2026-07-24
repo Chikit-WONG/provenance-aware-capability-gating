@@ -19,7 +19,7 @@ MAX_WAVE_TASKS=10
 WAVE_SHARDS="${5:-${MAX_WAVE_TASKS}}"
 MAX_FORMAL_SHARD_ROWS=8
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SLURM_LOG_DIR="${ROOT}/artifacts/agentdojo-external-v1/slurm"
+SLURM_LOG_DIR="${AGENTDOJO_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-external-v1}/slurm"
 mkdir -p "${SLURM_LOG_DIR}"
 case "${PHASE}" in
   development) EXPECTED_PLAN_NAME="development_plan.jsonl" ;;
@@ -57,7 +57,9 @@ if [[ "${PHASE}" == development ]]; then
     exit 2
   }
   # A development submission is exactly one task covering the complete plan.
-  AGENTDOJO_FROZEN_ROOT="${PLAN_DIR}"     sbatch "${ROOT}/scripts/run_agentdojo_external.slurm" development 0 "${COUNT}" attempt-0001
+  AGENTDOJO_FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PLAN_DIR}}" \
+    AGENTDOJO_ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-external-v1}" \
+    sbatch "${ROOT}/scripts/run_agentdojo_external.slurm" development 0 "${COUNT}" attempt-0001
   exit 0
 fi
 
@@ -82,4 +84,6 @@ fi
 ARRAY_END=$((SHARD_START + TASKS_IN_WAVE - 1))
 # SLURM array IDs carry the absolute shard offset; the launcher maps each ID
 # to LIMIT consecutive rows, so later waves never repeat an earlier shard.
-AGENTDOJO_FROZEN_ROOT="${PLAN_DIR}"   sbatch --array="${SHARD_START}-${ARRAY_END}%2"     "${ROOT}/scripts/run_agentdojo_external.slurm" formal 0 "${LIMIT}" attempt-0001
+AGENTDOJO_FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PLAN_DIR}}" \
+  AGENTDOJO_ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-external-v1}" \
+  sbatch --array="${SHARD_START}-${ARRAY_END}%2"     "${ROOT}/scripts/run_agentdojo_external.slurm" formal 0 "${LIMIT}" attempt-0001
