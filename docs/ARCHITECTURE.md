@@ -79,6 +79,19 @@ Tool reads produce structured resource events. Exposure is proved only by a
 successful `read_email` event and an Action-Agent context event containing its
 event ID, never by searching raw transcript text for a marker.
 
+## Optional secret-isolation boundary
+
+Capability authorization is independent from confidentiality. The optional
+`SecretBroker` prevents registered `secret` literals from entering model
+context: trusted tool outputs carry non-bearer `secret://...` references, while
+external tool calls, audit arguments, completed traces, and final responses
+fail closed or redact secret material. References can be redeemed only by a
+purpose-bound trusted consumer with an explicit expiry and use count.
+
+This mechanism is disabled by default so historical frozen plans retain their
+original semantics. Its design and activation contract are documented in
+[SECRET_BROKER.md](SECRET_BROKER.md).
+
 ## Argument-level trust model
 
 Following the authority-binding view of argument-level provenance contracts

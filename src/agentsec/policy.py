@@ -28,6 +28,7 @@ from .schemas import (
     ToolName,
     TrustLevel,
 )
+from .secrets import SecretBroker
 from .tools import TOOL_ARGUMENT_MODELS, ToolExecutionResult, ToolExecutor
 from .world import AuditLog
 
@@ -263,6 +264,7 @@ class CapabilityGateway:
         taint_tracker: ExactTaintTracker | None = None,
         runtime_provenance: RuntimeProvenance | None = None,
         tool_contracts: Mapping[ToolName, ToolContract] | None = None,
+        secret_broker: SecretBroker | None = None,
     ) -> None:
         self.defense_arm = DefenseArm(defense_arm)
         self.capabilities = tuple(capability.model_copy(deep=True) for capability in capabilities)
@@ -273,6 +275,7 @@ class CapabilityGateway:
         self.taint_tracker = taint_tracker or ExactTaintTracker()
         self.runtime_provenance = runtime_provenance
         self.tool_contracts = dict(tool_contracts or DEFAULT_TOOL_CONTRACTS)
+        self.secret_broker = secret_broker
         if self.defense_arm is DefenseArm.PACT_L2:
             validate_tool_contracts(self.tool_contracts)
             if self.runtime_provenance is None:
@@ -290,6 +293,12 @@ class CapabilityGateway:
         actor: str = "action_agent",
     ) -> GatewayDecision:
         arguments = dict(arguments)
+        detected_secret_ids: tuple[str, ...] = ()
+        if self.secret_broker is not None:
+            detected_secret_ids = self.secret_broker.detected_secret_ids(arguments)
+            if detected_secret_ids:
+                # Audit evidence must not become another secret sink.
+                arguments = self.secret_broker.redact_for_display(arguments)
         try:
             tool_name = ToolName(tool)
         except ValueError:
@@ -315,6 +324,19 @@ class CapabilityGateway:
             arguments=arguments,
             resource_ids=_resource_ids(arguments),
         )
+
+        if detected_secret_ids:
+            return self._record_decision(
+                actor=actor,
+                tool=tool_name,
+                arguments=arguments,
+                proposal_event_id=proposal.event_id,
+                allowed=False,
+                reason=(
+                    "secret broker blocked model-originated secret material: "
+                    + ", ".join(detected_secret_ids)
+                ),
+            )
 
         if self.defense_arm in (DefenseArm.ALLOW_ALL, DefenseArm.PROMPT_ONLY):
             return self._record_decision(

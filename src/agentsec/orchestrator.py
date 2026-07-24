@@ -37,6 +37,7 @@ from .schemas import (
     UsageStats,
     WorldState,
 )
+from .secrets import SecretBroker
 from .tools import ToolExecutor
 from .world import AuditLog, MockWorld
 
@@ -75,6 +76,7 @@ class ExperimentOrchestrator:
         action_max_tokens: int = 1024,
         temperature: float = 0.7,
         top_p: float = 0.8,
+        secret_broker_enabled: bool = False,
     ) -> None:
         self.model = model
         self.artifact_root = Path(artifact_root) if artifact_root is not None else None
@@ -84,6 +86,7 @@ class ExperimentOrchestrator:
         self.action_max_tokens = action_max_tokens
         self.temperature = temperature
         self.top_p = top_p
+        self.secret_broker_enabled = secret_broker_enabled
 
     def run(
         self,
@@ -121,11 +124,17 @@ class ExperimentOrchestrator:
         taint_tracker = ExactTaintTracker(scenario.protected_values)
         runtime_provenance = RuntimeProvenance()
         runtime_provenance.observe_user_input(scenario.user_request)
+        secret_broker = (
+            SecretBroker.from_protected_values(scenario.protected_values)
+            if self.secret_broker_enabled
+            else None
+        )
         executor = ToolExecutor(
             world,
             audit_log,
             taint_tracker,
             runtime_provenance=runtime_provenance,
+            secret_broker=secret_broker,
         )
         gateway = CapabilityGateway(
             run_spec.defense_arm,
@@ -133,6 +142,7 @@ class ExperimentOrchestrator:
             audit_log,
             taint_tracker,
             runtime_provenance=runtime_provenance,
+            secret_broker=secret_broker,
         )
 
         reader_result: ReaderResult | None = None
@@ -199,6 +209,21 @@ class ExperimentOrchestrator:
             audit_log.events,
             latency_seconds=latency,
         )
+        if secret_broker is not None:
+            # Runtime hand-off may use opaque references, but completed traces
+            # are display-only evidence and should not retain even those handles.
+            if reader_result is not None:
+                reader_result = ReaderResult.model_validate(
+                    secret_broker.redact_for_display(
+                        reader_result.model_dump(mode="python")
+                    )
+                )
+            if action_result is not None:
+                action_result = ActionResult.model_validate(
+                    secret_broker.redact_for_display(
+                        action_result.model_dump(mode="python")
+                    )
+                )
         artifact_paths = self._artifact_paths(run_spec, attempt_id)
         result = evaluate_run(
             scenario,
@@ -303,6 +328,7 @@ def run_scenario(
             "action_max_tokens",
             "temperature",
             "top_p",
+            "secret_broker_enabled",
         }
     }
     return ExperimentOrchestrator(model, **orchestrator_keys).run(

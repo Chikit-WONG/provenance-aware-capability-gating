@@ -22,6 +22,7 @@ from .schemas import (
     Sensitivity,
     ToolName,
 )
+from .secrets import SecretBroker
 from .tools import ToolExecutionResult, ToolExecutor, tool_schemas
 from .world import AuditLog
 
@@ -134,6 +135,8 @@ class ReaderAgent:
         self.top_p = top_p
 
     def run(self, user_request: str, *, seed: int) -> ReaderResult:
+        secret_broker = self.executor.secret_broker
+        model_user_request = _model_safe(user_request, secret_broker)
         messages: list[dict[str, Any]] = [
             {
                 "role": "system",
@@ -142,7 +145,7 @@ class ReaderAgent:
             },
             {
                 "role": "user",
-                "content": f"TRUSTED USER REQUEST:\n{user_request}",
+                "content": f"TRUSTED USER REQUEST:\n{model_user_request}",
             },
         ]
         evidence: list[RetrievedEvidence] = []
@@ -159,6 +162,7 @@ class ReaderAgent:
                 top_p=self.top_p,
                 max_tokens=self.max_tokens,
             )
+            turn = _model_safe_turn(turn, secret_broker)
             model_calls += 1
             prompt_tokens += turn.usage.get("prompt_tokens", 0)
             completion_tokens += turn.usage.get("completion_tokens", 0)
@@ -167,7 +171,7 @@ class ReaderAgent:
                 return ReaderResult(
                     summary=turn.content,
                     evidence=tuple(evidence),
-                    messages=tuple(messages),
+                    messages=_safe_trace(messages, secret_broker),
                     usage=AgentUsage(
                         prompt_tokens=prompt_tokens,
                         completion_tokens=completion_tokens,
@@ -237,7 +241,7 @@ class ReaderAgent:
                 return ReaderResult(
                     summary=_fallback_summary(evidence),
                     evidence=tuple(evidence),
-                    messages=tuple(messages),
+                    messages=_safe_trace(messages, secret_broker),
                     usage=AgentUsage(
                         prompt_tokens=prompt_tokens,
                         completion_tokens=completion_tokens,
@@ -294,6 +298,8 @@ class ActionAgent:
             raise ValueError("max_model_calls must be positive")
         if executor.audit_log is not audit_log or gateway.audit_log is not audit_log:
             raise ValueError("Action Agent, gateway, and executor must share one AuditLog")
+        if executor.secret_broker is not gateway.secret_broker:
+            raise ValueError("gateway and executor must share one SecretBroker")
         self.model = model
         self.executor = executor
         self.gateway = gateway
@@ -311,7 +317,12 @@ class ActionAgent:
         *,
         seed: int,
     ) -> ActionResult:
-        evidence_json = [item.record for item in reader_result.evidence]
+        secret_broker = self.gateway.secret_broker
+        model_user_request = _model_safe(user_request, secret_broker)
+        evidence_json = _model_safe(
+            [item.record for item in reader_result.evidence], secret_broker
+        )
+        reader_summary = _model_safe(reader_result.summary, secret_broker)
         read_event_ids = tuple(item.read_event_id for item in reader_result.evidence)
         labels = tuple(item.provenance for item in reader_result.evidence)
         if labels:
@@ -324,21 +335,26 @@ class ActionAgent:
                 sensitivity=Sensitivity.PUBLIC,
             )
         context_arguments = {
-            "trusted_user_request": user_request,
-            "reader_summary": reader_result.summary,
+            "trusted_user_request": model_user_request,
+            "reader_summary": reader_summary,
             "exact_retrieved_evidence": evidence_json,
         }
+        audit_context_arguments = (
+            secret_broker.redact_for_display(context_arguments)
+            if secret_broker is not None
+            else context_arguments
+        )
         context_event = self.audit_log.append(
             EventKind.CONTEXT,
             ACTION_ACTOR,
-            arguments=context_arguments,
+            arguments=audit_context_arguments,
             resource_ids=(item.resource_id for item in reader_result.evidence),
             provenance=context_provenance,
             success=True,
         )
-        if self.gateway.runtime_provenance is not None and reader_result.summary:
+        if self.gateway.runtime_provenance is not None and reader_summary:
             self.gateway.runtime_provenance.observe_derived(
-                reader_result.summary,
+                reader_summary,
                 evidence_json,
                 origin=context_event.event_id,
             )
@@ -353,8 +369,8 @@ class ActionAgent:
             {
                 "role": "user",
                 "content": (
-                    f"TRUSTED USER REQUEST:\n{user_request}\n\n"
-                    f"READER SUMMARY:\n{reader_result.summary}\n\n"
+                    f"TRUSTED USER REQUEST:\n{model_user_request}\n\n"
+                    f"READER SUMMARY:\n{reader_summary}\n\n"
                     "EXACT RETRIEVED EVIDENCE (JSON):\n"
                     f"{json.dumps(evidence_json, ensure_ascii=False, sort_keys=True)}"
                 ),
@@ -373,6 +389,7 @@ class ActionAgent:
                 top_p=self.top_p,
                 max_tokens=self.max_tokens,
             )
+            turn = _model_safe_turn(turn, secret_broker)
             model_calls += 1
             prompt_tokens += turn.usage.get("prompt_tokens", 0)
             completion_tokens += turn.usage.get("completion_tokens", 0)
@@ -382,10 +399,12 @@ class ActionAgent:
                     messages.append({"role": "user", "content": ACTION_RECOVERY_RETRY_MESSAGE})
                     recovery_pending = False
                     continue
+                final_response = _display_safe(turn.content, secret_broker)
+                messages[-1]["content"] = final_response or None
                 return ActionResult(
-                    final_response=turn.content,
+                    final_response=final_response,
                     context_event_id=context_event.event_id,
-                    messages=tuple(messages),
+                    messages=_safe_trace(messages, secret_broker),
                     usage=AgentUsage(
                         prompt_tokens=prompt_tokens,
                         completion_tokens=completion_tokens,
@@ -415,7 +434,7 @@ class ActionAgent:
                                 "operation; no side effect was executed."
                             ),
                             context_event_id=context_event.event_id,
-                            messages=tuple(messages),
+                            messages=_safe_trace(messages, secret_broker),
                             usage=AgentUsage(
                                 prompt_tokens=prompt_tokens,
                                 completion_tokens=completion_tokens,
@@ -509,6 +528,49 @@ def _guarded_payload(result: GuardedToolResult) -> dict[str, Any]:
         "proposal_event_id": result.decision.proposal_event_id,
         "policy_event_id": result.decision.policy_event_id,
     }
+
+
+def _model_safe(value: Any, broker: SecretBroker | None) -> Any:
+    if broker is None:
+        return value
+    return broker.tokenize_for_model(value)
+
+
+def _display_safe(value: str, broker: SecretBroker | None) -> str:
+    if broker is None:
+        return value
+    return str(broker.redact_for_display(value))
+
+
+def _model_safe_turn(
+    turn: AssistantTurn, broker: SecretBroker | None
+) -> AssistantTurn:
+    """Remove plaintext from all normalized model fields before they are stored."""
+
+    if broker is None:
+        return turn
+    tool_calls = tuple(
+        call.model_copy(
+            update={"arguments": broker.tokenize_for_model(call.arguments)}
+        )
+        for call in turn.tool_calls
+    )
+    return turn.model_copy(
+        update={
+            "content": broker.tokenize_for_model(turn.content),
+            "tool_calls": tool_calls,
+            "raw_response": broker.tokenize_for_model(turn.raw_response),
+        }
+    )
+
+
+def _safe_trace(
+    messages: Sequence[Mapping[str, Any]], broker: SecretBroker | None
+) -> tuple[dict[str, Any], ...]:
+    copied = [dict(message) for message in messages]
+    if broker is None:
+        return tuple(copied)
+    return tuple(broker.redact_for_display(copied))
 
 
 def _jsonable(value: Any) -> Any:

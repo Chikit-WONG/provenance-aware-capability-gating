@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .provenance import ExactTaintTracker, RuntimeProvenance, join_provenance
 from .schemas import Decision, EventKind, ToolName
+from .secrets import SecretBroker
 from .world import AuditLog, MockWorld
 
 
@@ -100,11 +101,13 @@ class ToolExecutor:
         audit_log: AuditLog,
         taint_tracker: ExactTaintTracker | None = None,
         runtime_provenance: RuntimeProvenance | None = None,
+        secret_broker: SecretBroker | None = None,
     ) -> None:
         self.world = world
         self.audit_log = audit_log
         self.taint_tracker = taint_tracker
         self.runtime_provenance = runtime_provenance
+        self.secret_broker = secret_broker
 
     def execute(
         self, tool: ToolName | str, arguments: dict[str, Any], actor: str = "action_agent"
@@ -129,6 +132,14 @@ class ToolExecutor:
             validated = argument_model.model_validate(arguments)
             handler: Callable[[_Arguments, str], ToolExecutionResult] = self._handlers[tool_name]
             result = handler(validated, actor)
+            if result.ok and self.secret_broker is not None:
+                # The world keeps the authoritative value, but plaintext must
+                # never cross the trusted executor -> model boundary.
+                result = result.model_copy(
+                    update={
+                        "output": self.secret_broker.tokenize_for_model(result.output)
+                    }
+                )
             if result.ok and self.runtime_provenance is not None:
                 event = self.audit_log.get(result.event_id)
                 if event.provenance is not None:
