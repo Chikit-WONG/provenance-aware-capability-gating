@@ -23,22 +23,25 @@ from pydantic import (
 )
 
 
+AGENTDOJO_SUITES = ("workspace", "travel", "banking", "slack")
+CANONICAL_ATTACKS = ("important_instructions", "tool_knowledge")
+DEFENSES = ("none", "repeat_user_prompt")
 _PAIR_KEY_PREFIX = "workspace:v1.2.2:"
-_ATTACKS = ("important_instructions", "tool_knowledge")
-_DEFENSES = ("none", "repeat_user_prompt")
+_ATTACKS = CANONICAL_ATTACKS
+_DEFENSES = DEFENSES
 _HEX64 = set("0123456789abcdef")
 
 
-def _parse_canonical_pair_key(value: str) -> tuple[str, str]:
-    """Parse a canonical key and reject empty or ambiguous ID suffixes."""
+def _parse_canonical_pair_key(value: str) -> tuple[str, str, str]:
+    """Parse a suite-qualified canonical key."""
 
-    if not value.startswith(_PAIR_KEY_PREFIX):
-        raise ValueError("manifest pair IDs must use workspace:v1.2.2 prefix")
-    suffix = value[len(_PAIR_KEY_PREFIX):]
-    parts = suffix.split(":")
-    if len(parts) != 2 or any(not part for part in parts):
+    parts = value.split(":", 3)
+    if len(parts) != 4 or parts[1] != "v1.2.2" or parts[0] not in AGENTDOJO_SUITES:
+        raise ValueError("manifest pair IDs must use <suite>:v1.2.2 prefix")
+    suite, _version, user_id, injection_id = parts
+    if not user_id or not injection_id or ":" in user_id or ":" in injection_id:
         raise ValueError("canonical pair IDs require nonempty user and injection IDs")
-    return parts[0], parts[1]
+    return suite, user_id, injection_id
 
 
 class _FrozenModel(BaseModel):
@@ -52,12 +55,20 @@ class _FrozenModel(BaseModel):
 class AgentDojoPair(_FrozenModel):
     """One outcome-independent, pre-screened native benchmark pair."""
 
+    suite: str = "workspace"
     canonical_key: str
     canonical_sha256: str
     user_task_id: str
     injection_task_id: str
     runnable: bool
     exclusion_reason: str = ""
+
+    @field_validator("suite")
+    @classmethod
+    def require_suite(cls, value: str) -> str:
+        if value not in AGENTDOJO_SUITES:
+            raise ValueError(f"unsupported AgentDojo suite: {value}")
+        return value
 
     @field_validator("canonical_key", "user_task_id", "injection_task_id")
     @classmethod
@@ -75,9 +86,9 @@ class AgentDojoPair(_FrozenModel):
 
     @model_validator(mode="after")
     def enforce_canonical_identity(self) -> "AgentDojoPair":
-        parsed_user, parsed_injection = _parse_canonical_pair_key(self.canonical_key)
-        if (parsed_user, parsed_injection) != (self.user_task_id, self.injection_task_id):
-            raise ValueError("canonical_key does not match the workspace:v1.2.2 pair identity")
+        parsed_suite, parsed_user, parsed_injection = _parse_canonical_pair_key(self.canonical_key)
+        if (parsed_suite, parsed_user, parsed_injection) != (self.suite, self.user_task_id, self.injection_task_id):
+            raise ValueError("canonical_key does not match the suite:v1.2.2 pair identity")
         expected_hash = hashlib.sha256(self.canonical_key.encode("utf-8")).hexdigest()
         if self.canonical_sha256 != expected_hash:
             raise ValueError("canonical_sha256 does not match canonical_key")
@@ -87,13 +98,35 @@ class AgentDojoPair(_FrozenModel):
 class AgentDojoRunSpec(_FrozenModel):
     """One cell in the development or formal native AgentDojo matrix."""
 
+    suite: str = "workspace"
     phase: Literal["development", "formal"]
     user_task_id: str
     injection_task_id: str | None
-    attack: Literal["none", "important_instructions", "tool_knowledge"]
-    defense: Literal["none", "repeat_user_prompt"]
+    attack: str
+    defense: str
     model_config_hash: str
     run_id: str = ""
+
+    @field_validator("suite")
+    @classmethod
+    def require_suite(cls, value: str) -> str:
+        if value not in AGENTDOJO_SUITES:
+            raise ValueError(f"unsupported AgentDojo suite: {value}")
+        return value
+
+    @field_validator("attack")
+    @classmethod
+    def require_attack(cls, value: str) -> str:
+        if value != "none" and value not in CANONICAL_ATTACKS:
+            raise ValueError(f"unsupported AgentDojo attack: {value}")
+        return value
+
+    @field_validator("defense")
+    @classmethod
+    def require_defense(cls, value: str) -> str:
+        if value not in DEFENSES:
+            raise ValueError(f"unsupported AgentDojo defense: {value}")
+        return value
 
     @field_validator("user_task_id")
     @classmethod
@@ -131,9 +164,11 @@ class AgentDojoRunSpec(_FrozenModel):
             return value
         fields = (
             value.get("phase", ""),
+            value.get("suite", "workspace"),
             value.get("user_task_id", ""),
             value.get("injection_task_id") or "none",
             value.get("attack", ""),
+
             value.get("defense", ""),
         )
         digest = hashlib.sha256("\x1f".join(str(field) for field in fields).encode()).hexdigest()[:16]
@@ -143,11 +178,12 @@ class AgentDojoRunSpec(_FrozenModel):
 class AgentDojoResultRecord(_FrozenModel):
     """Project-owned wrapper around one untouched AgentDojo result."""
 
+    suite: str = "workspace"
     phase: Literal["development", "formal"]
     user_task_id: str
     injection_task_id: str | None
-    attack: Literal["none", "important_instructions", "tool_knowledge"]
-    defense: Literal["none", "repeat_user_prompt"]
+    attack: str
+    defense: str
     model_config_hash: str
     run_id: str
     attempt_id: Literal["attempt-0001", "attempt-0002"]
@@ -178,6 +214,27 @@ class AgentDojoResultRecord(_FrozenModel):
     def nonempty_ids(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("AgentDojo result identifiers cannot be blank")
+        return value
+
+    @field_validator("suite")
+    @classmethod
+    def require_suite(cls, value: str) -> str:
+        if value not in AGENTDOJO_SUITES:
+            raise ValueError(f"unsupported AgentDojo suite: {value}")
+        return value
+
+    @field_validator("attack")
+    @classmethod
+    def require_attack(cls, value: str) -> str:
+        if value != "none" and value not in CANONICAL_ATTACKS:
+            raise ValueError(f"unsupported AgentDojo attack: {value}")
+        return value
+
+    @field_validator("defense")
+    @classmethod
+    def require_defense(cls, value: str) -> str:
+        if value not in DEFENSES:
+            raise ValueError(f"unsupported AgentDojo defense: {value}")
         return value
 
     @field_validator("injection_task_id")
@@ -233,6 +290,7 @@ class AgentDojoResultRecord(_FrozenModel):
     @property
     def run_spec(self) -> AgentDojoRunSpec:
         return AgentDojoRunSpec(
+            suite=self.suite,
             phase=self.phase,
             user_task_id=self.user_task_id,
             injection_task_id=self.injection_task_id,
@@ -414,11 +472,14 @@ def validate_agentdojo_model_binding(
         raise ValueError("AgentDojo manifest model_checkpoint_sha256 mismatch")
 
 
-def canonical_pair(user_task_id: str, injection_task_id: str) -> AgentDojoPair:
+def canonical_pair(user_task_id: str, injection_task_id: str, suite_name: str = "workspace") -> AgentDojoPair:
     """Create the frozen canonical representation for one benchmark pair."""
 
-    key = f"workspace:v1.2.2:{user_task_id}:{injection_task_id}"
+    if suite_name not in AGENTDOJO_SUITES:
+        raise ValueError(f"unsupported AgentDojo suite: {suite_name}")
+    key = f"{suite_name}:v1.2.2:{user_task_id}:{injection_task_id}"
     return AgentDojoPair(
+        suite=suite_name,
         canonical_key=key,
         canonical_sha256=hashlib.sha256(key.encode("utf-8")).hexdigest(),
         user_task_id=user_task_id,
@@ -436,6 +497,7 @@ def _coerce_pair(candidate: AgentDojoPair | Mapping[str, Any] | Any) -> AgentDoj
         data = {
             field: getattr(candidate, field)
             for field in (
+                "suite",
                 "canonical_key",
                 "canonical_sha256",
                 "user_task_id",
@@ -559,6 +621,53 @@ def _expected_plan(
     return rows
 
 
+
+def build_matrix_plan(
+    pairs: Sequence[AgentDojoPair],
+    model_config_hash: str,
+    *,
+    phase: Literal["development", "formal"],
+    suite_name: str,
+    clean_user_task_ids: Sequence[str] = (),
+) -> list[AgentDojoRunSpec]:
+    """Build an arbitrary-size, suite-aware canonical AgentDojo matrix."""
+
+    if suite_name not in AGENTDOJO_SUITES:
+        raise ValueError(f"unsupported AgentDojo suite: {suite_name}")
+    if phase not in {"development", "formal"}:
+        raise ValueError(f"unsupported AgentDojo phase: {phase}")
+    normalized = [_coerce_pair(pair) for pair in pairs]
+    if any(pair.suite != suite_name for pair in normalized):
+        raise ValueError("all matrix pairs must use the requested suite")
+    if any(not pair.runnable for pair in normalized):
+        raise ValueError("run plans can only use runnable AgentDojo pairs")
+    if len({pair.canonical_key for pair in normalized}) != len(normalized):
+        raise ValueError("duplicate AgentDojo pair in run-plan input")
+    model_config_hash = _require_model_config_hash(model_config_hash)
+    users = tuple(dict.fromkeys(str(user) for user in clean_user_task_ids))
+    pair_users = {pair.user_task_id for pair in normalized}
+    if any(user not in pair_users for user in users):
+        raise ValueError("clean user task IDs must belong to matrix pairs")
+    rows: list[AgentDojoRunSpec] = []
+    for pair in normalized:
+        for attack in CANONICAL_ATTACKS:
+            for defense in DEFENSES:
+                rows.append(AgentDojoRunSpec(
+                    suite=suite_name, phase=phase,
+                    user_task_id=pair.user_task_id,
+                    injection_task_id=pair.injection_task_id,
+                    attack=attack, defense=defense,
+                    model_config_hash=model_config_hash,
+                ))
+    for user_task_id in users:
+        for defense in DEFENSES:
+            rows.append(AgentDojoRunSpec(
+                suite=suite_name, phase=phase,
+                user_task_id=user_task_id, injection_task_id=None,
+                attack="none", defense=defense,
+                model_config_hash=model_config_hash,
+            ))
+    return rows
 def build_development_plan(
     pairs: Sequence[AgentDojoPair], model_config_hash: str
 ) -> list[AgentDojoRunSpec]:
@@ -645,9 +754,13 @@ def plan_jsonl(rows: Sequence[AgentDojoRunSpec]) -> str:
 
 __all__ = [
     "AgentDojoFrozenManifest",
+    "AGENTDOJO_SUITES",
+    "CANONICAL_ATTACKS",
+    "DEFENSES",
     "AgentDojoPair",
     "AgentDojoResultRecord",
     "AgentDojoRunSpec",
+    "build_matrix_plan",
     "build_development_plan",
     "build_formal_plan",
     "canonical_pair",

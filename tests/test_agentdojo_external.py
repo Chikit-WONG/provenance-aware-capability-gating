@@ -8,10 +8,14 @@ import unittest
 from pydantic import ValidationError
 
 from agentsec.agentdojo_external import (
+    AGENTDOJO_SUITES,
     AgentDojoFrozenManifest,
     AgentDojoPair,
     AgentDojoResultRecord,
     AgentDojoRunSpec,
+    CANONICAL_ATTACKS,
+    DEFENSES,
+    build_matrix_plan,
     build_development_plan,
     build_formal_plan,
     canonical_pair,
@@ -65,6 +69,50 @@ def _valid_manifest_fields() -> dict[str, object]:
 
 
 class AgentDojoExternalTests(unittest.TestCase):
+    def test_suite_aware_pairs_and_run_ids(self) -> None:
+        travel = canonical_pair("u1", "i1", "travel")
+        slack = canonical_pair("u1", "i1", "slack")
+        self.assertEqual(travel.suite, "travel")
+        self.assertEqual(slack.suite, "slack")
+        self.assertNotEqual(travel.canonical_key, slack.canonical_key)
+        travel_row = AgentDojoRunSpec(
+            suite="travel",
+            phase="formal",
+            user_task_id="u1",
+            injection_task_id="i1",
+            attack="important_instructions",
+            defense="none",
+            model_config_hash=_MODEL_HASH,
+        )
+        slack_row = AgentDojoRunSpec(**{**travel_row.model_dump(), "suite": "slack", "run_id": ""})
+        self.assertNotEqual(travel_row.run_id, slack_row.run_id)
+
+    def test_generic_matrix_is_suite_aware(self) -> None:
+        pairs = [canonical_pair("u1", "i1", "travel"), canonical_pair("u2", "i2", "travel")]
+        rows = build_matrix_plan(
+            pairs, _MODEL_HASH, phase="formal", suite_name="travel", clean_user_task_ids=("u1",)
+        )
+        self.assertEqual(len([row for row in rows if row.attack != "none"]), 8)
+        self.assertEqual(len([row for row in rows if row.attack == "none"]), 2)
+        self.assertEqual({row.suite for row in rows}, {"travel"})
+
+    def test_generic_contracts_reject_unsupported_suite_and_attack(self) -> None:
+        self.assertEqual(AGENTDOJO_SUITES, ("workspace", "travel", "banking", "slack"))
+        self.assertEqual(CANONICAL_ATTACKS, ("important_instructions", "tool_knowledge"))
+        self.assertEqual(DEFENSES, ("none", "repeat_user_prompt"))
+        with self.assertRaises(ValueError):
+            canonical_pair("u1", "i1", "unsupported")
+        with self.assertRaises(ValueError):
+            AgentDojoRunSpec(
+                suite="unsupported",
+                phase="formal",
+                user_task_id="u1",
+                injection_task_id="i1",
+                attack="not-an-attack",
+                defense="none",
+                model_config_hash=_MODEL_HASH,
+            )
+
     def test_canonical_pair_uses_frozen_workspace_key(self) -> None:
         pair = canonical_pair("u1", "i2")
         key = "workspace:v1.2.2:u1:i2"
@@ -235,7 +283,7 @@ class AgentDojoExternalTests(unittest.TestCase):
             utility=True,
         )
         self.assertIsNone(clean.targeted_attack_success)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValueError):
             mismatch = attacked.model_dump()
             mismatch["targeted_attack_success"] = True
             AgentDojoResultRecord(**mismatch)
@@ -244,7 +292,7 @@ class AgentDojoExternalTests(unittest.TestCase):
         pair = canonical_pair("u", "i")
         pair_data = pair.model_dump()
         pair_data["unexpected"] = True
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValueError):
             AgentDojoPair.model_validate(pair_data)
         row = AgentDojoRunSpec(
             phase="formal",
@@ -255,7 +303,7 @@ class AgentDojoExternalTests(unittest.TestCase):
             model_config_hash=_MODEL_HASH,
         )
         self.assertTrue(row.run_id.startswith("adj-"))
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValueError):
             row.attack = "tool_knowledge"
 
     def test_manifest_requires_exact_partition_and_model_identity(self) -> None:
@@ -282,7 +330,7 @@ class AgentDojoExternalTests(unittest.TestCase):
             AgentDojoFrozenManifest(**unknown)
         invalid_hash = _valid_manifest_fields()
         invalid_hash["model_config_hash"] = "not-a-sha256"
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValueError):
             AgentDojoFrozenManifest(**invalid_hash)
         validate_agentdojo_model_binding(
             manifest,
@@ -297,7 +345,7 @@ class AgentDojoExternalTests(unittest.TestCase):
             validate_agentdojo_model_binding(manifest, _MODEL_HASH, "other-model", manifest.model_checkpoint_path, _CHECKPOINT_HASH)
         no_checkpoint = _valid_manifest_fields()
         no_checkpoint["model_checkpoint_path"] = "relative/model"
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValueError):
             AgentDojoFrozenManifest(**no_checkpoint)
         malformed = _valid_manifest_fields()
         malformed["selected_pair_ids"] = ("workspace:v1.2.2::injection",) + tuple(malformed["selected_pair_ids"][1:])
