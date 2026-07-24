@@ -233,6 +233,7 @@ def enumerate_official_pairs(
             screening.append(
                 {
                     "canonical_key": pair.canonical_key,
+                    "suite": suite_name,
                     "canonical_sha256": pair.canonical_sha256,
                     "user_task_id": user_task_id,
                     "injection_task_id": injection_task_id,

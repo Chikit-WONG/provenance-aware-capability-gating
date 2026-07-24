@@ -1,0 +1,6 @@
+agentdojo_commit=a75aba7631d3ca5fb7ab938965c97ead2f9ff84b
+agentdojo_tag=v0.1.35
+benchmark_version=v1.2.2
+suite=slack
+model_config_hash=1e138643d40038f11cd7182b43aa7b97d2eb36628c97e86fafa124e4ceae894e
+model_checkpoint_sha256=cb84f4512874b60aca27c63e8aec595633531c7c363dbffe2df4ecb6a2ff264d

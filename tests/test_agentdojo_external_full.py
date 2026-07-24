@@ -25,6 +25,7 @@ class FullFreezeTests(unittest.TestCase):
                 screening = [
                     {
                         "canonical_key": pair.canonical_key,
+                        "suite": suite,
                         "canonical_sha256": pair.canonical_sha256,
                         "user_task_id": pair.user_task_id,
                         "injection_task_id": pair.injection_task_id,
