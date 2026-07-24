@@ -51,7 +51,7 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         submitter = Path("scripts/submit_agentdojo_external_wave.sh").read_text(encoding="utf-8")
         self.assertIn("--array=", submitter)
         self.assertRegex(submitter, r"--array=.*%2")
-        self.assertIn("MAX_WAVE_TASKS=10", submitter)
+        self.assertIn("MAX_WAVE_TASKS=8", submitter)
         self.assertIn("MAX_FORMAL_SHARD_ROWS=8", submitter)
         self.assertIn("SHARD_START", submitter)
         self.assertIn("WAVE_SHARDS", submitter)

@@ -5,17 +5,16 @@
 #   submit_agentdojo_external_wave.sh development PLAN [ignored-limit]
 #   submit_agentdojo_external_wave.sh formal PLAN [rows-per-shard] [shard-start] [wave-shards]
 #
-# ``shard-start`` and ``wave-shards`` make plans larger than ten shards
-# schedulable in sequential waves.  For example, a plan with twelve shards
-# at eight rows per shard is submitted as starts 0 and 10 (the second wave has
-# two tasks).
+# ``shard-start`` and ``wave-shards`` make plans larger than eight shards
+# schedulable in sequential waves.  The debug QOS permits eight submitted
+# array elements per user, so a plan is submitted as starts 0 and 8.
 set -euo pipefail
 
 PHASE="${1:?phase development or formal}"
 PLAN="${2:?frozen plan JSONL path}"
 LIMIT="${3:-8}"
 SHARD_START="${4:-0}"
-MAX_WAVE_TASKS=10
+MAX_WAVE_TASKS=8
 WAVE_SHARDS="${5:-${MAX_WAVE_TASKS}}"
 MAX_FORMAL_SHARD_ROWS=8
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
