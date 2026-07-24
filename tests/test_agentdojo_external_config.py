@@ -97,5 +97,16 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertEqual(config["tool_output_format"], "json")
 
 
+    def test_full_launcher_and_runner_are_suite_aware(self) -> None:
+        runner = Path("scripts/run_agentdojo_external.py").read_text(encoding="utf-8")
+        launcher = Path("scripts/run_agentdojo_external.slurm").read_text(encoding="utf-8")
+        wrapper = Path("scripts/submit_agentdojo_external_full_wave.sh").read_text(encoding="utf-8")
+        self.assertIn("suite_name: str = \"workspace\"", runner)
+        self.assertIn("row.suite", runner)
+        self.assertIn("SUITE=\"${5:-${AGENTDOJO_SUITE:-}}\"", launcher)
+        self.assertIn('"${FROZEN_ROOT}/${SUITE}/${PLAN_NAME}"', launcher)
+        for suite in ("workspace", "travel", "banking", "slack"):
+            self.assertIn(suite, wrapper)
+        self.assertIn("agentdojo-external-full-v1", wrapper)
 if __name__ == "__main__":
     unittest.main()

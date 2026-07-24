@@ -15,6 +15,7 @@ PHASE="${1:?phase development or formal}"
 START_INDEX="${2:-0}"
 LIMIT="${3:-12}"
 ATTEMPT_ID="${4:-attempt-0001}"
+SUITE="${5:-${AGENTDOJO_SUITE:-}}"
 if [[ "${PHASE}" == formal && -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
   START_INDEX=$((SLURM_ARRAY_TASK_ID * LIMIT))
 fi
@@ -26,10 +27,16 @@ FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PROJECT_ROOT}/configs/frozen/agentdojo_e
 mkdir -p "${ARTIFACT_ROOT}/slurm"
 
 case "${PHASE}" in
-  development) PLAN="${FROZEN_ROOT}/development_plan.jsonl" ;;
-  formal) PLAN="${FROZEN_ROOT}/formal_plan.jsonl" ;;
+  development) PLAN_NAME="development_plan.jsonl" ;;
+  formal) PLAN_NAME="formal_plan.jsonl" ;;
   *) echo "phase must be development or formal" >&2; exit 2 ;;
 esac
+if [[ -n "${SUITE}" ]]; then
+  [[ "${SUITE}" =~ ^(workspace|travel|banking|slack)$ ]] || { echo "unsupported suite: ${SUITE}" >&2; exit 2; }
+  PLAN="${FROZEN_ROOT}/${SUITE}/${PLAN_NAME}"
+else
+  PLAN="${FROZEN_ROOT}/${PLAN_NAME}"
+fi
 [[ -f "${PLAN}" ]] || { echo "missing frozen plan: ${PLAN}" >&2; exit 2; }
 
 BASE_PORT="${VLLM_BASE_PORT:-18000}"

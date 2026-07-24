@@ -184,14 +184,14 @@ def build_pipeline(arm: str, *, port: int) -> Any:
     return pipeline
 
 
-def _benchmark_functions(pipeline: Any | None = None, attack_name: str | None = None) -> tuple[Any, Any, Any, Any | None]:
+def _benchmark_functions(pipeline: Any | None = None, attack_name: str | None = None, suite_name: str = "workspace") -> tuple[Any, Any, Any, Any | None]:
     """Resolve the official task functions and suite/attack objects lazily."""
 
     benchmark = importlib.import_module("agentdojo.benchmark")
     with_injection = getattr(benchmark, "run_task_with_injection_tasks")
     without_injection = getattr(benchmark, "run_task_without_injection_tasks")
     suite_module = importlib.import_module("agentdojo.task_suite")
-    suite = suite_module.get_suite("v1.2.2", "workspace")
+    suite = suite_module.get_suite("v1.2.2", suite_name)
     attack = None
     if pipeline is not None and attack_name and attack_name != "none":
         attacks = importlib.import_module("agentdojo.attacks")
@@ -331,7 +331,7 @@ def run_row(
     valid = True
     try:
         with _output_logger()(str(trace_root)):
-            resolved = suite_functions or _benchmark_functions(pipeline, row.attack)
+            resolved = suite_functions or _benchmark_functions(pipeline, row.attack, row.suite)
             with_injection, without_injection, suite = resolved[:3]
             attack = resolved[3] if len(resolved) > 3 else None
             native = _call_task(
