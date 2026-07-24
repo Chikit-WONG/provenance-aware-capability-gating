@@ -8,6 +8,9 @@
 #SBATCH --error=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%j.err
 set -euo pipefail
 
+unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
+export NO_PROXY=127.0.0.1,localhost,::1 no_proxy=127.0.0.1,localhost,::1
+
 PHASE="${1:?phase development or formal}"
 START_INDEX="${2:-0}"
 LIMIT="${3:-12}"

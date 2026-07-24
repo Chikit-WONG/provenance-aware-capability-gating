@@ -14,6 +14,8 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertIsNotNone(cpu_match)
         self.assertLessEqual(int(cpu_match.group(1)), 16)
         self.assertIn("HF_HUB_OFFLINE=1", launcher)
+        self.assertIn("unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy", launcher)
+        self.assertIn("NO_PROXY=127.0.0.1,localhost,::1", launcher)
         self.assertIn("TRANSFORMERS_OFFLINE=1", launcher)
         self.assertIn("Qwen3-VL-8B-Instruct", launcher)
         self.assertIn("select_vllm_port.sh", launcher)
