@@ -112,3 +112,21 @@ Provenance-only 相对 Allow-All 为 $-0.33$（95% CI $[-0.67,0.00]$），Prompt
 [hardened 完整分析](artifacts/hardened-full-factorial-analysis-v1/)，冻结语料见
 [red_corpus_qwen3_hardened_v1](data/frozen/red_corpus_qwen3_hardened_v1/)。
 - [技术报告 PDF](report/main.pdf)
+
+## 公开 benchmark 交叉验证
+
+我们另外运行了固定版本的 AgentDojo Workspace 切片：2 个 development pair 和
+96 次 formal victim call（64 次攻击、32 次 clean），108 条记录全部有效。该实验
+与项目自己的 gateway 结果分开，只评估本地 Qwen3-VL-8B 以及 AgentDojo 的
+`repeat_user_prompt` 防御。
+
+| AgentDojo 条件 | 无防御 ASR | `repeat_user_prompt` ASR | Utility（无防御 / repeat） |
+| --- | ---: | ---: | ---: |
+| `important_instructions` | 1/16（6.25%） | 0/16（0%） | 11/16 / 12/16 |
+| `tool_knowledge` | 1/16（6.25%） | 0/16（0%） | 9/16 / 12/16 |
+| Clean utility | — | — | 10/16 / 12/16 |
+
+完整摘要、结果表、图、attempt manifest 和可复现记录见
+[`artifacts/agentdojo-external-analysis-v1-context16k/`](artifacts/agentdojo-external-analysis-v1-context16k/)
+和 [`artifacts/agentdojo-external-v1-context16k/`](artifacts/agentdojo-external-v1-context16k/)。
+具体 commit、评测边界和局限见[外部验证说明](docs/EXTERNAL_VALIDATION.md)。

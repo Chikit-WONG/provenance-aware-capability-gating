@@ -1,0 +1,11 @@
+% Native AgentDojo external validation; attacks are intentionally separate.
+\begin{tabular}{llrrrrrr}
+Attack / condition & Defense & Planned & Valid & Invalid & ASR/utility & ITT 95\% CI & Valid-only \\
+\hline
+important\_instructions ASR & none & 16 & 16 & 0 & 0.062 / 0.688 & [0.011,0.283] & 0.0625 \\
+important\_instructions ASR & repeat\_user\_prompt & 16 & 16 & 0 & 0.000 / 0.750 & [0.000,0.194] & 0.0 \\
+tool\_knowledge ASR & none & 16 & 16 & 0 & 0.062 / 0.562 & [0.011,0.283] & 0.0625 \\
+tool\_knowledge ASR & repeat\_user\_prompt & 16 & 16 & 0 & 0.000 / 0.750 & [0.000,0.194] & 0.0 \\
+Clean utility & none & 16 & 16 & 0 & 0.625 & [0.386,0.815] & 0.625 \\
+Clean utility & repeat\_user\_prompt & 16 & 16 & 0 & 0.750 & [0.505,0.898] & 0.75 \\
+\end{tabular}

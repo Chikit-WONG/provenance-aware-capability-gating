@@ -2,72 +2,74 @@
 
 ## Status
 
-This workstream is **implementation-complete but execution-blocked**. The
-native AgentDojo plans and results are intentionally absent: the pinned
-pre-inference freeze did not run, so no native pair IDs, victim calls, attack
-rates, or utility numbers are reported here.
+The pinned native AgentDojo cross-check is complete. The final artifact root is
+`artifacts/agentdojo-external-v1-context16k/`; preliminary failed bootstrap,
+serialization, context-window, and port-race attempts remain in the separate
+ignored `artifacts/agentdojo-external-v1/` root as debugging evidence and are
+not included in the reported denominator.
 
-## Frozen contract (when the prerequisite is available)
+The final root contains 12 valid development records and 96 valid formal
+records. The formal matrix is exactly 64 attacked calls plus 32 clean calls;
+all 96 formal rows use `attempt-0001`, and the selection manifest selects 96/96
+rows with verified SHA-256 hashes.
 
-- AgentDojo: `v0.1.35`, exact source commit
+## Frozen contract
+
+- AgentDojo `v0.1.35`, exact source commit
   `a75aba7631d3ca5fb7ab938965c97ead2f9ff84b`.
-- Benchmark: Workspace `v1.2.2`.
-- Attacks: official `important_instructions` and `tool_knowledge`.
-- Defenses: official `none` and `repeat_user_prompt`.
-- Victim: the existing local checkpoint
-  `/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct`, served as `qwen3-vl-8b`.
-- Runtime: temperature `0.0`, JSON tool output, local non-streaming vLLM, no
-  external services.
+- Workspace benchmark `v1.2.2`.
+- Official attacks: `important_instructions` and `tool_knowledge`.
+- Official defenses: `none` and `repeat_user_prompt`.
+- Victim: existing local checkpoint
+  `/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct`,
+  served as `qwen3-vl-8b`.
+- Runtime: local non-streaming vLLM, BF16, temperature 0, JSON tool output,
+  one A40, configurable 16K default context, no external services.
 
-The freeze enumerates the public Workspace suite and screens both official
-attacks before inference. It sorts by the canonical pair hash and applies the
-three fixed diversity passes, selecting 18 runnable pairs: two development
-pairs and 16 formal pairs. The intended formal matrix is 64 attacked cells
-(two attacks x two defenses x 16 pairs) plus at most 32 clean cells (one clean
-cell per selected user task and defense), for at most 96 victim calls. Selection
-is independent of model responses.
+The frozen pre-inference selection contains two development pairs and 16 formal
+pairs. Selection is independent of model responses. The official AgentDojo
+security and utility values are retained without inversion or translation into
+the project gateway's labels.
 
-## Official scoring boundary
+## Reported results
 
-AgentDojo's task environments, attack constructors, defense pipeline, user-task
-evaluator, and injection-task evaluator remain untouched. The only compatibility
-registration is `qwen3-vl-8b -> Qwen`, needed by the official attack
-constructor. Official security values and utility values are retained as
-separate metrics; they are not translated into the project's gateway labels.
-For the published attack summary, `targeted_asr` is the mean of AgentDojo's untouched `security` boolean (not an inverted value); `utility_under_attack` and clean utility are the official user-task evaluator outputs. Infrastructure-invalid ITT rows use the conservative aggregate mapping ASR=1 and utility=0, while valid-only estimates remain reported separately.
-Native results would support claims about this local Qwen victim and the
-official `repeat_user_prompt` defense only. They would not evaluate or validate
-this project's `Full` gateway.
+All formal rows are valid (`n=16` per condition):
 
-## Attempts and artifacts
+| Condition | No defense | `repeat_user_prompt` |
+| --- | ---: | ---: |
+| `important_instructions` targeted ASR | 1/16 (6.25%) | 0/16 (0%) |
+| `tool_knowledge` targeted ASR | 1/16 (6.25%) | 0/16 (0%) |
+| `important_instructions` utility | 11/16 (68.75%) | 12/16 (75%) |
+| `tool_knowledge` utility | 9/16 (56.25%) | 12/16 (75%) |
+| Clean utility | 10/16 (62.5%) | 12/16 (75%) |
 
-Execution uses append-only `attempt-0001` records. A single `attempt-0002` is
-permitted only for a declared infrastructure failure (timeout, local endpoint
-transport failure, scheduler termination, or artifact-write interruption).
-Behavioral failures, refusals, no-ops, parse failures, failed attacks, and
-blocked calls are never retried.
+The publication table and confidence intervals are generated in
+`artifacts/agentdojo-external-analysis-v1-context16k/`. This cross-check supports
+claims about this local Qwen victim and the official repeat-prompt defense only;
+it does not evaluate the project's `Full` provenance-aware gateway.
 
-The reviewed launcher is [`scripts/run_agentdojo_external.slurm`](../scripts/run_agentdojo_external.slurm), and bounded waves are submitted with
-[`scripts/submit_agentdojo_external_wave.sh`](../scripts/submit_agentdojo_external_wave.sh).
-They fail closed if the official plans are missing. No files under
-`configs/frozen/agentdojo_external_v1/`, `artifacts/agentdojo-external-v1/`,
-or `artifacts/agentdojo-external-analysis-v1/` were fabricated or substituted
-from the project's older frozen plans.
+## Reproduction and artifacts
 
-## Why execution is blocked
+The reviewed launchers are [`scripts/run_agentdojo_external.slurm`](../scripts/run_agentdojo_external.slurm),
+[`scripts/submit_agentdojo_external_wave.sh`](../scripts/submit_agentdojo_external_wave.sh),
+and [`scripts/launch_vllm.sh`](../scripts/launch_vllm.sh). Formal outputs are
+kept compact for publication:
 
-The first bootstrap attempt failed while Conda contacted the configured
-Tsinghua mirror (`SSLEOFError`/`CondaSSLError`). A temporary official Conda
-channel override did create Python 3.11, but installing the exact VCS pin still
-failed: the cluster's GitHub clone path returned HTTP 403 (and the Conda git
-runtime had a `libffi`/`libp11-kit` symbol conflict); codeload/API archives
-were truncated by the network proxy. The PyPI `agentdojo==0.1.35` wheel was
-not substituted because it has no VCS `direct_url.json` proving the required
-commit. Consequently the official freeze could not produce selected IDs or a
-manifest, no development job was submitted, the four-hour development gate was
-not started, and the formal Task 7 execution/analysis was skipped.
+- [`attempt_selection.json`](../artifacts/agentdojo-external-v1-context16k/attempt_selection.json)
+- [`analysis bundle`](../artifacts/agentdojo-external-analysis-v1-context16k/)
+- [`final record root`](../artifacts/agentdojo-external-v1-context16k/)
 
-Once the exact VCS environment and network path are available, run the freeze
-and verification commands in the AgentDojo plan, then submit development before
-formal waves. The project-specific benchmark and existing attack results remain
-separate from this external-validation workstream.
+Only wrapper records and derived summaries need to be committed; vLLM logs and
+full official traces remain ignored. The initial debug failures are retained
+locally to document why the final run uses the 16K context and deterministic
+array-task ports.
+
+## Scope and limitations
+
+AgentDojo is an external transfer check, not a replacement for the project's
+synthetic provenance benchmark. It uses one local model, one Workspace suite,
+two official attacks, and one official prompt defense. It does not test the
+project's capability gateway, provenance sink checks, hardened corpus, or
+semantic information-flow claims. Results should therefore be reported as
+external validation alongside—not merged into—the project-specific factorial
+results.

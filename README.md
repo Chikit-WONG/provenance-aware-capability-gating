@@ -42,7 +42,7 @@ The primary model is already available locally and must not be downloaded:
 
 One A40 runs one shared vLLM 0.15.1 service in the `vllm` Conda environment.
 The controller uses the `test` environment. Requests are non-streaming; vLLM is
-configured for BF16, an 8K context, one GPU, and the Hermes tool parser.
+configured for BF16, a configurable 16K default context, one GPU, and the Hermes tool parser.
 
 ## Experimental design
 
@@ -161,6 +161,25 @@ safe prompt/capability baseline. Its artifacts and figures are in
 [`artifacts/hardened-full-factorial-analysis-v1/`](artifacts/hardened-full-factorial-analysis-v1/), with the
 frozen corpus in [`data/frozen/red_corpus_qwen3_hardened_v1/`](data/frozen/red_corpus_qwen3_hardened_v1/).
 - [technical report PDF](report/main.pdf)
+
+## Public benchmark cross-check
+
+We also ran the pinned native AgentDojo Workspace slice: 2 development pairs and
+96 formal victim calls (64 attacked + 32 clean), all 108 records valid. This is
+separate from the project gateway and only evaluates the local Qwen3-VL-8B victim
+and AgentDojo's `repeat_user_prompt` defense.
+
+| AgentDojo condition | No defense ASR | `repeat_user_prompt` ASR | Utility (none / repeat) |
+| --- | ---: | ---: | ---: |
+| `important_instructions` | 1/16 (6.25%) | 0/16 (0%) | 11/16 / 12/16 |
+| `tool_knowledge` | 1/16 (6.25%) | 0/16 (0%) | 9/16 / 12/16 |
+| Clean utility | — | — | 10/16 / 12/16 |
+
+The complete summary, table, figure, selected-record manifest, and reproducible
+records are in [`artifacts/agentdojo-external-analysis-v1-context16k/`](artifacts/agentdojo-external-analysis-v1-context16k/) and
+[`artifacts/agentdojo-external-v1-context16k/`](artifacts/agentdojo-external-v1-context16k/).
+See [the external-validation note](docs/EXTERNAL_VALIDATION.md) for the exact
+commit, benchmark boundary, and limitations.
 
 ## Demo and report
 
