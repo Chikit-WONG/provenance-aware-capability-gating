@@ -63,6 +63,11 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertIn("development", submitter)
         self.assertNotRegex(submitter, r"\b96\b")
 
+    def test_vllm_launcher_uses_configurable_16k_context_by_default(self) -> None:
+        launcher = Path("scripts/launch_vllm.sh").read_text(encoding="utf-8")
+        self.assertIn('VLLM_MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-16384}"', launcher)
+        self.assertIn('--max-model-len "${VLLM_MAX_MODEL_LEN}"', launcher)
+
     def test_config_pins_public_benchmark_and_local_victim(self) -> None:
         config = json.loads(
             Path("configs/external/agentdojo_external_v1.json").read_text()
