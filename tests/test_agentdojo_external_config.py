@@ -108,6 +108,12 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         for suite in ("workspace", "travel", "banking", "slack"):
             self.assertIn(suite, wrapper)
         self.assertIn("agentdojo-external-full-v1", wrapper)
+
+    def test_full_development_jobs_use_suite_specific_vllm_base_ports(self) -> None:
+        wrapper = Path("scripts/submit_agentdojo_external_full_wave.sh").read_text(encoding="utf-8")
+        self.assertIn("SUITE_INDEX", wrapper)
+        self.assertIn("VLLM_BASE_PORT", wrapper)
+        self.assertIn("18000 + SUITE_INDEX * 4000", wrapper)
     def test_full_selection_and_analysis_are_aggregate_suite_aware(self) -> None:
         selector = Path("scripts/select_agentdojo_external_full.py").read_text(encoding="utf-8")
         analysis = Path("scripts/analyze_agentdojo_external.py").read_text(encoding="utf-8")
