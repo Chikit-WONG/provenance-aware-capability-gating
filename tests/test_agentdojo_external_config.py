@@ -39,11 +39,11 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
             "artifacts/agentdojo-external-v1/slurm/"
         )
         self.assertIn(
-            f"#SBATCH --output={artifact_prefix}%x-%j.out",
+            f"#SBATCH --output={artifact_prefix}%x-%A_%a.out",
             launcher,
         )
         self.assertIn(
-            f"#SBATCH --error={artifact_prefix}%x-%j.err",
+            f"#SBATCH --error={artifact_prefix}%x-%A_%a.err",
             launcher,
         )
 
@@ -62,6 +62,14 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertNotIn("lower shard limit", submitter)
         self.assertIn("development", submitter)
         self.assertNotRegex(submitter, r"\b96\b")
+
+    def test_slurm_array_tasks_use_deterministic_ports_and_unique_logs(self) -> None:
+        launcher = Path("scripts/run_agentdojo_external.slurm").read_text(encoding="utf-8")
+        self.assertIn('VLLM_PORT_STRIDE="${VLLM_PORT_STRIDE:-10}"', launcher)
+        self.assertIn('SLURM_ARRAY_TASK_ID', launcher)
+        self.assertIn('PORT_BASE=$((BASE_PORT + SLURM_ARRAY_TASK_ID * VLLM_PORT_STRIDE))', launcher)
+        self.assertIn('SLURM_ARRAY_JOB_ID', launcher)
+        self.assertIn('JOB_TOKEN', launcher)
 
     def test_vllm_launcher_uses_configurable_16k_context_by_default(self) -> None:
         launcher = Path("scripts/launch_vllm.sh").read_text(encoding="utf-8")

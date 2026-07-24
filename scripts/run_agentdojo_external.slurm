@@ -4,8 +4,8 @@
 #SBATCH --gres=gpu:a40:1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=00:30:00
-#SBATCH --output=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%j.out
-#SBATCH --error=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%j.err
+#SBATCH --output=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%A_%a.out
+#SBATCH --error=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%A_%a.err
 set -euo pipefail
 
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
@@ -33,10 +33,19 @@ esac
 [[ -f "${PLAN}" ]] || { echo "missing frozen plan: ${PLAN}" >&2; exit 2; }
 
 BASE_PORT="${VLLM_BASE_PORT:-18000}"
-PORT="$("${PROJECT_ROOT}/scripts/select_vllm_port.sh" "${BASE_PORT}")"
+VLLM_PORT_STRIDE="${VLLM_PORT_STRIDE:-10}"
+PORT_BASE="${BASE_PORT}"
+if [[ -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
+  PORT_BASE=$((BASE_PORT + SLURM_ARRAY_TASK_ID * VLLM_PORT_STRIDE))
+fi
+PORT="$(${PROJECT_ROOT}/scripts/select_vllm_port.sh "${PORT_BASE}")"
 export VLLM_PORT="${PORT}"
-VLLM_LOG="${ARTIFACT_ROOT}/slurm/vllm-${SLURM_JOB_ID:-local}.log"
-CONTROLLER_LOG="${ARTIFACT_ROOT}/slurm/controller-${SLURM_JOB_ID:-local}.log"
+JOB_TOKEN="${SLURM_JOB_ID:-local}"
+if [[ -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
+  JOB_TOKEN="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-local}}_${SLURM_ARRAY_TASK_ID}"
+fi
+VLLM_LOG="${ARTIFACT_ROOT}/slurm/vllm-${JOB_TOKEN}.log"
+CONTROLLER_LOG="${ARTIFACT_ROOT}/slurm/controller-${JOB_TOKEN}.log"
 "${PROJECT_ROOT}/scripts/launch_vllm.sh" >"${VLLM_LOG}" 2>&1 &
 VLLM_PID=$!
 cleanup() { kill "${VLLM_PID}" 2>/dev/null || true; wait "${VLLM_PID}" 2>/dev/null || true; }
