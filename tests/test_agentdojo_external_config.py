@@ -108,5 +108,15 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         for suite in ("workspace", "travel", "banking", "slack"):
             self.assertIn(suite, wrapper)
         self.assertIn("agentdojo-external-full-v1", wrapper)
+    def test_full_selection_and_analysis_are_aggregate_suite_aware(self) -> None:
+        selector = Path("scripts/select_agentdojo_external_full.py").read_text(encoding="utf-8")
+        analysis = Path("scripts/analyze_agentdojo_external.py").read_text(encoding="utf-8")
+        self.assertIn("def select_full_attempts", selector)
+        self.assertIn("AGENTDOJO_SUITES", selector)
+        self.assertIn("write_manifest_exclusive", selector)
+        self.assertIn("--plan-root", analysis)
+        self.assertIn("path / row.suite", analysis)
+        self.assertIn("aggregate", analysis)
+
 if __name__ == "__main__":
     unittest.main()

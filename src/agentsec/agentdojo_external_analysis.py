@@ -23,7 +23,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from .agentdojo_external import AgentDojoResultRecord, AgentDojoRunSpec
+from .agentdojo_external import (
+    AGENTDOJO_SUITES,
+    AgentDojoResultRecord,
+    AgentDojoRunSpec,
+)
 from .aggregate import wilson_interval
 from .attempts import AttemptSelectionManifest, INFRASTRUCTURE_REASONS
 
@@ -186,70 +190,128 @@ def _metric_summary(
     }
 
 
-def summarize_records(records: Iterable[AgentDojoResultRecord | Mapping[str, Any]]) -> dict[str, Any]:
-    """Summarize attacks separately and clean utility by defense.
+def _attack_summary_rows(
+    grouped: Mapping[tuple[str, str, str], Sequence[AgentDojoResultRecord]],
+    *,
+    include_suite: bool,
+) -> list[dict[str, Any]]:
+    """Build deterministic attack rows from a suite-aware grouping."""
 
-    The returned dictionary is intentionally JSON-native.  ``attack_summary``
-    has one row for each attack/defense pair and includes targeted ASR and
-    utility-under-attack metrics.  ``clean_utility`` has one row per defense.
-    """
-
-    parsed = [item if isinstance(item, AgentDojoResultRecord) else AgentDojoResultRecord.model_validate(item) for item in records]
-    if any(row.phase != "formal" for row in parsed):
-        raise ValueError("summarize_records accepts formal records only")
-    grouped_attack: dict[tuple[str, str], list[AgentDojoResultRecord]] = {}
-    grouped_clean: dict[str, list[AgentDojoResultRecord]] = {}
-    for row in parsed:
-        if row.attack == "none":
-            grouped_clean.setdefault(row.defense, []).append(row)
-        else:
-            grouped_attack.setdefault((row.attack, row.defense), []).append(row)
-
-    attack_summary: list[dict[str, Any]] = []
-    for attack in _ATTACKS:
-        for defense in _DEFENSES:
-            rows = grouped_attack.get((attack, defense), [])
-            if not rows:
-                continue
-            targeted = _metric_summary(rows, "targeted_attack_success", conservative_invalid=True)
-            utility = _metric_summary(rows, "utility", conservative_invalid=True)
-            attack_summary.append(
-                {
+    rows: list[dict[str, Any]] = []
+    suites = AGENTDOJO_SUITES if include_suite else ("__overall__",)
+    for suite in suites:
+        for attack in _ATTACKS:
+            for defense in _DEFENSES:
+                values = grouped.get((suite, attack, defense), ())
+                if not values:
+                    continue
+                targeted = _metric_summary(values, "targeted_attack_success", conservative_invalid=True)
+                utility = _metric_summary(values, "utility", conservative_invalid=True)
+                row: dict[str, Any] = {
                     "attack": attack,
                     "defense": defense,
-                    "planned_n": len(rows),
-                    "valid_n": sum(row.valid for row in rows),
-                    "invalid_n": sum(not row.valid for row in rows),
+                    "planned_n": len(values),
+                    "valid_n": sum(item.valid for item in values),
+                    "invalid_n": sum(not item.valid for item in values),
                     "targeted_asr": targeted,
                     "utility_under_attack": utility,
                 }
-            )
+                if include_suite:
+                    row = {"suite": suite, **row}
+                rows.append(row)
+    return rows
 
-    clean_utility: list[dict[str, Any]] = []
-    for defense in _DEFENSES:
-        rows = grouped_clean.get(defense, [])
-        if not rows:
-            continue
-        utility = _metric_summary(rows, "utility", conservative_invalid=True)
-        clean_utility.append(
-            {
+
+def _clean_summary_rows(
+    grouped: Mapping[tuple[str, str], Sequence[AgentDojoResultRecord]],
+    *,
+    include_suite: bool,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    suites = AGENTDOJO_SUITES if include_suite else ("__overall__",)
+    for suite in suites:
+        for defense in _DEFENSES:
+            values = grouped.get((suite, defense), ())
+            if not values:
+                continue
+            utility = _metric_summary(values, "utility", conservative_invalid=True)
+            row: dict[str, Any] = {
                 "defense": defense,
-                "planned_n": len(rows),
-                "valid_n": sum(row.valid for row in rows),
-                "invalid_n": sum(not row.valid for row in rows),
+                "planned_n": len(values),
+                "valid_n": sum(item.valid for item in values),
+                "invalid_n": sum(not item.valid for item in values),
                 "utility_without_attack": utility,
             }
-        )
+            if include_suite:
+                row = {"suite": suite, **row}
+            rows.append(row)
+    return rows
+
+
+def summarize_records(records: Iterable[AgentDojoResultRecord | Mapping[str, Any]]) -> dict[str, Any]:
+    """Summarize native formal records with both overall and suite strata.
+
+    Single-suite callers retain the historical ``attack_summary`` and
+    ``clean_utility`` shapes.  Multi-suite input additionally exposes
+    ``overall_*`` (pooled denominators) and ``suite_*`` (independent suite
+    denominators); no row is pooled across suites in the latter views.
+    """
+
+    parsed = [
+        item if isinstance(item, AgentDojoResultRecord) else AgentDojoResultRecord.model_validate(item)
+        for item in records
+    ]
+    if any(row.phase != "formal" for row in parsed):
+        raise ValueError("summarize_records accepts formal records only")
+    suites_present = tuple(sorted({row.suite for row in parsed}, key=lambda value: (AGENTDOJO_SUITES.index(value) if value in AGENTDOJO_SUITES else len(AGENTDOJO_SUITES), value)))
+    multi_suite = len(suites_present) > 1
+
+    grouped_attack_suite: dict[tuple[str, str, str], list[AgentDojoResultRecord]] = {}
+    grouped_clean_suite: dict[tuple[str, str], list[AgentDojoResultRecord]] = {}
+    for row in parsed:
+        if row.attack == "none":
+            grouped_clean_suite.setdefault((row.suite, row.defense), []).append(row)
+        else:
+            grouped_attack_suite.setdefault((row.suite, row.attack, row.defense), []).append(row)
+
+    grouped_attack_overall: dict[tuple[str, str, str], list[AgentDojoResultRecord]] = {}
+    grouped_clean_overall: dict[tuple[str, str], list[AgentDojoResultRecord]] = {}
+    for (suite, attack, defense), values in grouped_attack_suite.items():
+        grouped_attack_overall.setdefault(("__overall__", attack, defense), []).extend(values)
+    for (suite, defense), values in grouped_clean_suite.items():
+        grouped_clean_overall.setdefault(("__overall__", defense), []).extend(values)
+
+    overall_attack_summary = _attack_summary_rows(grouped_attack_overall, include_suite=False)
+    suite_attack_summary = _attack_summary_rows(grouped_attack_suite, include_suite=True)
+    overall_clean_utility = _clean_summary_rows(grouped_clean_overall, include_suite=False)
+    suite_clean_utility = _clean_summary_rows(grouped_clean_suite, include_suite=True)
+
+    # Historical names are intentionally retained.  For the aggregate input,
+    # they refer to pooled rows so existing consumers still receive a useful
+    # table while new consumers can select the suite-stratified rows above.
+    attack_summary = overall_attack_summary if multi_suite else [
+        {key: value for key, value in row.items() if key != "suite"}
+        for row in suite_attack_summary
+    ]
+    clean_utility = overall_clean_utility if multi_suite else [
+        {key: value for key, value in row.items() if key != "suite"}
+        for row in suite_clean_utility
+    ]
     return {
         "schema_version": "1",
         "record_count": len(parsed),
         "planned_n": len(parsed),
         "valid_n": sum(row.valid for row in parsed),
         "invalid_n": sum(not row.valid for row in parsed),
+        "suite_count": len(suites_present),
+        "suites": list(suites_present),
         "attack_summary": attack_summary,
         "clean_utility": clean_utility,
+        "overall_attack_summary": overall_attack_summary,
+        "suite_attack_summary": suite_attack_summary,
+        "overall_clean_utility": overall_clean_utility,
+        "suite_clean_utility": suite_clean_utility,
     }
-
 
 def _csv_value(value: Any) -> str | int | float | bool | None:
     if isinstance(value, (dict, list, tuple)):
@@ -295,47 +357,56 @@ def _tex_label(value: Any) -> str:
 
 
 def _publication_tex(report: Mapping[str, Any]) -> str:
+    """Render a compact LaTeX table, adding a suite column for aggregates."""
+
+    multi_suite = int(report.get("suite_count", 1)) > 1
+    rows = report.get("suite_attack_summary", []) if multi_suite else report.get("attack_summary", [])
+    clean_rows = report.get("suite_clean_utility", []) if multi_suite else report.get("clean_utility", [])
+    first_col = "Suite & " if multi_suite else ""
+    column_spec = "lllrrrrrr" if multi_suite else "llrrrrrr"
     lines = [
         "% Native AgentDojo external validation; attacks are intentionally separate.",
-        "\\begin{tabular}{llrrrrrr}",
-        "Attack / condition & Defense & Planned & Valid & Invalid & ASR/utility & ITT 95\\% CI & Valid-only " + r"\\",
+        f"\\begin{{tabular}}{{{column_spec}}}",
+        first_col + "Attack / condition & Defense & Planned & Valid & Invalid & ASR/utility & ITT 95\\% CI & Valid-only " + "\\\\",
         "\\hline",
     ]
-    for row in report["attack_summary"]:
+    for row in rows:
         asr = row["targeted_asr"]
         utility = row["utility_under_attack"]
         asr_ci = asr.get("wilson") or {}
-        util_ci = utility.get("wilson") or {}
+        suite_prefix = f"{_tex_label(row['suite'])} & " if multi_suite else ""
         lines.append(
-            f"{_tex_label(row['attack'])} ASR & {_tex_label(row['defense'])} & "
+            f"{suite_prefix}{_tex_label(row['attack'])} ASR & {_tex_label(row['defense'])} & "
             f"{row['planned_n']} & {row['valid_n']} & {row['invalid_n']} & "
             f"{asr['itt_rate']:.3f} / {utility['itt_rate']:.3f} & "
-            f"[{asr_ci.get('lower', 0):.3f},{asr_ci.get('upper', 0):.3f}] & " +
-            (f"{asr.get('valid_only_rate') if asr.get('valid_only_rate') is not None else 'NA'} " + r"\\"),
+            f"[{asr_ci.get('lower', 0):.3f},{asr_ci.get('upper', 0):.3f}] & "
+            + (f"{asr.get('valid_only_rate') if asr.get('valid_only_rate') is not None else 'NA'} " + "\\\\"),
         )
-    for row in report["clean_utility"]:
+    for row in clean_rows:
         metric = row["utility_without_attack"]
         ci = metric.get("wilson") or {}
+        suite_prefix = f"{_tex_label(row['suite'])} & " if multi_suite else ""
         lines.append(
-            f"Clean utility & {_tex_label(row['defense'])} & {row['planned_n']} & "
+            f"{suite_prefix}Clean utility & {_tex_label(row['defense'])} & {row['planned_n']} & "
             f"{row['valid_n']} & {row['invalid_n']} & {metric['itt_rate']:.3f} & "
-            f"[{ci.get('lower', 0):.3f},{ci.get('upper', 0):.3f}] & " +
-            (f"{metric.get('valid_only_rate') if metric.get('valid_only_rate') is not None else 'NA'} " + r"\\"),
+            f"[{ci.get('lower', 0):.3f},{ci.get('upper', 0):.3f}] & "
+            + (f"{metric.get('valid_only_rate') if metric.get('valid_only_rate') is not None else 'NA'} " + "\\\\"),
         )
     lines.extend(["\\end{tabular}", ""])
     return "\n".join(lines)
 
-
-def _fallback_png(path: Path) -> None:
-    """Write a small real two-panel PNG when matplotlib is unavailable."""
-    width, height = 160, 80
+def _fallback_png(path: Path, *, panels: int = 2) -> None:
+    """Write a small real PNG when matplotlib is unavailable."""
+    panels = max(1, int(panels))
+    panel_width = 72
+    width, height = panel_width * panels + 16, 80
     rows = []
     for y in range(height):
         row = bytearray([0])
         for x in range(width):
-            if 8 < x < 76 and 12 < y < 68:
-                color = (76, 120, 168) if y > 40 else (245, 133, 24)
-            elif 84 < x < 152 and 12 < y < 68:
+            panel = min(panels - 1, max(0, (x - 8) // panel_width))
+            within = (x - 8) % panel_width
+            if 8 < x < width - 8 and 12 < y < 68 and within > 4:
                 color = (76, 120, 168) if y > 40 else (245, 133, 24)
             else:
                 color = (255, 255, 255)
@@ -348,34 +419,54 @@ def _fallback_png(path: Path) -> None:
     with path.open("xb") as handle:
         handle.write(payload)
 
-
 def _plot(path: Path, report: Mapping[str, Any]) -> None:
+    """Plot attack ASR by suite (four panels for the full benchmark)."""
+    multi_suite = int(report.get("suite_count", 1)) > 1
+    suites = list(report.get("suites", [])) if multi_suite else []
+    if not suites:
+        suites = ["__overall__"]
+    rows = report.get("suite_attack_summary", []) if multi_suite else report.get("attack_summary", [])
+    ncols = 2
+    nrows = (len(suites) + ncols - 1) // ncols
     try:
         import matplotlib
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except Exception:
-        _fallback_png(path)
+        _fallback_png(path, panels=len(suites))
         return
-    fig, axes = plt.subplots(1, 2, figsize=(8.0, 3.4), sharey=True)
-    attack_rows = report.get("attack_summary", [])
-    for ax, attack in zip(axes, _ATTACKS):
-        subset = [row for row in attack_rows if row["attack"] == attack]
+    fig, axes = plt.subplots(nrows, ncols, figsize=(8.0, 3.4 * nrows), squeeze=False, sharey=True)
+    flat_axes = list(axes.flat)
+    for index, suite in enumerate(suites):
+        ax = flat_axes[index]
+        subset = [row for row in rows if (row.get("suite", "__overall__") == suite)]
         labels = ["None", "Repeat user prompt"]
-        values = []
-        for defense in _DEFENSES:
-            found = next((row for row in subset if row["defense"] == defense), None)
-            values.append((found or {}).get("targeted_asr", {}).get("itt_rate", 0.0))
-        ax.bar(labels, values, color=("#4c78a8", "#f58518"))
-        ax.set_title(attack.replace("_", " ").title())
-        ax.set_ylabel("Targeted ASR (ITT)" if ax is axes[0] else "")
+        values_by_attack: dict[str, list[float]] = {}
+        for attack in _ATTACKS:
+            values_by_attack[attack] = []
+            attack_rows = [row for row in subset if row["attack"] == attack]
+            for defense in _DEFENSES:
+                found = next((row for row in attack_rows if row["defense"] == defense), None)
+                values_by_attack[attack].append((found or {}).get("targeted_asr", {}).get("itt_rate", 0.0))
+        # Keep two bars per defense, grouped by attack; this is compact and
+        # allows the same figure to compare all four suite denominators.
+        x = list(range(len(_ATTACKS)))
+        width = 0.35
+        for offset, defense in enumerate(_DEFENSES):
+            vals = [values_by_attack[attack][offset] for attack in _ATTACKS]
+            ax.bar([item + (offset - 0.5) * width for item in x], vals, width=width, label=defense.replace("_", " "))
+        ax.set_xticks(x, [attack.replace("_", " ").title() for attack in _ATTACKS])
+        ax.set_title("Overall" if suite == "__overall__" else suite.title())
+        ax.set_ylabel("Targeted ASR (ITT)")
         ax.set_ylim(0.0, 1.0)
         ax.tick_params(axis="x", rotation=18)
+        ax.legend(fontsize=7)
+    for ax in flat_axes[len(suites):]:
+        ax.axis("off")
     fig.tight_layout()
     with path.open("xb") as handle:
         fig.savefig(handle, format="png", dpi=160)
     plt.close(fig)
-
 
 def write_analysis_bundle(
     records: Sequence[AgentDojoResultRecord],
@@ -392,8 +483,9 @@ def write_analysis_bundle(
     root.mkdir(parents=True, exist_ok=False)
     report = summarize_records(records)
     record_rows = _record_rows(records)
-    attack_rows = report["attack_summary"]
-    clean_rows = report["clean_utility"]
+    multi_suite = int(report.get("suite_count", 1)) > 1
+    attack_rows = report["suite_attack_summary"] if multi_suite else report["attack_summary"]
+    clean_rows = report["suite_clean_utility"] if multi_suite else report["clean_utility"]
     outputs: dict[str, Any] = {
         "records.json": record_rows,
         "records.csv": record_rows,
@@ -428,6 +520,8 @@ def write_analysis_bundle(
         "plan_sha256": plan_hash,
         "attempt_selection_sha256": attempt_selection_hash,
         "record_count": len(records),
+        "suite_count": report.get("suite_count", 1),
+        "suites": report.get("suites", []),
         "input_record_sha256": dict(sorted((input_record_hashes or {}).items())),
         "outputs": hashes,
         "output_sha256": hashes,

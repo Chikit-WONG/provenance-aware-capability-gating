@@ -68,6 +68,32 @@ def select_attempts(
     }
 
 
+def select_full_attempts(
+    plan_root: str | Path,
+    artifact_root: str | Path,
+    output_path: str | Path,
+    *,
+    scheduler_interruptions: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compatibility entry point for the four-suite selector.
+
+    The implementation lives in the dedicated full-benchmark CLI; keeping
+    this forwarding function lets existing analysis automation import one
+    selector module without changing the legacy single-suite API.
+    """
+    try:
+        from select_agentdojo_external_full import select_full_attempts as _select_full_attempts
+    except ModuleNotFoundError:
+        from scripts.select_agentdojo_external_full import select_full_attempts as _select_full_attempts
+
+    return _select_full_attempts(
+        plan_root,
+        artifact_root,
+        output_path,
+        scheduler_interruptions=scheduler_interruptions,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", "--frozen-plan", dest="plan", type=Path, required=True)
