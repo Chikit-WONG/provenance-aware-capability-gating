@@ -39,10 +39,16 @@ VLLM_PID=$!
 cleanup() { kill "${VLLM_PID}" 2>/dev/null || true; wait "${VLLM_PID}" 2>/dev/null || true; }
 trap cleanup EXIT
 
-for _ in $(seq 1 60); do
-  if curl --fail --silent "http://127.0.0.1:${PORT}/v1/models" >/dev/null; then break; fi
+CURL_BIN="${CURL_BIN:-/usr/bin/curl}"
+for _ in $(seq 1 600); do
+  if ! kill -0 "${VLLM_PID}" 2>/dev/null; then
+    echo "vLLM exited before readiness; log follows:" >&2
+    cat "${VLLM_LOG}" >&2 || true
+    exit 1
+  fi
+  if "${CURL_BIN}" --fail --silent "http://127.0.0.1:${PORT}/v1/models" >/dev/null; then break; fi
   sleep 1
 done
-curl --fail --silent "http://127.0.0.1:${PORT}/v1/models" >/dev/null
+"${CURL_BIN}" --fail --silent "http://127.0.0.1:${PORT}/v1/models" >/dev/null
 source "/hpc2hdd/home/ckwong627/miniconda3/etc/profile.d/conda.sh"
 conda run -n agentdojo-external python "${PROJECT_ROOT}/scripts/run_agentdojo_external.py"   --plan "${PLAN}" --artifact-root "${ARTIFACT_ROOT}" --phase "${PHASE}"   --start-index "${START_INDEX}" --limit "${LIMIT}" --attempt-id "${ATTEMPT_ID}" --port "${PORT}"   2>&1 | tee "${CONTROLLER_LOG}"

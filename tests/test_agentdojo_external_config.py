@@ -20,6 +20,8 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertIn("launch_vllm.sh", launcher)
         self.assertIn("agentdojo-external", launcher)
         self.assertIn("/v1/models", launcher)
+        self.assertIn("seq 1 600", launcher)
+        self.assertIn("kill -0 \"${VLLM_PID}\"", launcher)
         self.assertIn("run_agentdojo_external.py", launcher)
         self.assertIn("AGENTDOJO_PROJECT_ROOT", launcher)
         self.assertNotRegex(launcher, r"(?im)\bgit\s+clone\b")
