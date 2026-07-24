@@ -21,6 +21,7 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertIn("agentdojo-external", launcher)
         self.assertIn("/v1/models", launcher)
         self.assertIn("run_agentdojo_external.py", launcher)
+        self.assertIn("AGENTDOJO_PROJECT_ROOT", launcher)
         self.assertNotRegex(launcher, r"(?im)\bgit\s+clone\b")
         self.assertNotRegex(launcher, r"(?im)\bhf\s+download\b")
         self.assertNotRegex(launcher, r"(?i)(OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_API_KEY)\s*=")

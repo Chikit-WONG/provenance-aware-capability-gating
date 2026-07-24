@@ -17,7 +17,7 @@ if [[ "${PHASE}" == formal && -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
 fi
 MODEL_PATH="/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct"
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="${AGENTDOJO_PROJECT_ROOT:-/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating}"
 ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${PROJECT_ROOT}/artifacts/agentdojo-external-v1}"
 FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PROJECT_ROOT}/configs/frozen/agentdojo_external_v1}"
 mkdir -p "${ARTIFACT_ROOT}/slurm"
