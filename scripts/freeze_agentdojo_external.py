@@ -224,7 +224,7 @@ def enumerate_official_pairs(
                     }
                     reasons.append(f"{attack_name}: {type(exc).__name__}: {message}")
             runnable = not reasons
-            pair = canonical_pair(user_task_id, injection_task_id)
+            pair = canonical_pair(user_task_id, injection_task_id, suite_name)
             if not runnable:
                 pair = AgentDojoPair(
                     **pair.model_dump(), runnable=False, exclusion_reason="; ".join(reasons)
