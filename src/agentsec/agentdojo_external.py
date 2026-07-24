@@ -645,9 +645,6 @@ def build_matrix_plan(
         raise ValueError("duplicate AgentDojo pair in run-plan input")
     model_config_hash = _require_model_config_hash(model_config_hash)
     users = tuple(dict.fromkeys(str(user) for user in clean_user_task_ids))
-    pair_users = {pair.user_task_id for pair in normalized}
-    if any(user not in pair_users for user in users):
-        raise ValueError("clean user task IDs must belong to matrix pairs")
     rows: list[AgentDojoRunSpec] = []
     for pair in normalized:
         for attack in CANONICAL_ATTACKS:
