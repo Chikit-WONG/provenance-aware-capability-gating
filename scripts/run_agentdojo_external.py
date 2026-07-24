@@ -9,6 +9,8 @@ independent official-trace root; no benchmark-wide Cartesian helper is used.
 from __future__ import annotations
 
 import argparse
+import datetime
+import enum
 import hashlib
 import importlib
 import inspect
@@ -28,6 +30,86 @@ from agentsec.agentdojo_external import AgentDojoResultRecord, AgentDojoRunSpec 
 
 
 MODEL_NAMES = {"qwen3-vl-8b": "Qwen"}
+
+
+def _json_dumps_with_temporal_support(value: Any, *args: Any, default: Callable[[Any], Any] | None = None, **kwargs: Any) -> str:
+    """Serialize AgentDojo JSON tool payloads without losing datetime values.
+
+    AgentDojo 0.1.35 builds JSON tool messages from ``model_dump()`` in Python
+    mode.  Workspace objects therefore contain ``datetime``/``date`` values,
+    which the stock ``json.dumps`` call cannot encode.  Keep the public JSON
+    format, but encode temporal values as ISO-8601 strings and retain any
+    caller-provided fallback for other custom objects.
+    """
+
+    def _default(obj: Any) -> Any:
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+            return obj.isoformat()
+        if isinstance(obj, enum.Enum):
+            return obj.value
+        if isinstance(obj, Path):
+            return obj.as_posix()
+        try:
+            from pydantic import BaseModel
+
+            if isinstance(obj, BaseModel):
+                return obj.model_dump(mode="json")
+        except ImportError:
+            pass
+        if default is not None:
+            converted = default(obj)
+            if converted is not obj:
+                return converted
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+    kwargs["default"] = _default
+    return json.dumps(value, *args, **kwargs)
+
+
+def _json_tool_result_to_str(tool_result: Any) -> str:
+    """Match AgentDojo's JSON formatter while supporting temporal fields."""
+
+    from pydantic import BaseModel
+
+    if isinstance(tool_result, BaseModel):
+        value: Any = tool_result.model_dump()
+    elif isinstance(tool_result, list):
+        items: list[Any] = []
+        for item in tool_result:
+            if type(item) in (str, int):
+                items.append(str(item))
+            elif isinstance(item, BaseModel):
+                items.append(item.model_dump())
+            else:
+                raise TypeError("Not valid type for item tool result: " + str(type(item)))
+        value = items
+    else:
+        return str(tool_result)
+    return _json_dumps_with_temporal_support(value).strip()
+
+
+def _patch_json_tool_formatters(pipeline: Any) -> int:
+    """Patch only AgentDojo ToolsExecutor nodes to use the safe JSON formatter."""
+
+    patched = 0
+    visited: set[int] = set()
+
+    def visit(node: Any) -> None:
+        nonlocal patched
+        marker = id(node)
+        if marker in visited:
+            return
+        visited.add(marker)
+        if node.__class__.__name__ == "ToolsExecutor" and hasattr(node, "output_formatter"):
+            node.output_formatter = _json_tool_result_to_str
+            patched += 1
+        for child in getattr(node, "elements", ()) or ():
+            visit(child)
+
+    visit(pipeline)
+    if patched == 0:
+        raise RuntimeError("AgentDojo pipeline has no ToolsExecutor to patch")
+    return patched
 
 
 def _hash_path(path: Path) -> str:
@@ -97,6 +179,7 @@ def build_pipeline(arm: str, *, port: int) -> Any:
             tool_output_format="json",
         )
     )
+    _patch_json_tool_formatters(pipeline)
     pipeline.name = f"qwen3-vl-8b__{arm}"
     return pipeline
 

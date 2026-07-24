@@ -1,3 +1,4 @@
+import datetime
 import json
 import tempfile
 import unittest
@@ -42,6 +43,54 @@ def _record(spec: AgentDojoRunSpec, attempt: str, **kwargs: object) -> AgentDojo
 
 
 class AttemptTests(unittest.TestCase):
+    def test_agentdojo_json_compat_serializes_temporal_values(self) -> None:
+        import importlib.util
+
+        script_path = Path("scripts/run_agentdojo_external.py")
+        spec = importlib.util.spec_from_file_location("run_agentdojo_external_json_compat", script_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        encoded = module._json_dumps_with_temporal_support(
+            {"when": datetime.datetime(2026, 7, 24, 12, 34, 56)},
+            default=lambda value: value,
+        )
+        self.assertIn('"when": "2026-07-24T12:34:56"', encoded)
+
+    def test_agentdojo_pipeline_tools_executor_is_patched(self) -> None:
+        import importlib.util
+        from pydantic import BaseModel
+
+        script_path = Path("scripts/run_agentdojo_external.py")
+        spec = importlib.util.spec_from_file_location("run_agentdojo_external_formatter_patch", script_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        class Event(BaseModel):
+            when: datetime.datetime
+
+        class ToolsExecutor:
+            def __init__(self) -> None:
+                self.output_formatter = lambda _value: "old"
+
+        class ToolsExecutionLoop:
+            def __init__(self, *elements: object) -> None:
+                self.elements = elements
+
+        class Pipeline:
+            def __init__(self, *elements: object) -> None:
+                self.elements = elements
+
+        executor = ToolsExecutor()
+        patched = module._patch_json_tool_formatters(Pipeline(ToolsExecutionLoop(executor)))
+        self.assertEqual(patched, 1)
+        self.assertEqual(
+            json.loads(executor.output_formatter(Event(when=datetime.datetime(2026, 7, 24, 12, 34, 56))))["when"],
+            "2026-07-24T12:34:56",
+        )
+
     def test_missing_initial_can_select_one_declared_recovery(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
