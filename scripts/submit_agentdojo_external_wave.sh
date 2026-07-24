@@ -59,7 +59,8 @@ if [[ "${PHASE}" == development ]]; then
   # A development submission is exactly one task covering the complete plan.
   AGENTDOJO_FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PLAN_DIR}}" \
     AGENTDOJO_ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-external-v1}" \
-    sbatch "${ROOT}/scripts/run_agentdojo_external.slurm" development 0 "${COUNT}" attempt-0001
+    sbatch --output="${SLURM_LOG_DIR}/%x-%A_%a.out" --error="${SLURM_LOG_DIR}/%x-%A_%a.err" \
+      "${ROOT}/scripts/run_agentdojo_external.slurm" development 0 "${COUNT}" attempt-0001
   exit 0
 fi
 
@@ -86,4 +87,5 @@ ARRAY_END=$((SHARD_START + TASKS_IN_WAVE - 1))
 # to LIMIT consecutive rows, so later waves never repeat an earlier shard.
 AGENTDOJO_FROZEN_ROOT="${AGENTDOJO_FROZEN_ROOT:-${PLAN_DIR}}" \
   AGENTDOJO_ARTIFACT_ROOT="${AGENTDOJO_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-external-v1}" \
-  sbatch --array="${SHARD_START}-${ARRAY_END}%2"     "${ROOT}/scripts/run_agentdojo_external.slurm" formal 0 "${LIMIT}" attempt-0001
+  sbatch --output="${SLURM_LOG_DIR}/%x-%A_%a.out" --error="${SLURM_LOG_DIR}/%x-%A_%a.err" \
+    --array="${SHARD_START}-${ARRAY_END}%2" "${ROOT}/scripts/run_agentdojo_external.slurm" formal 0 "${LIMIT}" attempt-0001
