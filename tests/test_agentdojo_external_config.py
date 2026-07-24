@@ -25,6 +25,23 @@ class AgentDojoExternalConfigTests(unittest.TestCase):
         self.assertNotRegex(launcher, r"(?im)\bhf\s+download\b")
         self.assertNotRegex(launcher, r"(?i)(OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_API_KEY)\s*=")
 
+    def test_slurm_output_and_error_paths_are_absolute_artifact_paths(self) -> None:
+        launcher = Path("scripts/run_agentdojo_external.slurm").read_text(encoding="utf-8")
+        artifact_prefix = (
+            "/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/"
+            "Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/"
+            "Group_Project/provenance-aware-capability-gating/"
+            "artifacts/agentdojo-external-v1/slurm/"
+        )
+        self.assertIn(
+            f"#SBATCH --output={artifact_prefix}%x-%j.out",
+            launcher,
+        )
+        self.assertIn(
+            f"#SBATCH --error={artifact_prefix}%x-%j.err",
+            launcher,
+        )
+
     def test_wave_submitter_is_bounded_and_uses_verified_plan_counts(self) -> None:
         submitter = Path("scripts/submit_agentdojo_external_wave.sh").read_text(encoding="utf-8")
         self.assertIn("--array=", submitter)

@@ -4,8 +4,8 @@
 #SBATCH --gres=gpu:a40:1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=00:30:00
-#SBATCH --output=artifacts/agentdojo-external-v1/slurm/%x-%j.out
-#SBATCH --error=artifacts/agentdojo-external-v1/slurm/%x-%j.err
+#SBATCH --output=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%j.out
+#SBATCH --error=/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/Class/AIAA4313_L01-Frontier_Topics_in_AI_Security_and_Privacy/Group_Project/provenance-aware-capability-gating/artifacts/agentdojo-external-v1/slurm/%x-%j.err
 set -euo pipefail
 
 PHASE="${1:?phase development or formal}"
