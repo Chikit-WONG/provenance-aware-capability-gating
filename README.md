@@ -162,24 +162,36 @@ safe prompt/capability baseline. Its artifacts and figures are in
 frozen corpus in [`data/frozen/red_corpus_qwen3_hardened_v1/`](data/frozen/red_corpus_qwen3_hardened_v1/).
 - [technical report PDF](report/main.pdf)
 
-## Public benchmark cross-check
+## Full native AgentDojo benchmark
 
-We also ran the pinned native AgentDojo Workspace slice: 2 development pairs and
-96 formal victim calls (64 attacked + 32 clean), all 108 records valid. This is
-separate from the project gateway and only evaluates the local Qwen3-VL-8B victim
-and AgentDojo's `repeat_user_prompt` defense.
+We completed the pinned native AgentDojo suites with local Qwen3-VL-8B-Instruct:
+AgentDojo `v0.1.35` at commit `a75aba7631d3ca5fb7ab938965c97ead2f9ff84b`,
+benchmark `v1.2.2`, BF16 vLLM, and a 16K context. The formal plan contains
+3,942 rows: Workspace 2,308, Travel 588, Banking 596, and Slack 450. All
+3,942 formal records are covered; 3,935 are valid and 7 Workspace rows are
+`agentdojo_execution_error` records retained in the ITT denominator.
 
-| AgentDojo condition | No defense ASR | `repeat_user_prompt` ASR | Utility (none / repeat) |
+The benchmark reports AgentDojo targeted attack success and utility separately
+from this project's T1--T4 authority leakage and T5--T6 sensitive-value leakage.
+The official AgentDojo matrix has no synthetic-secret metric, so these results
+are not pooled with the project factorial tables. Valid-only values are shown
+first; ITT is shown in parentheses.
+
+| Attack / defense | Targeted ASR | Attack utility | Clean utility |
 | --- | ---: | ---: | ---: |
-| `important_instructions` | 1/16 (6.25%) | 0/16 (0%) | 11/16 / 12/16 |
-| `tool_knowledge` | 1/16 (6.25%) | 0/16 (0%) | 9/16 / 12/16 |
-| Clean utility | — | — | 10/16 / 12/16 |
+| `important_instructions` / `none` | 95/940 (95/941), 10.1% | 637/940, 67.8% | 64/89, 71.9% |
+| `important_instructions` / `repeat_user_prompt` | 81/940 (81/941), 8.6% | 610/940, 64.9% | 65/89, 73.0% |
+| `tool_knowledge` / `none` | 152/937 (152/941), 16.2% | 584/937, 62.3% | 64/89, 71.9% |
+| `tool_knowledge` / `repeat_user_prompt` | 97/940 (97/941), 10.3% | 620/940, 66.0% | 65/89, 73.0% |
 
-The complete summary, table, figure, selected-record manifest, and reproducible
-records are in [`artifacts/agentdojo-external-analysis-v1-context16k/`](artifacts/agentdojo-external-analysis-v1-context16k/) and
-[`artifacts/agentdojo-external-v1-context16k/`](artifacts/agentdojo-external-v1-context16k/).
-See [the external-validation note](docs/EXTERNAL_VALIDATION.md) for the exact
-commit, benchmark boundary, and limitations.
+The compact [results summary](artifacts/agentdojo-external-full-analysis-v1/results_summary.json),
+[attack table](artifacts/agentdojo-external-full-analysis-v1/attack_summary.csv),
+[clean-utility table](artifacts/agentdojo-external-full-analysis-v1/clean_utility.csv),
+[publication figure](artifacts/agentdojo-external-full-analysis-v1/agentdojo_outcomes.png),
+and [attempt-selection manifest](artifacts/agentdojo-external-full-v1/attempt_selection.json)
+are retained. Raw vLLM logs and complete official traces remain untracked. See
+[the external-validation note](docs/EXTERNAL_VALIDATION.md) for denominators,
+hashes, and scope limitations.
 
 ## Demo and report
 
