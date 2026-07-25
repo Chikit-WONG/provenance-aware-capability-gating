@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FROZEN_ROOT="${AGENTDOJO_TRANSFER_FROZEN_ROOT:-${ROOT}/configs/frozen/agentdojo_public_transfer_slice_v1}"
 ARTIFACT_ROOT="${AGENTDOJO_TRANSFER_ARTIFACT_ROOT:-${ROOT}/artifacts/agentdojo-public-transfer-slice-v1}"
 ROWS_PER_SHARD="${AGENTDOJO_TRANSFER_ROWS_PER_SHARD:-8}"
+PARTITION="${AGENTDOJO_TRANSFER_PARTITION:-debug}"
 
 [[ "${ROWS_PER_SHARD}" -ge 1 && "${ROWS_PER_SHARD}" -le 8 ]] || exit 2
 
@@ -24,6 +25,7 @@ for suite in workspace travel banking slack; do
     AGENTDOJO_SUITE="${suite}" \
     VLLM_BASE_PORT="${suite_base_port}" \
     sbatch --parsable \
+      --partition="${PARTITION}" \
       --job-name="ad-transfer-${suite}" \
       --output="${suite_root}/slurm/%x_%A_%a.out" \
       --error="${suite_root}/slurm/%x_%A_%a.err" \
