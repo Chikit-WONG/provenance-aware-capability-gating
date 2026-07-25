@@ -27,12 +27,16 @@ from .agentdojo_external import (
     AGENTDOJO_SUITES,
     AgentDojoResultRecord,
     AgentDojoRunSpec,
+    TRANSFER_DEFENSES,
 )
 from .aggregate import wilson_interval
 from .attempts import AttemptSelectionManifest, INFRASTRUCTURE_REASONS
 
 _ATTACKS = ("important_instructions", "tool_knowledge")
-_DEFENSES = ("none", "repeat_user_prompt")
+# Keep one analyzer for both the two-arm external baseline and the seven-arm
+# capability/provenance transfer matrix.  Baseline inputs simply omit the
+# additional arms, so their published rows remain unchanged.
+_DEFENSES = TRANSFER_DEFENSES
 _HEX64 = set("0123456789abcdef")
 
 
@@ -440,7 +444,6 @@ def _plot(path: Path, report: Mapping[str, Any]) -> None:
     for index, suite in enumerate(suites):
         ax = flat_axes[index]
         subset = [row for row in rows if (row.get("suite", "__overall__") == suite)]
-        labels = ["None", "Repeat user prompt"]
         values_by_attack: dict[str, list[float]] = {}
         for attack in _ATTACKS:
             values_by_attack[attack] = []
@@ -448,13 +451,15 @@ def _plot(path: Path, report: Mapping[str, Any]) -> None:
             for defense in _DEFENSES:
                 found = next((row for row in attack_rows if row["defense"] == defense), None)
                 values_by_attack[attack].append((found or {}).get("targeted_asr", {}).get("itt_rate", 0.0))
-        # Keep two bars per defense, grouped by attack; this is compact and
-        # allows the same figure to compare all four suite denominators.
+        # Keep one bar per defense, grouped by attack.  Scale the bar width so
+        # seven transfer arms remain readable without overlapping neighboring
+        # attack groups; the two-arm baseline retains the wider historical bars.
         x = list(range(len(_ATTACKS)))
-        width = 0.35
+        width = min(0.35, 0.8 / len(_DEFENSES))
         for offset, defense in enumerate(_DEFENSES):
             vals = [values_by_attack[attack][offset] for attack in _ATTACKS]
-            ax.bar([item + (offset - 0.5) * width for item in x], vals, width=width, label=defense.replace("_", " "))
+            centre = (len(_DEFENSES) - 1) / 2
+            ax.bar([item + (offset - centre) * width for item in x], vals, width=width, label=defense.replace("_", " "))
         ax.set_xticks(x, [attack.replace("_", " ").title() for attack in _ATTACKS])
         ax.set_title("Overall" if suite == "__overall__" else suite.title())
         ax.set_ylabel("Targeted ASR (ITT)")
