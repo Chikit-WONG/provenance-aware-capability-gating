@@ -86,7 +86,10 @@ def _strings(value: Any) -> list[str]:
 
 
 def _message_text(message: Mapping[str, Any]) -> str:
-    content = message.get("content", "")
+    if isinstance(message, Mapping):
+        content = message.get("content", "")
+    else:
+        content = getattr(message, "content", "")
     if isinstance(content, str):
         return content
     return " ".join(_strings(content))
@@ -123,7 +126,10 @@ class AgentDojoGate:
         self._user_text = " ".join(
             _message_text(message).casefold()
             for message in messages
-            if message.get("role") == "user"
+            if (
+                (message.get("role") if isinstance(message, Mapping) else getattr(message, "role", ""))
+                == "user"
+            )
         )
 
     def observe_tool_output(self, tool_name: str, output: Any) -> None:
