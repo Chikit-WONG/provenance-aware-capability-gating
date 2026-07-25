@@ -17,7 +17,8 @@ LIMIT="${3:-12}"
 ATTEMPT_ID="${4:-attempt-0001}"
 SUITE="${5:-${AGENTDOJO_SUITE:-}}"
 if [[ "${PHASE}" == formal && -n "${SLURM_ARRAY_TASK_ID:-}" ]]; then
-  START_INDEX=$((SLURM_ARRAY_TASK_ID * LIMIT))
+  ARRAY_OFFSET="${AGENTDOJO_ARRAY_OFFSET:-0}"
+  START_INDEX=$((ARRAY_OFFSET + SLURM_ARRAY_TASK_ID * LIMIT))
 fi
 MODEL_PATH="/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Qwen3-VL-8B-Instruct"
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
