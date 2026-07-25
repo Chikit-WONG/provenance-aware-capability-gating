@@ -301,6 +301,23 @@ def summarize_records(records: Iterable[AgentDojoResultRecord | Mapping[str, Any
         {key: value for key, value in row.items() if key != "suite"}
         for row in suite_clean_utility
     ]
+    adapter_summary = []
+    for defense in _DEFENSES:
+        values = [row for row in parsed if row.defense == defense]
+        if not values:
+            continue
+        adapter_records = sum(bool(row.adapter_mode) for row in values)
+        decision_hashes = sum(bool(row.adapter_decision_sha256) for row in values)
+        adapter_summary.append(
+            {
+                "defense": defense,
+                "records": len(values),
+                "adapter_records": adapter_records,
+                "denied_calls": sum(row.adapter_denied_calls for row in values),
+                "decision_hashes": decision_hashes,
+                "missing_decision_hash": adapter_records - decision_hashes,
+            }
+        )
     return {
         "schema_version": "1",
         "record_count": len(parsed),
@@ -315,6 +332,7 @@ def summarize_records(records: Iterable[AgentDojoResultRecord | Mapping[str, Any
         "suite_attack_summary": suite_attack_summary,
         "overall_clean_utility": overall_clean_utility,
         "suite_clean_utility": suite_clean_utility,
+        "adapter_summary": adapter_summary,
     }
 
 def _csv_value(value: Any) -> str | int | float | bool | None:
