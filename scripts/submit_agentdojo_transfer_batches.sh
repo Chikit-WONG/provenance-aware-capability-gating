@@ -24,7 +24,6 @@ for suite in workspace travel banking slack; do
   (( offset < count )) || continue
   suite_root="${ARTIFACT_ROOT}/${suite}"
   mkdir -p "${suite_root}/slurm"
-  suite_base_port=$((18000 + (case_index:=0) * 4000))
   case "${suite}" in
     workspace) suite_base_port=18000 ;;
     travel) suite_base_port=22000 ;;
