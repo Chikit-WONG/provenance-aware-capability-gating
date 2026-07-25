@@ -27,6 +27,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from agentsec.agentdojo_external import AgentDojoResultRecord, AgentDojoRunSpec  # noqa: E402
+from agentsec.agentdojo_guard import AgentDojoGate  # noqa: E402
 
 
 MODEL_NAMES = {"qwen3-vl-8b": "Qwen"}
@@ -159,11 +160,56 @@ def _import_pipeline_types() -> tuple[Any, Any, Any]:
     return AgentPipeline, PipelineConfig, models
 
 
-def build_pipeline(arm: str, *, port: int) -> Any:
-    """Build exactly the official configured victim pipeline for one arm."""
 
-    if arm not in {"none", "repeat_user_prompt"}:
-        raise ValueError("arm must be none or repeat_user_prompt")
+def _install_guarded_executor(pipeline: Any, gate: AgentDojoGate) -> None:
+    """Replace native ToolsExecutor nodes with a runtime-proxy gate."""
+    pipeline_module = importlib.import_module("agentdojo.agent_pipeline")
+    tools_executor_type = getattr(pipeline_module, "ToolsExecutor")
+
+    class _GatedRuntime:
+        def __init__(self, runtime: Any) -> None:
+            self._runtime = runtime
+
+        @property
+        def functions(self) -> Any:
+            return self._runtime.functions
+
+        def run_function(self, env: Any, function: str, kwargs: Mapping[str, Any], raise_on_error: bool = False) -> Any:
+            allowed, reason = gate.evaluate(function, kwargs)
+            if not allowed:
+                if raise_on_error:
+                    raise RuntimeError(f"AgentDojoGateDenied: {reason}")
+                return "", f"AgentDojoGateDenied: {reason}"
+            result, error = self._runtime.run_function(env, function, kwargs, raise_on_error=raise_on_error)
+            if error is None:
+                gate.observe_tool_output(function, result)
+            return result, error
+
+    class _GatedToolsExecutor(tools_executor_type):
+        def query(self, query: str, runtime: Any, env: Any = None, messages: Sequence[Mapping[str, Any]] = (), extra_args: dict = None) -> Any:
+            gate.observe_messages(messages)
+            return super().query(query, _GatedRuntime(runtime), env, messages, extra_args or {})
+
+
+    def replace(node: Any) -> Any:
+        if node.__class__.__name__ == "ToolsExecutor":
+            guarded = _GatedToolsExecutor(node.output_formatter)
+            return guarded
+        children = getattr(node, "elements", None)
+        if isinstance(children, list):
+            node.elements = [replace(child) for child in children]
+        return node
+
+    replace(pipeline)
+
+def build_pipeline(arm: str, *, port: int, gate: AgentDojoGate | None = None) -> Any:
+    """Build exactly the official configured victim pipeline for one arm."""
+    valid_arms = {
+        "none", "repeat_user_prompt", "capability_only", "provenance_only",
+        "prompt_capability", "prompt_provenance", "full",
+    }
+    if arm not in valid_arms:
+        raise ValueError(f"unsupported AgentDojo defense arm: {arm}")
     os.environ["LOCAL_LLM_PORT"] = str(port)
     AgentPipeline, PipelineConfig, models = _import_pipeline_types()
     MODEL_NAMES["qwen3-vl-8b"] = "Qwen"
@@ -172,7 +218,7 @@ def build_pipeline(arm: str, *, port: int) -> Any:
         PipelineConfig(
             llm="vllm_parsed",
             model_id=None,
-            defense=None if arm == "none" else "repeat_user_prompt",
+            defense=None if arm in {"none", "capability_only", "provenance_only", "full"} else "repeat_user_prompt",
             system_message_name=None,
             system_message=None,
             tool_delimiter="tool",
@@ -180,6 +226,8 @@ def build_pipeline(arm: str, *, port: int) -> Any:
         )
     )
     _patch_json_tool_formatters(pipeline)
+    if gate is not None:
+        _install_guarded_executor(pipeline, gate)
     pipeline.name = f"qwen3-vl-8b__{arm}"
     return pipeline
 
@@ -313,6 +361,7 @@ def run_row(
     artifact_root: str | Path,
     attempt_id: str = "attempt-0001",
     suite_functions: tuple[Callable[..., Any], Callable[..., Any], Any] | None = None,
+    adapter_gate: AgentDojoGate | None = None,
 ) -> AgentDojoResultRecord:
     """Run and persist exactly one row in a fresh append-only attempt leaf."""
 
@@ -358,6 +407,9 @@ def run_row(
         error_text = f"{type(exc).__name__}: {exc}"
     trace_hash = _hash_path(trace_root) if any(trace_root.rglob("*")) else ""
     trace_path = trace_root.relative_to(Path(artifact_root)).as_posix()
+    adapter_decision_sha = ""
+    if adapter_gate is not None:
+        adapter_decision_sha = hashlib.sha256(json.dumps(adapter_gate.decisions, sort_keys=True).encode("utf-8")).hexdigest()
     record = AgentDojoResultRecord(
         **row.model_dump(),
         attempt_id=attempt_id,
@@ -370,6 +422,9 @@ def run_row(
         trace_sha256=trace_hash,
         duration_seconds=time.perf_counter() - started,
         error=error_text,
+        adapter_mode=adapter_gate.mode if adapter_gate is not None else "",
+        adapter_denied_calls=sum(1 for decision in (adapter_gate.decisions if adapter_gate is not None else ()) if not decision["allowed"]),
+        adapter_decision_sha256=adapter_decision_sha,
     )
     record_path = leaf / "record.json"
     with record_path.open("x", encoding="utf-8") as handle:
@@ -406,11 +461,14 @@ def run_slice(
             except Exception:
                 pass
         arm = row.defense
-        pipeline = pipelines.get(arm)
+        transfer_arms = {"capability_only", "provenance_only", "prompt_capability", "prompt_provenance", "full"}
+        gate = AgentDojoGate(arm) if arm in transfer_arms else None
+        pipeline = None if gate is not None else pipelines.get(arm)
         if pipeline is None:
-            pipeline = build_pipeline(arm, port=port)
-            pipelines[arm] = pipeline
-        outputs.append(run_row(row, pipeline=pipeline, artifact_root=artifact_root, attempt_id=attempt_id))
+            pipeline = build_pipeline(arm, port=port, gate=gate)
+            if gate is None:
+                pipelines[arm] = pipeline
+        outputs.append(run_row(row, pipeline=pipeline, artifact_root=artifact_root, attempt_id=attempt_id, adapter_gate=gate))
     return outputs
 
 

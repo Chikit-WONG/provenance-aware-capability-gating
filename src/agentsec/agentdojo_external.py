@@ -26,6 +26,15 @@ from pydantic import (
 AGENTDOJO_SUITES = ("workspace", "travel", "banking", "slack")
 CANONICAL_ATTACKS = ("important_instructions", "tool_knowledge")
 DEFENSES = ("none", "repeat_user_prompt")
+TRANSFER_DEFENSES = (
+    "none",
+    "repeat_user_prompt",
+    "capability_only",
+    "provenance_only",
+    "prompt_capability",
+    "prompt_provenance",
+    "full",
+)
 _PAIR_KEY_PREFIX = "workspace:v1.2.2:"
 _ATTACKS = CANONICAL_ATTACKS
 _DEFENSES = DEFENSES
@@ -124,7 +133,7 @@ class AgentDojoRunSpec(_FrozenModel):
     @field_validator("defense")
     @classmethod
     def require_defense(cls, value: str) -> str:
-        if value not in DEFENSES:
+        if value not in TRANSFER_DEFENSES:
             raise ValueError(f"unsupported AgentDojo defense: {value}")
         return value
 
@@ -196,6 +205,9 @@ class AgentDojoResultRecord(_FrozenModel):
     trace_sha256: str = ""
     duration_seconds: float = Field(default=0.0, ge=0.0)
     error: str = ""
+    adapter_mode: str = ""
+    adapter_denied_calls: int = Field(default=0, ge=0)
+    adapter_decision_sha256: str = ""
 
     @model_validator(mode="before")
     @classmethod
@@ -233,7 +245,7 @@ class AgentDojoResultRecord(_FrozenModel):
     @field_validator("defense")
     @classmethod
     def require_defense(cls, value: str) -> str:
-        if value not in DEFENSES:
+        if value not in TRANSFER_DEFENSES:
             raise ValueError(f"unsupported AgentDojo defense: {value}")
         return value
 
@@ -765,4 +777,37 @@ __all__ = [
     "validate_agentdojo_model_binding",
     "select_agentdojo_pairs",
     "validate_agentdojo_plan",
+    "TRANSFER_DEFENSES",
+    "build_transfer_plan_from_rows",
 ]
+
+def build_transfer_plan_from_rows(
+    baseline_rows: Sequence[AgentDojoRunSpec | Mapping[str, Any]],
+) -> list[AgentDojoRunSpec]:
+    """Expand an existing frozen baseline plan to the seven transfer arms."""
+
+    normalized = [AgentDojoRunSpec.model_validate(row) for row in baseline_rows]
+    expanded: list[AgentDojoRunSpec] = []
+    seen: set[tuple[str, str, str | None, str, str, str]] = set()
+    seen_base: set[tuple[str, str, str | None, str]] = set()
+    for row in normalized:
+        base_key = (row.phase, row.suite, row.user_task_id, row.injection_task_id, row.attack)
+        if base_key in seen_base:
+            continue
+        seen_base.add(base_key)
+        for defense in TRANSFER_DEFENSES:
+            cell = AgentDojoRunSpec(
+                suite=row.suite,
+                phase=row.phase,
+                user_task_id=row.user_task_id,
+                injection_task_id=row.injection_task_id,
+                attack=row.attack,
+                defense=defense,
+                model_config_hash=row.model_config_hash,
+            )
+            key = (cell.phase, cell.suite, cell.user_task_id, cell.injection_task_id, cell.attack, defense)
+            if key in seen:
+                raise ValueError(f"duplicate transfer plan cell: {key!r}")
+            seen.add(key)
+            expanded.append(cell)
+    return expanded
