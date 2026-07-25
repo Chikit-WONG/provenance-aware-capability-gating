@@ -2,6 +2,21 @@
 
 [English version](README.md)
 
+## 已冻结的项目主线：PACT 核心机制
+
+课程项目主线现在固定为确定性的 PACT（Provenance-Aware Capability
+Tracking/Control）。核心论点很窄但可审计：普通 capability 只检查值是否在
+allow-list 中；PACT 还检查这个值是否可信、是否可以绑定到当前参数角色。
+
+最低实验包含四个案例：用户指定 Alice 时允许；外部邮件提供、但也在 allow-list
+中的 Bob 绑定到 recipient 时拒绝；外部邮件内容绑定到低风险 content 时允许；用户值
+经过明确登记的 Base64 transformation 后允许。结果表、decision log、架构图和 hash
+见 [`artifacts/pact-minimum-v2/`](artifacts/pact-minimum-v2/)，实验协议见
+[`docs/PACT_MINIMUM.md`](docs/PACT_MINIMUM.md)。
+
+下面的 AgentDojo 结果只作为外部攻击现实性基线保留，不直接证明 PACT 有效。Secret
+Broker、语义级 provenance、L3 用户确认、多模型和多 seed 均放到 Future Work。
+
 本目录是 AIAA/AAIA 4313 Group Project 的代码、实验和复现材料。项目构建一个
 完全本地的 Level-2 办公助理：Reader Agent 读取不可信邮件，Action Agent 使用
 文件、日历和发信工具，确定性 Gateway 在实际执行前检查用户授权、参数边界及敏感

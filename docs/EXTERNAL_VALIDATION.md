@@ -1,4 +1,9 @@
-# Native AgentDojo external validation
+# Native AgentDojo external validation (baseline only)
+
+PACT is evaluated separately by the deterministic four-case experiment in
+[`PACT_MINIMUM.md`](PACT_MINIMUM.md). This document deliberately does not claim
+that the AgentDojo numbers evaluate PACT. The benchmark is retained only to
+show that indirect prompt injection is realistic for a local Qwen3-VL model.
 
 ## Status
 
@@ -61,9 +66,9 @@ record.
 
 ## Scope and limitations
 
-AgentDojo is an external transfer check, not a replacement for the project
-synthetic provenance benchmark. It evaluates one local model, two official attack
-families, and the two official defenses across four suites. It does not evaluate
-the project's capability gateway, provenance sink checks, PACT-L2, hardened corpus,
-or semantic information-flow claims. T1--T4 authority leakage and T5--T6
+AgentDojo is an external attack-realism baseline, not a replacement for the
+PACT four-case mechanism experiment. It evaluates one local model, two official
+attack families, and the two official defenses across four suites. It does not
+evaluate the project's role-aware PACT policy, registered transformations, or
+semantic information-flow claims. T1--T4 authority leakage and T5--T6
 sensitive-value leakage must remain separate from these AgentDojo metrics.

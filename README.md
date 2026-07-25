@@ -2,6 +2,26 @@
 
 [中文说明](README_ZH.md)
 
+## Frozen project scope: PACT core
+
+The course-project main line is now the deterministic PACT (Provenance-Aware
+Capability Tracking/Control) mechanism. The key claim is narrow: ordinary
+capability checks ask whether a value is on an allow-list; PACT also checks
+whether that value is trusted for the requested parameter role.
+
+The minimum experiment has four auditable cases: user-selected Alice is
+allowed, an allow-listed Bob supplied by an external email is denied at the
+recipient role, external email text is allowed at a low-risk content role, and a
+user value is allowed after an explicitly registered Base64 transformation.
+The result table, decision logs, architecture diagram, and hashes are in
+[`artifacts/pact-minimum-v2/`](artifacts/pact-minimum-v2/); the protocol is in
+[`docs/PACT_MINIMUM.md`](docs/PACT_MINIMUM.md).
+
+The AgentDojo runs below are retained as an external attack-realism baseline.
+They are not used as direct evidence for PACT effectiveness. Secret Broker,
+semantic provenance, L3 confirmation, extra models, and extra seeds are future
+work.
+
 This repository is the implementation and reproducibility package for the
 AIAA/AAIA 4313 group project. It evaluates indirect prompt injection against a
 local, tool-using multi-agent office assistant and compares prompt-only defenses

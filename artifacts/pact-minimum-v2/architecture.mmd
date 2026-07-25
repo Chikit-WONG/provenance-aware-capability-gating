@@ -1,0 +1,9 @@
+flowchart LR
+  U[User value] --> P[PACT provenance label]
+  E[External email] --> P
+  P --> R[Role binding: recipient / target / content]
+  C[Capability allow-list] --> D{Decision}
+  R --> D
+  T[Registered Base64 transformation] --> P
+  D -->|allow| X[Tool call and side effect]
+  D -->|deny| N[No tool call, no side effect]

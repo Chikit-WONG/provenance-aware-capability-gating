@@ -1,0 +1,34 @@
+{
+  "case_count": 4,
+  "cases": [
+    "user-alice",
+    "external-bob-allowlisted",
+    "external-content",
+    "registered-base64"
+  ],
+  "code_commit": "14adf0fc975f08561d914156a913d27ca621a2d8",
+  "experiment": "pact_minimum_four_cases",
+  "output_sha256": {
+    "architecture.mmd": "4003736b9281746c67505183009e08d2bb0a45a8f1b71f35f20a5bcc8cec011f",
+    "decision_log.jsonl": "f030ef986a824dcb9d1042db0e6643fb3b634bd16bcbdfa6445bb05eab4c4ae4",
+    "results.csv": "6d7827a94c9db2ecf7a2df76e2f74c5b6f10b668fb05108002717da32111b8f5",
+    "results.json": "86378c0955ca4d0266e5cd174c15fd7079d5546409384ee7ec10172c9965c825"
+  },
+  "outputs": {
+    "architecture.mmd": "4003736b9281746c67505183009e08d2bb0a45a8f1b71f35f20a5bcc8cec011f",
+    "decision_log.jsonl": "f030ef986a824dcb9d1042db0e6643fb3b634bd16bcbdfa6445bb05eab4c4ae4",
+    "results.csv": "6d7827a94c9db2ecf7a2df76e2f74c5b6f10b668fb05108002717da32111b8f5",
+    "results.json": "86378c0955ca4d0266e5cd174c15fd7079d5546409384ee7ec10172c9965c825"
+  },
+  "schema_version": "1",
+  "semantics": {
+    "capability_only": "exact value allow-list, no provenance role check",
+    "external_content_role": "allowed",
+    "high_trust_roles": [
+      "recipient",
+      "target",
+      "control"
+    ],
+    "pact": "exact role binding plus trusted source or registered transformation"
+  }
+}
