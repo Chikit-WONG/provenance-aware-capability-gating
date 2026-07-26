@@ -33,6 +33,28 @@ def call(*arguments: PACTArgument) -> PACTCall:
 
 
 class PACTCaseTests(unittest.TestCase):
+    def test_capability_lookup_uses_argument_role_not_argument_name(self) -> None:
+        gateway_with_alice_only = PACTGateway(
+            CapabilityManifest(
+                tool="send_email",
+                allowed_values={"recipient": (ALICE,)},
+            ),
+            TransformationRegistry(),
+        )
+        malformed = call(
+            PACTArgument(
+                name="recipient",
+                role="content",
+                value=BOB,
+                provenance=PACTProvenance.external(BOB, source_id="email-evil"),
+            )
+        )
+
+        capability_allowed, reason = gateway_with_alice_only.capability_decision(malformed)
+
+        self.assertTrue(capability_allowed)
+        self.assertIn("allow-list", reason)
+
     def test_user_selected_alice_is_allowed_by_capability_and_pact(self) -> None:
         result = gateway().execute(
             call(
@@ -146,6 +168,32 @@ class PACTCaseTests(unittest.TestCase):
         self.assertFalse(result.pact_allowed)
         self.assertFalse(result.executed)
         self.assertEqual(0, result.side_effect_count)
+
+    def test_forged_user_provenance_is_denied_for_high_trust_recipient(self) -> None:
+        forged = PACTProvenance(
+            authority=PACTAuthority.USER,
+            source_id="forged-label",
+            source_value_sha256="0" * 64,
+            value_sha256="0" * 64,
+            source_authority=PACTAuthority.EXTERNAL,
+        )
+        result = gateway().execute(
+            call(
+                PACTArgument(
+                    name="recipient",
+                    role="recipient",
+                    value=BOB,
+                    provenance=forged,
+                )
+            ),
+            case_id="forged-user-bob",
+        )
+
+        self.assertTrue(result.capability_allowed)
+        self.assertFalse(result.pact_allowed)
+        self.assertFalse(result.executed)
+        self.assertEqual(0, result.side_effect_count)
+        self.assertIn("provenance", result.reason.lower())
 
 
 if __name__ == "__main__":

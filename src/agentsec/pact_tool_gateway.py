@@ -91,10 +91,15 @@ class PACTToolGateway:
 
         execution: ToolExecutionResult | None = None
         if enforced_allowed:
-            execution = self.tool_executor.execute(
-                "send_email",
-                self._tool_arguments(call),
-            )
+            try:
+                tool_arguments = self._tool_arguments(call)
+            except ValueError as error:
+                # A malformed role/name binding must fail closed at the tool
+                # boundary instead of reaching MockWorld with guessed fields.
+                enforced_allowed = False
+                reason = f"{reason}; tool argument mapping denied: {error}"
+            else:
+                execution = self.tool_executor.execute("send_email", tool_arguments)
 
         outbox_count = len(self.tool_executor.world.snapshot().outbox)
         executed = bool(execution is not None and execution.ok)
@@ -130,13 +135,10 @@ class PACTToolGateway:
 
     @staticmethod
     def _argument_for_role(call: PACTCall, role: str) -> PACTArgument | None:
-        """Find a role-labelled argument, with a name fallback for callers."""
+        """Find only the argument explicitly labelled with ``role``."""
 
         for argument in call.arguments.values():
             if argument.role == role:
-                return argument
-        for argument in call.arguments.values():
-            if argument.name == role:
                 return argument
         return None
 

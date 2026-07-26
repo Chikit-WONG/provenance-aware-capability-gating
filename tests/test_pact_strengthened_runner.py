@@ -98,7 +98,7 @@ class StrengthenedPACTRunnerTests(unittest.TestCase):
                 row for row in rows if row["case_id"] == "external-recipient-registered"
             )
             self.assertEqual("external", external_transform["source_authority"])
-            self.assertEqual("untrusted_transform", external_transform["transform_status"])
+            self.assertEqual("registered_external_source", external_transform["transform_status"])
             self.assertFalse(external_transform["pact_allowed"])
 
     def test_artifact_text_is_lf_only_and_manifest_hashes_final_bytes(self) -> None:

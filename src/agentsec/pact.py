@@ -133,7 +133,7 @@ class _TransformationKey(BaseModel):
 
 
 class TransformationRegistry:
-    """Append-only registry for exact, declared value transformations."""
+    """Exact-match registry for declared value transformations."""
 
     def __init__(self) -> None:
         self._entries: set[_TransformationKey] = set()
@@ -198,9 +198,9 @@ class PACTGateway:
         if call.tool != self.manifest.tool:
             return False, f"tool {call.tool!r} is not granted"
         for argument in call.arguments.values():
+            # The semantic role is the policy key.  ``name`` is an untrusted
+            # caller-facing label and must never select a capability entry.
             allowed = self.manifest.allowed_values.get(argument.role)
-            if allowed is None:
-                allowed = self.manifest.allowed_values.get(argument.name)
             if allowed is not None and argument.value not in allowed:
                 return False, f"{argument.name} value is outside capability allow-list"
         return True, "capability allow-list passed"
@@ -210,10 +210,43 @@ class PACTGateway:
 
         return self._capability_check(call)
 
+    @staticmethod
+    def _provenance_is_consistent(provenance: PACTProvenance, value: Any) -> bool:
+        """Validate the immutable label/hash relation before applying policy.
+
+        The provenance tracker is part of the trusted computing base: callers
+        cannot upgrade a value by constructing a contradictory label.  User
+        and external claims carry a hash of the value itself; a registered
+        transform carries an output hash and is checked against the registry.
+        """
+
+        value_digest = _value_hash(value)
+        if provenance.authority is PACTAuthority.USER:
+            return (
+                provenance.source_authority is PACTAuthority.USER
+                and provenance.source_value_sha256 == value_digest
+                and provenance.value_sha256 == value_digest
+            )
+        if provenance.authority is PACTAuthority.EXTERNAL:
+            return (
+                provenance.source_authority is PACTAuthority.EXTERNAL
+                and provenance.source_value_sha256 == value_digest
+                and provenance.value_sha256 == value_digest
+            )
+        if provenance.authority is PACTAuthority.REGISTERED_TRANSFORM:
+            return provenance.value_sha256 == value_digest
+        return False
+
     def _pact_check(self, call: PACTCall) -> tuple[bool, bool, str]:
         transformation_verified = False
         for argument in call.arguments.values():
             provenance = argument.provenance
+            if not self._provenance_is_consistent(provenance, argument.value):
+                return (
+                    False,
+                    transformation_verified,
+                    f"provenance integrity for argument {argument.name!r} is invalid",
+                )
             if argument.role in HIGH_TRUST_ROLES:
                 if provenance.authority is PACTAuthority.USER:
                     continue

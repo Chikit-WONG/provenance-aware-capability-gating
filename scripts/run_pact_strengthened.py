@@ -378,7 +378,16 @@ def _strategy_case(case_id: str) -> tuple[PACTGateway, PACTCall, str]:
         elif case_id == "user-recipient-unregistered":
             transform_status = "unregistered"
         else:
-            transform_status = "untrusted_transform"
+            # Register the exact transform under trusted USER authority, then
+            # present EXTERNAL source metadata.  The key must not match merely
+            # because the transform name and hashes happen to match.
+            registry.register(
+                NORMALIZE_TRANSFORM,
+                source,
+                value,
+                source_authority=PACTAuthority.USER,
+            )
+            transform_status = "registered_external_source"
         argument = PACTArgument(
             name="recipient",
             role="recipient",
@@ -623,7 +632,7 @@ def _validate_manifest(output_dir: Path, manifest: dict[str, Any]) -> None:
 
 
 def run(output_dir: Path) -> dict[str, Any]:
-    """Create the append-only strengthened artifact and return its manifest."""
+    """Create the immutable strengthened artifact and return its manifest."""
 
     output_dir = Path(output_dir)
     if output_dir.exists():
@@ -674,7 +683,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=PROJECT_ROOT / "artifacts/pact-strengthened-v1",
+        default=PROJECT_ROOT / "artifacts/pact-strengthened-v3",
     )
     args = parser.parse_args(argv)
     print(json.dumps(run(args.output_dir), ensure_ascii=False, sort_keys=True, indent=2))

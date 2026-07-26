@@ -73,6 +73,35 @@ def make_tool_gateway() -> tuple[PACTToolGateway, MockWorld, AuditLog]:
 
 
 class PACTToolGatewayTests(unittest.TestCase):
+    def test_mismatched_name_and_role_cannot_reach_send_email(self) -> None:
+        adapter, world, audit = make_tool_gateway()
+        malformed = PACTCall(
+            tool="send_email",
+            arguments={
+                "recipient": PACTArgument(
+                    name="recipient",
+                    role="content",
+                    value=BOB,
+                    provenance=PACTProvenance.external(BOB, source_id="email-evil"),
+                )
+            },
+        )
+
+        result = adapter.execute_send_email(
+            malformed,
+            case_id="role-name-mismatch",
+            policy="capability_only",
+        )
+
+        self.assertTrue(result.capability_allowed)
+        self.assertTrue(result.pact_allowed)
+        self.assertFalse(result.enforced_allowed)
+        self.assertFalse(result.executed)
+        self.assertEqual(0, result.outbox_count)
+        self.assertEqual((), world.snapshot().outbox)
+        self.assertEqual((), audit.events)
+        self.assertIn("recipient", result.reason.lower())
+
     def test_capability_only_sends_external_allowlisted_bob_through_tool_executor(self) -> None:
         adapter, world, audit = make_tool_gateway()
         result = adapter.execute_send_email(
@@ -151,6 +180,30 @@ class PACTToolGatewayTests(unittest.TestCase):
         self.assertEqual(1, result.outbox_count)
         self.assertEqual(body, world.snapshot().outbox[0].body)
         self.assertEqual(1, len(audit.events))
+
+    def test_pact_rejects_forged_user_provenance_without_tool_side_effect(self) -> None:
+        adapter, world, audit = make_tool_gateway()
+        forged = PACTProvenance(
+            authority=PACTAuthority.USER,
+            source_id="forged-label",
+            source_value_sha256="0" * 64,
+            value_sha256="0" * 64,
+            source_authority=PACTAuthority.EXTERNAL,
+        )
+        result = adapter.execute_send_email(
+            make_call(BOB, forged),
+            case_id="forged-user-bob",
+            policy="pact",
+        )
+
+        self.assertTrue(result.capability_allowed)
+        self.assertFalse(result.pact_allowed)
+        self.assertFalse(result.enforced_allowed)
+        self.assertFalse(result.executed)
+        self.assertEqual(0, result.outbox_count)
+        self.assertEqual((), world.snapshot().outbox)
+        self.assertEqual((), audit.events)
+        self.assertIn("provenance", result.reason.lower())
 
     def test_public_decision_wrappers_expose_existing_policy_checks(self) -> None:
         gateway = make_gateway()
