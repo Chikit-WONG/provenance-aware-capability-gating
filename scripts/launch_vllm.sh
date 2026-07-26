@@ -5,6 +5,7 @@ MODEL_PATH="/hpc2hdd/home/ckwong627/workdir/new_sub_workdir/EEG_Project/models/Q
 CONDA_ROOT="/hpc2hdd/home/ckwong627/miniconda3"
 HOST="${VLLM_HOST:-127.0.0.1}"
 PORT="${VLLM_PORT:-8000}"
+VLLM_MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-16384}"
 
 if [[ ! -f "${MODEL_PATH}/model.safetensors.index.json" ]]; then
   echo "Local model is incomplete or missing: ${MODEL_PATH}" >&2
@@ -23,7 +24,7 @@ exec vllm serve "${MODEL_PATH}" \
   --host "${HOST}" \
   --port "${PORT}" \
   --dtype bfloat16 \
-  --max-model-len 8192 \
+  --max-model-len "${VLLM_MAX_MODEL_LEN}" \
   --tensor-parallel-size 1 \
   --max-num-seqs 4 \
   --gpu-memory-utilization "${VLLM_GPU_MEMORY_UTILIZATION:-0.90}" \

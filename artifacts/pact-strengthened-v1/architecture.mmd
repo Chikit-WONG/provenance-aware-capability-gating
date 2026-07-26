@@ -1,0 +1,10 @@
+flowchart LR
+  U[User value] --> P[Attach immutable provenance]
+  E[External email] --> P
+  P --> R[Bind role: recipient / target / control / content]
+  C[Capability exact allow-list] --> D{Gateway decision}
+  R --> D
+  T[NormalizeEmailAddress exact registry] --> P
+  D -->|capability-only allow| X[MockWorld.send_email]
+  D -->|PACT allow| X
+  D -->|PACT deny| N[No tool call; no outbox side effect]

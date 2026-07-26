@@ -1,0 +1,1499 @@
+{
+  "attack_summary": [
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.10095642933049948,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 95,
+        "valid_n": 940,
+        "valid_only_rate": 0.10106382978723404,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.0833898968607117,
+          "upper": 0.1219851234979978
+        },
+        "valid_successes": 95,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.08330050004475098,
+          "upper": 0.12185715578317782
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6769394261424017,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 637,
+        "valid_n": 940,
+        "valid_only_rate": 0.6776595744680851,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6471108803913553,
+          "upper": 0.7067621105422327
+        },
+        "valid_successes": 637,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6463928836136021,
+          "upper": 0.706047197091191
+        }
+      },
+      "valid_n": 940
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.08607863974495218,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 81,
+        "valid_n": 940,
+        "valid_only_rate": 0.08617021276595745,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.06987311348833372,
+          "upper": 0.10583590763043427
+        },
+        "valid_successes": 81,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.06979827284196184,
+          "upper": 0.10572478160538375
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6482465462274176,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 610,
+        "valid_n": 940,
+        "valid_only_rate": 0.648936170212766,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6178735914544163,
+          "upper": 0.6787864009449988
+        },
+        "valid_successes": 610,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6171899128274807,
+          "upper": 0.6780977223576163
+        }
+      },
+      "valid_n": 940
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 4,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 4,
+        "itt_rate": 0.16153028692879914,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 152,
+        "valid_n": 937,
+        "valid_only_rate": 0.1622198505869797,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.1400023792481046,
+          "upper": 0.18719563688371066
+        },
+        "valid_successes": 152,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.13940008159242764,
+          "upper": 0.1864127369993042
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 4,
+        "itt_rate": 0.620616365568544,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 584,
+        "valid_n": 937,
+        "valid_only_rate": 0.6232657417289221,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5917952843800643,
+          "upper": 0.6537296102069036
+        },
+        "valid_successes": 584,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5891821430204891,
+          "upper": 0.6510698038863818
+        }
+      },
+      "valid_n": 937
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.1030818278427205,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 97,
+        "valid_n": 940,
+        "valid_only_rate": 0.10319148936170212,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.08533189363670982,
+          "upper": 0.12428112661341989
+        },
+        "valid_successes": 97,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.08524040379260342,
+          "upper": 0.12415076651826581
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6588735387885228,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 620,
+        "valid_n": 940,
+        "valid_only_rate": 0.6595744680851063,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6286877834380221,
+          "upper": 0.689162208418494
+        },
+        "valid_successes": 620,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6279914544649746,
+          "upper": 0.6884637531348247
+        }
+      },
+      "valid_n": 940
+    }
+  ],
+  "clean_utility": [
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 89,
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7191011235955056,
+        "metric": "utility",
+        "planned_n": 89,
+        "successes": 64,
+        "valid_n": 89,
+        "valid_only_rate": 0.7191011235955056,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6181658471673626,
+          "upper": 0.8019051049201222
+        },
+        "valid_successes": 64,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6181658471673626,
+          "upper": 0.8019051049201222
+        }
+      },
+      "valid_n": 89
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 89,
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7303370786516854,
+        "metric": "utility",
+        "planned_n": 89,
+        "successes": 65,
+        "valid_n": 89,
+        "valid_only_rate": 0.7303370786516854,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6300335779919279,
+          "upper": 0.8115794742026075
+        },
+        "valid_successes": 65,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6300335779919279,
+          "upper": 0.8115794742026075
+        }
+      },
+      "valid_n": 89
+    }
+  ],
+  "invalid_n": 7,
+  "metadata": {
+    "suite_count": 4,
+    "suites": [
+      "banking",
+      "slack",
+      "travel",
+      "workspace"
+    ]
+  },
+  "overall_attack_summary": [
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.10095642933049948,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 95,
+        "valid_n": 940,
+        "valid_only_rate": 0.10106382978723404,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.0833898968607117,
+          "upper": 0.1219851234979978
+        },
+        "valid_successes": 95,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.08330050004475098,
+          "upper": 0.12185715578317782
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6769394261424017,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 637,
+        "valid_n": 940,
+        "valid_only_rate": 0.6776595744680851,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6471108803913553,
+          "upper": 0.7067621105422327
+        },
+        "valid_successes": 637,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6463928836136021,
+          "upper": 0.706047197091191
+        }
+      },
+      "valid_n": 940
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.08607863974495218,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 81,
+        "valid_n": 940,
+        "valid_only_rate": 0.08617021276595745,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.06987311348833372,
+          "upper": 0.10583590763043427
+        },
+        "valid_successes": 81,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.06979827284196184,
+          "upper": 0.10572478160538375
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6482465462274176,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 610,
+        "valid_n": 940,
+        "valid_only_rate": 0.648936170212766,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6178735914544163,
+          "upper": 0.6787864009449988
+        },
+        "valid_successes": 610,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6171899128274807,
+          "upper": 0.6780977223576163
+        }
+      },
+      "valid_n": 940
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 4,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 4,
+        "itt_rate": 0.16153028692879914,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 152,
+        "valid_n": 937,
+        "valid_only_rate": 0.1622198505869797,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.1400023792481046,
+          "upper": 0.18719563688371066
+        },
+        "valid_successes": 152,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.13940008159242764,
+          "upper": 0.1864127369993042
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 4,
+        "itt_rate": 0.620616365568544,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 584,
+        "valid_n": 937,
+        "valid_only_rate": 0.6232657417289221,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5917952843800643,
+          "upper": 0.6537296102069036
+        },
+        "valid_successes": 584,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5891821430204891,
+          "upper": 0.6510698038863818
+        }
+      },
+      "valid_n": 937
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 941,
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.1030818278427205,
+        "metric": "targeted_attack_success",
+        "planned_n": 941,
+        "successes": 97,
+        "valid_n": 940,
+        "valid_only_rate": 0.10319148936170212,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.08533189363670982,
+          "upper": 0.12428112661341989
+        },
+        "valid_successes": 97,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.08524040379260342,
+          "upper": 0.12415076651826581
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.6588735387885228,
+        "metric": "utility",
+        "planned_n": 941,
+        "successes": 620,
+        "valid_n": 940,
+        "valid_only_rate": 0.6595744680851063,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6286877834380221,
+          "upper": 0.689162208418494
+        },
+        "valid_successes": 620,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6279914544649746,
+          "upper": 0.6884637531348247
+        }
+      },
+      "valid_n": 940
+    }
+  ],
+  "overall_clean_utility": [
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 89,
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7191011235955056,
+        "metric": "utility",
+        "planned_n": 89,
+        "successes": 64,
+        "valid_n": 89,
+        "valid_only_rate": 0.7191011235955056,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6181658471673626,
+          "upper": 0.8019051049201222
+        },
+        "valid_successes": 64,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6181658471673626,
+          "upper": 0.8019051049201222
+        }
+      },
+      "valid_n": 89
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 89,
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7303370786516854,
+        "metric": "utility",
+        "planned_n": 89,
+        "successes": 65,
+        "valid_n": 89,
+        "valid_only_rate": 0.7303370786516854,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6300335779919279,
+          "upper": 0.8115794742026075
+        },
+        "valid_successes": 65,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6300335779919279,
+          "upper": 0.8115794742026075
+        }
+      },
+      "valid_n": 89
+    }
+  ],
+  "planned_n": 3942,
+  "record_count": 3942,
+  "schema_version": "1",
+  "suite_attack_summary": [
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 1,
+      "planned_n": 558,
+      "suite": "workspace",
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.02867383512544803,
+        "metric": "targeted_attack_success",
+        "planned_n": 558,
+        "successes": 16,
+        "valid_n": 557,
+        "valid_only_rate": 0.02872531418312388,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.017757486788252615,
+          "upper": 0.04614909190166723
+        },
+        "valid_successes": 16,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.017725527251194636,
+          "upper": 0.04606730657763207
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.7508960573476703,
+        "metric": "utility",
+        "planned_n": 558,
+        "successes": 419,
+        "valid_n": 557,
+        "valid_only_rate": 0.7522441651705566,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.7147458009727484,
+          "upper": 0.7862870588141707
+        },
+        "valid_successes": 419,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.7133775265677503,
+          "upper": 0.7849837025727983
+        }
+      },
+      "valid_n": 557
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 558,
+      "suite": "workspace",
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.008960573476702509,
+        "metric": "targeted_attack_success",
+        "planned_n": 558,
+        "successes": 5,
+        "valid_n": 557,
+        "valid_only_rate": 0.008976660682226212,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.003840214530997109,
+          "upper": 0.020839592218309846
+        },
+        "valid_successes": 5,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.003833321796473072,
+          "upper": 0.020802558314167677
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.7258064516129032,
+        "metric": "utility",
+        "planned_n": 558,
+        "successes": 405,
+        "valid_n": 557,
+        "valid_only_rate": 0.7271095152603232,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6886554625737084,
+          "upper": 0.7624524147433399
+        },
+        "valid_successes": 405,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6873426726046713,
+          "upper": 0.7611824336218224
+        }
+      },
+      "valid_n": 557
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 4,
+      "planned_n": 558,
+      "suite": "workspace",
+      "targeted_asr": {
+        "invalid_n": 4,
+        "itt_rate": 0.04659498207885305,
+        "metric": "targeted_attack_success",
+        "planned_n": 558,
+        "successes": 26,
+        "valid_n": 554,
+        "valid_only_rate": 0.04693140794223827,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.032225824993383306,
+          "upper": 0.06787691555721305
+        },
+        "valid_successes": 26,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.031993388029285794,
+          "upper": 0.06739667645243724
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 4,
+        "itt_rate": 0.7078853046594982,
+        "metric": "utility",
+        "planned_n": 558,
+        "successes": 395,
+        "valid_n": 554,
+        "valid_only_rate": 0.7129963898916968,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6739622199621987,
+          "upper": 0.7490970494203896
+        },
+        "valid_successes": 395,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6688360864732982,
+          "upper": 0.744091789100299
+        }
+      },
+      "valid_n": 554
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 1,
+      "planned_n": 558,
+      "suite": "workspace",
+      "targeted_asr": {
+        "invalid_n": 1,
+        "itt_rate": 0.005376344086021506,
+        "metric": "targeted_attack_success",
+        "planned_n": 558,
+        "successes": 3,
+        "valid_n": 557,
+        "valid_only_rate": 0.005385996409335727,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.001833380241691272,
+          "upper": 0.015714286154776977
+        },
+        "valid_successes": 3,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.0018300916469421238,
+          "upper": 0.01568634233311936
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 1,
+        "itt_rate": 0.7365591397849462,
+        "metric": "utility",
+        "planned_n": 558,
+        "successes": 411,
+        "valid_n": 557,
+        "valid_only_rate": 0.7378815080789947,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.6998183128957394,
+          "upper": 0.7726859854798251
+        },
+        "valid_successes": 411,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.6984819177487006,
+          "upper": 0.7714015268695308
+        }
+      },
+      "valid_n": 557
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 138,
+      "suite": "travel",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.16666666666666666,
+        "metric": "targeted_attack_success",
+        "planned_n": 138,
+        "successes": 23,
+        "valid_n": 138,
+        "valid_only_rate": 0.16666666666666666,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.1137023810595438,
+          "upper": 0.23768612858417146
+        },
+        "valid_successes": 23,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.1137023810595438,
+          "upper": 0.23768612858417146
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.4492753623188406,
+        "metric": "utility",
+        "planned_n": 138,
+        "successes": 62,
+        "valid_n": 138,
+        "valid_only_rate": 0.4492753623188406,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.36877791778596075,
+          "upper": 0.5325203336815612
+        },
+        "valid_successes": 62,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.36877791778596075,
+          "upper": 0.5325203336815612
+        }
+      },
+      "valid_n": 138
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 138,
+      "suite": "travel",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.2391304347826087,
+        "metric": "targeted_attack_success",
+        "planned_n": 138,
+        "successes": 33,
+        "valid_n": 138,
+        "valid_only_rate": 0.2391304347826087,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.17564378628692803,
+          "upper": 0.3167472212603274
+        },
+        "valid_successes": 33,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.17564378628692803,
+          "upper": 0.3167472212603274
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.3695652173913043,
+        "metric": "utility",
+        "planned_n": 138,
+        "successes": 51,
+        "valid_n": 138,
+        "valid_only_rate": 0.3695652173913043,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.29358420242902833,
+          "upper": 0.4526113013445993
+        },
+        "valid_successes": 51,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.29358420242902833,
+          "upper": 0.4526113013445993
+        }
+      },
+      "valid_n": 138
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 138,
+      "suite": "travel",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.32608695652173914,
+        "metric": "targeted_attack_success",
+        "planned_n": 138,
+        "successes": 45,
+        "valid_n": 138,
+        "valid_only_rate": 0.32608695652173914,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.2535070470498725,
+          "upper": 0.4080869579816312
+        },
+        "valid_successes": 45,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.2535070470498725,
+          "upper": 0.4080869579816312
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.35507246376811596,
+        "metric": "utility",
+        "planned_n": 138,
+        "successes": 49,
+        "valid_n": 138,
+        "valid_only_rate": 0.35507246376811596,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.28014795607538495,
+          "upper": 0.4378470481175348
+        },
+        "valid_successes": 49,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.28014795607538495,
+          "upper": 0.4378470481175348
+        }
+      },
+      "valid_n": 138
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 138,
+      "suite": "travel",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.32608695652173914,
+        "metric": "targeted_attack_success",
+        "planned_n": 138,
+        "successes": 45,
+        "valid_n": 138,
+        "valid_only_rate": 0.32608695652173914,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.2535070470498725,
+          "upper": 0.4080869579816312
+        },
+        "valid_successes": 45,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.2535070470498725,
+          "upper": 0.4080869579816312
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.41304347826086957,
+        "metric": "utility",
+        "planned_n": 138,
+        "successes": 57,
+        "valid_n": 138,
+        "valid_only_rate": 0.41304347826086957,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.33433400445888056,
+          "upper": 0.4964629980568713
+        },
+        "valid_successes": 57,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.33433400445888056,
+          "upper": 0.4964629980568713
+        }
+      },
+      "valid_n": 138
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 142,
+      "suite": "banking",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.19014084507042253,
+        "metric": "targeted_attack_success",
+        "planned_n": 142,
+        "successes": 27,
+        "valid_n": 142,
+        "valid_only_rate": 0.19014084507042253,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.13409479019339512,
+          "upper": 0.2625102581132578
+        },
+        "valid_successes": 27,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.13409479019339512,
+          "upper": 0.2625102581132578
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.6549295774647887,
+        "metric": "utility",
+        "planned_n": 142,
+        "successes": 93,
+        "valid_n": 142,
+        "valid_only_rate": 0.6549295774647887,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5735868353855637,
+          "upper": 0.7281106404611098
+        },
+        "valid_successes": 93,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5735868353855637,
+          "upper": 0.7281106404611098
+        }
+      },
+      "valid_n": 142
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 142,
+      "suite": "banking",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.16901408450704225,
+        "metric": "targeted_attack_success",
+        "planned_n": 142,
+        "successes": 24,
+        "valid_n": 142,
+        "valid_only_rate": 0.16901408450704225,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.11628787581394034,
+          "upper": 0.2391766076045298
+        },
+        "valid_successes": 24,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.11628787581394034,
+          "upper": 0.2391766076045298
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.6619718309859155,
+        "metric": "utility",
+        "planned_n": 142,
+        "successes": 94,
+        "valid_n": 142,
+        "valid_only_rate": 0.6619718309859155,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5808148814735217,
+          "upper": 0.734596116002546
+        },
+        "valid_successes": 94,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5808148814735217,
+          "upper": 0.734596116002546
+        }
+      },
+      "valid_n": 142
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 142,
+      "suite": "banking",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.1619718309859155,
+        "metric": "targeted_attack_success",
+        "planned_n": 142,
+        "successes": 23,
+        "valid_n": 142,
+        "valid_only_rate": 0.1619718309859155,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.11042234546060645,
+          "upper": 0.2313286163284695
+        },
+        "valid_successes": 23,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.11042234546060645,
+          "upper": 0.2313286163284695
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.5985915492957746,
+        "metric": "utility",
+        "planned_n": 142,
+        "successes": 85,
+        "valid_n": 142,
+        "valid_only_rate": 0.5985915492957746,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5163975235017725,
+          "upper": 0.6755917793097469
+        },
+        "valid_successes": 85,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5163975235017725,
+          "upper": 0.6755917793097469
+        }
+      },
+      "valid_n": 142
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 142,
+      "suite": "banking",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.1267605633802817,
+        "metric": "targeted_attack_success",
+        "planned_n": 142,
+        "successes": 18,
+        "valid_n": 142,
+        "valid_only_rate": 0.1267605633802817,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.08170741106337315,
+          "upper": 0.19147594257873152
+        },
+        "valid_successes": 18,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.08170741106337315,
+          "upper": 0.19147594257873152
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.6619718309859155,
+        "metric": "utility",
+        "planned_n": 142,
+        "successes": 94,
+        "valid_n": 142,
+        "valid_only_rate": 0.6619718309859155,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5808148814735217,
+          "upper": 0.734596116002546
+        },
+        "valid_successes": 94,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5808148814735217,
+          "upper": 0.734596116002546
+        }
+      },
+      "valid_n": 142
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 103,
+      "suite": "slack",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.2815533980582524,
+        "metric": "targeted_attack_success",
+        "planned_n": 103,
+        "successes": 29,
+        "valid_n": 103,
+        "valid_only_rate": 0.2815533980582524,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.20376498790299363,
+          "upper": 0.3750501977308817
+        },
+        "valid_successes": 29,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.20376498790299363,
+          "upper": 0.3750501977308817
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.6116504854368932,
+        "metric": "utility",
+        "planned_n": 103,
+        "successes": 63,
+        "valid_n": 103,
+        "valid_only_rate": 0.6116504854368932,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.5151342340722562,
+          "upper": 0.7001380043815406
+        },
+        "valid_successes": 63,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.5151342340722562,
+          "upper": 0.7001380043815406
+        }
+      },
+      "valid_n": 103
+    },
+    {
+      "attack": "important_instructions",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 103,
+      "suite": "slack",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.18446601941747573,
+        "metric": "targeted_attack_success",
+        "planned_n": 103,
+        "successes": 19,
+        "valid_n": 103,
+        "valid_only_rate": 0.18446601941747573,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.12139537223023855,
+          "upper": 0.27022656257424815
+        },
+        "valid_successes": 19,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.12139537223023855,
+          "upper": 0.27022656257424815
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.5825242718446602,
+        "metric": "utility",
+        "planned_n": 103,
+        "successes": 60,
+        "valid_n": 103,
+        "valid_only_rate": 0.5825242718446602,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.4860016272725327,
+          "upper": 0.6731126359324475
+        },
+        "valid_successes": 60,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.4860016272725327,
+          "upper": 0.6731126359324475
+        }
+      },
+      "valid_n": 103
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 103,
+      "suite": "slack",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.5631067961165048,
+        "metric": "targeted_attack_success",
+        "planned_n": 103,
+        "successes": 58,
+        "valid_n": 103,
+        "valid_only_rate": 0.5631067961165048,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.4667599174750595,
+          "upper": 0.654915695564043
+        },
+        "valid_successes": 58,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.4667599174750595,
+          "upper": 0.654915695564043
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.5339805825242718,
+        "metric": "utility",
+        "planned_n": 103,
+        "successes": 55,
+        "valid_n": 103,
+        "valid_only_rate": 0.5339805825242718,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.4381614297995515,
+          "upper": 0.6273562079907344
+        },
+        "valid_successes": 55,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.4381614297995515,
+          "upper": 0.6273562079907344
+        }
+      },
+      "valid_n": 103
+    },
+    {
+      "attack": "tool_knowledge",
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 103,
+      "suite": "slack",
+      "targeted_asr": {
+        "invalid_n": 0,
+        "itt_rate": 0.30097087378640774,
+        "metric": "targeted_attack_success",
+        "planned_n": 103,
+        "successes": 31,
+        "valid_n": 103,
+        "valid_only_rate": 0.30097087378640774,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.22085929894836437,
+          "upper": 0.39539453685138876
+        },
+        "valid_successes": 31,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.22085929894836437,
+          "upper": 0.39539453685138876
+        }
+      },
+      "utility_under_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.5631067961165048,
+        "metric": "utility",
+        "planned_n": 103,
+        "successes": 58,
+        "valid_n": 103,
+        "valid_only_rate": 0.5631067961165048,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.4667599174750595,
+          "upper": 0.654915695564043
+        },
+        "valid_successes": 58,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.4667599174750595,
+          "upper": 0.654915695564043
+        }
+      },
+      "valid_n": 103
+    }
+  ],
+  "suite_clean_utility": [
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 38,
+      "suite": "workspace",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7894736842105263,
+        "metric": "utility",
+        "planned_n": 38,
+        "successes": 30,
+        "valid_n": 38,
+        "valid_only_rate": 0.7894736842105263,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.636542205246726,
+          "upper": 0.8892520815700411
+        },
+        "valid_successes": 30,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.636542205246726,
+          "upper": 0.8892520815700411
+        }
+      },
+      "valid_n": 38
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 38,
+      "suite": "workspace",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7631578947368421,
+        "metric": "utility",
+        "planned_n": 38,
+        "successes": 29,
+        "valid_n": 38,
+        "valid_only_rate": 0.7631578947368421,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.607931876367602,
+          "upper": 0.8700629298294591
+        },
+        "valid_successes": 29,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.607931876367602,
+          "upper": 0.8700629298294591
+        }
+      },
+      "valid_n": 38
+    },
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 18,
+      "suite": "travel",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.4444444444444444,
+        "metric": "utility",
+        "planned_n": 18,
+        "successes": 8,
+        "valid_n": 18,
+        "valid_only_rate": 0.4444444444444444,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.2455951812700564,
+          "upper": 0.6628358435795721
+        },
+        "valid_successes": 8,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.2455951812700564,
+          "upper": 0.6628358435795721
+        }
+      },
+      "valid_n": 18
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 18,
+      "suite": "travel",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.4444444444444444,
+        "metric": "utility",
+        "planned_n": 18,
+        "successes": 8,
+        "valid_n": 18,
+        "valid_only_rate": 0.4444444444444444,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.2455951812700564,
+          "upper": 0.6628358435795721
+        },
+        "valid_successes": 8,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.2455951812700564,
+          "upper": 0.6628358435795721
+        }
+      },
+      "valid_n": 18
+    },
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 14,
+      "suite": "banking",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.5714285714285714,
+        "metric": "utility",
+        "planned_n": 14,
+        "successes": 8,
+        "valid_n": 14,
+        "valid_only_rate": 0.5714285714285714,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.3259064457965074,
+          "upper": 0.7861920109552588
+        },
+        "valid_successes": 8,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.3259064457965074,
+          "upper": 0.7861920109552588
+        }
+      },
+      "valid_n": 14
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 14,
+      "suite": "banking",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.7142857142857143,
+        "metric": "utility",
+        "planned_n": 14,
+        "successes": 10,
+        "valid_n": 14,
+        "valid_only_rate": 0.7142857142857143,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.4535091567010683,
+          "upper": 0.8827862135542308
+        },
+        "valid_successes": 10,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.4535091567010683,
+          "upper": 0.8827862135542308
+        }
+      },
+      "valid_n": 14
+    },
+    {
+      "defense": "none",
+      "invalid_n": 0,
+      "planned_n": 19,
+      "suite": "slack",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.9473684210526315,
+        "metric": "utility",
+        "planned_n": 19,
+        "successes": 18,
+        "valid_n": 19,
+        "valid_only_rate": 0.9473684210526315,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.753612688331012,
+          "upper": 0.9906480059376995
+        },
+        "valid_successes": 18,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.753612688331012,
+          "upper": 0.9906480059376995
+        }
+      },
+      "valid_n": 19
+    },
+    {
+      "defense": "repeat_user_prompt",
+      "invalid_n": 0,
+      "planned_n": 19,
+      "suite": "slack",
+      "utility_without_attack": {
+        "invalid_n": 0,
+        "itt_rate": 0.9473684210526315,
+        "metric": "utility",
+        "planned_n": 19,
+        "successes": 18,
+        "valid_n": 19,
+        "valid_only_rate": 0.9473684210526315,
+        "valid_only_wilson": {
+          "confidence": 0.95,
+          "lower": 0.753612688331012,
+          "upper": 0.9906480059376995
+        },
+        "valid_successes": 18,
+        "wilson": {
+          "confidence": 0.95,
+          "lower": 0.753612688331012,
+          "upper": 0.9906480059376995
+        }
+      },
+      "valid_n": 19
+    }
+  ],
+  "suite_count": 4,
+  "suites": [
+    "workspace",
+    "travel",
+    "banking",
+    "slack"
+  ],
+  "valid_n": 3935
+}

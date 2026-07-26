@@ -1,0 +1,1 @@
+agentdojo @ git+https://github.com/ethz-spylab/agentdojo.git@a75aba7631d3ca5fb7ab938965c97ead2f9ff84b

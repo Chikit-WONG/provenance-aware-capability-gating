@@ -1,0 +1,60 @@
+{
+  "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+  "agentdojo_tag": "v0.1.35",
+  "benchmark_version": "v1.2.2",
+  "defenses": [
+    "none",
+    "repeat_user_prompt",
+    "capability_only",
+    "provenance_only",
+    "prompt_capability",
+    "prompt_provenance",
+    "full"
+  ],
+  "formal_total": 3934,
+  "kind": "agentdojo_public_transfer_stratified_slice",
+  "pairs_per_suite": 60,
+  "schema_version": "1",
+  "suites": {
+    "banking": {
+      "output_plan": "configs/frozen/agentdojo_public_transfer_slice_v1/banking/formal_plan.jsonl",
+      "output_rows": 938,
+      "output_sha256": "05ba1d49bf4373127333c0bb8985fbabdf759aae6d9485c5d888dd51a67c138a",
+      "selected_attacked_cells": 120,
+      "selected_clean_users": 16,
+      "selected_pairs": 60,
+      "source_plan": "configs/frozen/agentdojo_external_full_v1/banking/formal_plan.jsonl",
+      "source_sha256": "48ecc67fc0d96e00bd6e48f5125f5ff0508c6a5e4c39be795df39d8664045c1f"
+    },
+    "slack": {
+      "output_plan": "configs/frozen/agentdojo_public_transfer_slice_v1/slack/formal_plan.jsonl",
+      "output_rows": 973,
+      "output_sha256": "7f934d7a76cabde66122f10a67d7f5ab2a405175a8ca0c92af1e6a03e47c21fd",
+      "selected_attacked_cells": 120,
+      "selected_clean_users": 21,
+      "selected_pairs": 60,
+      "source_plan": "configs/frozen/agentdojo_external_full_v1/slack/formal_plan.jsonl",
+      "source_sha256": "566f4d5bcb147fdb9e32897161fd2440acfa8aabd61a420e837c4adc94b2a847"
+    },
+    "travel": {
+      "output_plan": "configs/frozen/agentdojo_public_transfer_slice_v1/travel/formal_plan.jsonl",
+      "output_rows": 966,
+      "output_sha256": "9624e8035d06fc30d645ba26350f3041a72125f8b5fd3a963728f5e8a341c926",
+      "selected_attacked_cells": 120,
+      "selected_clean_users": 20,
+      "selected_pairs": 60,
+      "source_plan": "configs/frozen/agentdojo_external_full_v1/travel/formal_plan.jsonl",
+      "source_sha256": "4aa975f16e2550250e84db55ed01a1ac483c92560aa2f5669cfe10968d2fb70d"
+    },
+    "workspace": {
+      "output_plan": "configs/frozen/agentdojo_public_transfer_slice_v1/workspace/formal_plan.jsonl",
+      "output_rows": 1057,
+      "output_sha256": "9cbd3c74d86629750f54058e5a8ba4ce6a0f6f038c2be6b3e81abee8615ffc3b",
+      "selected_attacked_cells": 120,
+      "selected_clean_users": 33,
+      "selected_pairs": 60,
+      "source_plan": "configs/frozen/agentdojo_external_full_v1/workspace/formal_plan.jsonl",
+      "source_sha256": "c5a2b051fd9cda926d2fb6bcd21fd581334bdd020f3487710036919118de9a07"
+    }
+  }
+}

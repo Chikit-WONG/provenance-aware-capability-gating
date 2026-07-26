@@ -2,6 +2,38 @@
 
 [English version](README.md)
 
+## 已冻结的项目主线：强化版 PACT 核心证据
+
+当前主结果是确定性的强化版 PACT（Provenance-Aware Capability
+Tracking/Control）artifact：
+[`artifacts/pact-strengthened-v3/`](artifacts/pact-strengthened-v3/)。它包含 6 条
+真实本地工具边界记录（3 个案例分别用 `capability_only` 和 PACT 执行）以及
+8 行角色/转换策略矩阵。普通 capability 只检查值是否在 allow-list 中；PACT
+还检查该值的 provenance 是否足以绑定到当前参数角色。
+
+最关键的端到端结果可在 `MockWorld.send_email` 观察到：外部邮件提供
+allow-list 中的 Bob 时，Capability-only 实际调用工具并产生
+`outbox_count=1`；PACT 在进入 `ToolExecutor` 前拒绝，没有 tool event，
+`outbox_count=0`。当用户明确选择 Bob，或用户选择 Alice 且外部邮件只作为
+`content` 时，两种策略都正常发送（`outbox_count=1`）。
+
+强化矩阵实例化了 `recipient`、`control` 和低风险 `content`；策略同时将
+`target` 声明为高信任角色；8 行矩阵用 `control` 作为代表性的高信任角色，
+没有单独实例化 `target`，并覆盖已注册/未注册的 `NormalizeEmailAddress` 转换。转换只有在 exact-match registry
+中对 source-value hash、output-value hash、transform name 和 trusted source
+authority 做精确匹配时才被接受，不使用模糊匹配。详见
+[实验协议](docs/PACT_MINIMUM.md)、[端到端记录](artifacts/pact-strengthened-v3/e2e_results.csv)、
+[策略矩阵](artifacts/pact-strengthened-v3/strategy_results.csv)、
+[结果图](artifacts/pact-strengthened-v3/strategy_matrix.svg)、
+[decision log](artifacts/pact-strengthened-v3/decision_log.jsonl) 和
+[manifest](artifacts/pact-strengthened-v3/manifest.json)。其中 JSON 是 6 条
+case-policy 记录，CSV 则把这些记录中的参数展开为 18 行。
+
+之前的 `pact-minimum-v2`/v1 artifact 和模型 factorial 实验保留为历史补充证据。
+下面的 AgentDojo 结果只用于说明攻击的现实性，不直接评价 PACT，也不与 PACT
+指标合并。Secret Broker、语义级 provenance、L3 用户确认、多模型和多 seed
+仍属于 Future Work。
+
 本目录是 AIAA/AAIA 4313 Group Project 的代码、实验和复现材料。项目构建一个
 完全本地的 Level-2 办公助理：Reader Agent 读取不可信邮件，Action Agent 使用
 文件、日历和发信工具，确定性 Gateway 在实际执行前检查用户授权、参数边界及敏感
@@ -10,7 +42,8 @@
 正式研究问题是：**在任务授权 manifest 正确的前提下，provenance-aware
 capability gating 能否减少真实执行的越权行为和合成秘密泄露，同时保持正常任务
 完成率？** 本项目不声称解决一般语义信息流安全；Full 防御只追踪已注册的精确合成
-敏感值，编码、释义或拆分后的逃逸属于明确局限。
+敏感值，编码、释义或拆分后的逃逸属于明确局限；实验同时假设 provenance tracker
+和 gateway 属于可信计算基，模型生成的标签和工具参数均不可信。
 
 ## 已固定的关键选择
 
@@ -38,7 +71,9 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 详细接口见 [系统架构](docs/ARCHITECTURE.md)、[威胁模型](docs/THREAT_MODEL.md)
 和[实验协议](docs/EXPERIMENT_PROTOCOL.md)。
 
-## 正式实验结果
+## 历史模型实验结果（补充）
+
+下面的 Qwen 模型 factorial 结果仅作背景补充，不是当前 PACT 主证据，且不能与 `pact-strengthened-v3` 合并。
 
 冻结的正式计划包含 216 次运行，分析得到 213 条有效记录和 3 条基础设施无效记录；
 无效记录保留在 intention-to-test（ITT）统计中。下表为六个任务合并后的有效样本率：
@@ -111,4 +146,32 @@ Provenance-only 相对 Allow-All 为 $-0.33$（95% CI $[-0.67,0.00]$），Prompt
 之上的端到端 provenance 增益。完整结果和图见
 [hardened 完整分析](artifacts/hardened-full-factorial-analysis-v1/)，冻结语料见
 [red_corpus_qwen3_hardened_v1](data/frozen/red_corpus_qwen3_hardened_v1/)。
-- [技术报告 PDF](report/main.pdf)
+- [技术报告 PDF](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf)
+
+## 完整 AgentDojo 外部 benchmark
+
+我们已经完成固定版本的原生 AgentDojo suite，使用本地 Qwen3-VL-8B-Instruct、
+AgentDojo `v0.1.35`（commit `a75aba7631d3ca5fb7ab938965c97ead2f9ff84b`）、
+benchmark `v1.2.2`、BF16 vLLM 和 16K context。正式计划共 3,942 条：Workspace
+2,308、Travel 588、Banking 596、Slack 450。3,942 条 formal record 全部覆盖，
+其中 3,935 条有效，7 条 Workspace record 为 `agentdojo_execution_error`，并保留在
+ITT denominator 中。
+
+这里分别报告 AgentDojo 的 targeted attack success 和 utility，不与本项目的 T1--T4
+authority 泄漏、T5--T6 sensitive-value 泄漏合并。AgentDojo 官方矩阵没有 synthetic-secret
+指标，因此不能和项目 factorial 表直接混合。每格先给 valid-only，括号内为 ITT。
+
+| 攻击 / 防御 | Targeted ASR | Attack utility | Clean utility |
+| --- | ---: | ---: | ---: |
+| `important_instructions` / `none` | 95/940（95/941），10.1% | 637/940，67.8% | 64/89，71.9% |
+| `important_instructions` / `repeat_user_prompt` | 81/940（81/941），8.6% | 610/940，64.9% | 65/89，73.0% |
+| `tool_knowledge` / `none` | 152/937（152/941），16.2% | 584/937，62.3% | 64/89，71.9% |
+| `tool_knowledge` / `repeat_user_prompt` | 97/940（97/941），10.3% | 620/940，66.0% | 65/89，73.0% |
+
+精简的[结果摘要](artifacts/agentdojo-external-full-analysis-v1/results_summary.json)、
+[攻击结果表](artifacts/agentdojo-external-full-analysis-v1/attack_summary.csv)、
+[clean utility 表](artifacts/agentdojo-external-full-analysis-v1/clean_utility.csv)、
+[结果图](artifacts/agentdojo-external-full-analysis-v1/agentdojo_outcomes.png)和
+[attempt-selection manifest](artifacts/agentdojo-external-full-v1/attempt_selection.json)
+已保留。原始 vLLM 日志和完整 official trace 不纳入版本控制。具体 denominator、
+hash 和边界见[外部验证说明](docs/EXTERNAL_VALIDATION.md)。

@@ -1,0 +1,92 @@
+{
+  "agentdojo_commit": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+  "agentdojo_tag": "v0.1.35",
+  "benchmark_version": "v1.2.2",
+  "defenses": [
+    "none",
+    "repeat_user_prompt",
+    "capability_only",
+    "provenance_only",
+    "prompt_capability",
+    "prompt_provenance",
+    "full"
+  ],
+  "formal_total": 13797,
+  "kind": "agentdojo_public_transfer",
+  "schema_version": "1",
+  "source_root": "configs/frozen/agentdojo_external_full_v1",
+  "suites": {
+    "banking": {
+      "development": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/banking/development_plan.jsonl",
+        "output_rows": 42,
+        "output_sha256": "7af5c3fcf6af597cf796279bd105534f5949317653de46e934ea9cbfd2c4fcbf",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/banking/development_plan.jsonl",
+        "source_rows": 12,
+        "source_sha256": "112fa6b1cade4778be7ad7b71fe9ce66cd99015bc3bccc895495120b50c5e889"
+      },
+      "formal": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/banking/formal_plan.jsonl",
+        "output_rows": 2086,
+        "output_sha256": "92da632403edd47c08b7d61cca4b83c77331597fa545856cd0c4c5aca49fbfc2",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/banking/formal_plan.jsonl",
+        "source_rows": 596,
+        "source_sha256": "48ecc67fc0d96e00bd6e48f5125f5ff0508c6a5e4c39be795df39d8664045c1f"
+      }
+    },
+    "slack": {
+      "development": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/slack/development_plan.jsonl",
+        "output_rows": 42,
+        "output_sha256": "6a99da6c7556a43adb32c348e527229e322d6f629e8a7e81f6cb0c5be3981973",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/slack/development_plan.jsonl",
+        "source_rows": 12,
+        "source_sha256": "3e73d50e2c360d2cfb94a0b755ba1cf6692c1c5c9a4ff0c75f69259b1cb54076"
+      },
+      "formal": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/slack/formal_plan.jsonl",
+        "output_rows": 1575,
+        "output_sha256": "96f6a507ce4471393c39466310ad97451944fb9d1a31a3719149c8d4ca39504b",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/slack/formal_plan.jsonl",
+        "source_rows": 450,
+        "source_sha256": "566f4d5bcb147fdb9e32897161fd2440acfa8aabd61a420e837c4adc94b2a847"
+      }
+    },
+    "travel": {
+      "development": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/travel/development_plan.jsonl",
+        "output_rows": 42,
+        "output_sha256": "e669459fde1d3384d25a5de29db175bc51d52b03156ead797c8ac3668d56e5ef",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/travel/development_plan.jsonl",
+        "source_rows": 12,
+        "source_sha256": "b56315a413468393b930901bdf330ab9fe74bde245c586a3ab8ca9f6e4233971"
+      },
+      "formal": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/travel/formal_plan.jsonl",
+        "output_rows": 2058,
+        "output_sha256": "9857105b0075ac36520ed12823027b47f3d8d870bfd90e8cb81284f1a65e10cc",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/travel/formal_plan.jsonl",
+        "source_rows": 588,
+        "source_sha256": "4aa975f16e2550250e84db55ed01a1ac483c92560aa2f5669cfe10968d2fb70d"
+      }
+    },
+    "workspace": {
+      "development": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/workspace/development_plan.jsonl",
+        "output_rows": 42,
+        "output_sha256": "9db0617cf954d00742d65f0630ea88bfb7d41a22b35d53ac8104ca66013a1241",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/workspace/development_plan.jsonl",
+        "source_rows": 12,
+        "source_sha256": "a8eae4b633b07ff125d8413fc862f4762d59705085c8e48947c76ebfe6b9da72"
+      },
+      "formal": {
+        "output_plan": "configs/frozen/agentdojo_public_transfer_v1/workspace/formal_plan.jsonl",
+        "output_rows": 8078,
+        "output_sha256": "12d0d81432080c5ae06757dadd980016f91863e3983b386f437c2534793393ea",
+        "source_plan": "configs/frozen/agentdojo_external_full_v1/workspace/formal_plan.jsonl",
+        "source_rows": 2308,
+        "source_sha256": "c5a2b051fd9cda926d2fb6bcd21fd581334bdd020f3487710036919118de9a07"
+      }
+    }
+  }
+}

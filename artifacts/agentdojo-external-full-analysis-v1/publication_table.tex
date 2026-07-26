@@ -1,0 +1,29 @@
+% Native AgentDojo external validation; attacks are intentionally separate.
+\begin{tabular}{lllrrrrrr}
+Suite & Attack / condition & Defense & Planned & Valid & Invalid & ASR/utility & ITT 95\% CI & Valid-only \\
+\hline
+workspace & important\_instructions ASR & none & 558 & 557 & 1 & 0.029 / 0.751 & [0.018,0.046] & 0.02872531418312388 \\
+workspace & important\_instructions ASR & repeat\_user\_prompt & 558 & 557 & 1 & 0.009 / 0.726 & [0.004,0.021] & 0.008976660682226212 \\
+workspace & tool\_knowledge ASR & none & 558 & 554 & 4 & 0.047 / 0.708 & [0.032,0.067] & 0.04693140794223827 \\
+workspace & tool\_knowledge ASR & repeat\_user\_prompt & 558 & 557 & 1 & 0.005 / 0.737 & [0.002,0.016] & 0.005385996409335727 \\
+travel & important\_instructions ASR & none & 138 & 138 & 0 & 0.167 / 0.449 & [0.114,0.238] & 0.16666666666666666 \\
+travel & important\_instructions ASR & repeat\_user\_prompt & 138 & 138 & 0 & 0.239 / 0.370 & [0.176,0.317] & 0.2391304347826087 \\
+travel & tool\_knowledge ASR & none & 138 & 138 & 0 & 0.326 / 0.355 & [0.254,0.408] & 0.32608695652173914 \\
+travel & tool\_knowledge ASR & repeat\_user\_prompt & 138 & 138 & 0 & 0.326 / 0.413 & [0.254,0.408] & 0.32608695652173914 \\
+banking & important\_instructions ASR & none & 142 & 142 & 0 & 0.190 / 0.655 & [0.134,0.263] & 0.19014084507042253 \\
+banking & important\_instructions ASR & repeat\_user\_prompt & 142 & 142 & 0 & 0.169 / 0.662 & [0.116,0.239] & 0.16901408450704225 \\
+banking & tool\_knowledge ASR & none & 142 & 142 & 0 & 0.162 / 0.599 & [0.110,0.231] & 0.1619718309859155 \\
+banking & tool\_knowledge ASR & repeat\_user\_prompt & 142 & 142 & 0 & 0.127 / 0.662 & [0.082,0.191] & 0.1267605633802817 \\
+slack & important\_instructions ASR & none & 103 & 103 & 0 & 0.282 / 0.612 & [0.204,0.375] & 0.2815533980582524 \\
+slack & important\_instructions ASR & repeat\_user\_prompt & 103 & 103 & 0 & 0.184 / 0.583 & [0.121,0.270] & 0.18446601941747573 \\
+slack & tool\_knowledge ASR & none & 103 & 103 & 0 & 0.563 / 0.534 & [0.467,0.655] & 0.5631067961165048 \\
+slack & tool\_knowledge ASR & repeat\_user\_prompt & 103 & 103 & 0 & 0.301 / 0.563 & [0.221,0.395] & 0.30097087378640774 \\
+workspace & Clean utility & none & 38 & 38 & 0 & 0.789 & [0.637,0.889] & 0.7894736842105263 \\
+workspace & Clean utility & repeat\_user\_prompt & 38 & 38 & 0 & 0.763 & [0.608,0.870] & 0.7631578947368421 \\
+travel & Clean utility & none & 18 & 18 & 0 & 0.444 & [0.246,0.663] & 0.4444444444444444 \\
+travel & Clean utility & repeat\_user\_prompt & 18 & 18 & 0 & 0.444 & [0.246,0.663] & 0.4444444444444444 \\
+banking & Clean utility & none & 14 & 14 & 0 & 0.571 & [0.326,0.786] & 0.5714285714285714 \\
+banking & Clean utility & repeat\_user\_prompt & 14 & 14 & 0 & 0.714 & [0.454,0.883] & 0.7142857142857143 \\
+slack & Clean utility & none & 19 & 19 & 0 & 0.947 & [0.754,0.991] & 0.9473684210526315 \\
+slack & Clean utility & repeat\_user\_prompt & 19 & 19 & 0 & 0.947 & [0.754,0.991] & 0.9473684210526315 \\
+\end{tabular}

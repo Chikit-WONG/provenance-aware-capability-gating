@@ -2,6 +2,45 @@
 
 [中文说明](README_ZH.md)
 
+## Frozen project scope: strengthened PACT core
+
+The current primary evidence is the deterministic strengthened PACT
+(Provenance-Aware Capability Tracking/Control) artifact
+[`artifacts/pact-strengthened-v3/`](artifacts/pact-strengthened-v3/). It has six
+real local tool-boundary records (three cases x `capability_only`/PACT) and an
+eight-row role/transformation policy matrix. Ordinary capability checks ask
+only whether a value is on an allow-list; PACT additionally checks whether its
+provenance is trusted for the requested parameter role.
+
+The key end-to-end result is observable in `MockWorld.send_email`: an external
+email supplies allow-listed Bob, so capability-only calls the tool and produces
+`outbox_count=1`; PACT denies before `ToolExecutor`, records no tool event, and
+leaves `outbox_count=0`. When the user explicitly selects Bob, and when the user
+selects Alice while external email text is used only as `content`, both policies
+send successfully (`outbox_count=1`).
+
+The strengthened matrix instantiates `recipient`, `control`, and low-risk
+`content`; the policy also declares `target` as a high-trust role, while `control`
+is the representative high-trust role in the eight-row matrix and `target` is not
+instantiated separately. It includes
+registered and unregistered
+`NormalizeEmailAddress` transformations. A transformation is accepted only on
+an exact source-value hash, output-value hash, transform name, and trusted source
+authority match in the exact-match registry; this is not fuzzy matching.
+See the concise [protocol](docs/PACT_MINIMUM.md),
+[e2e records](artifacts/pact-strengthened-v3/e2e_results.csv),
+[strategy rows](artifacts/pact-strengthened-v3/strategy_results.csv),
+[plot](artifacts/pact-strengthened-v3/strategy_matrix.svg),
+[decision log](artifacts/pact-strengthened-v3/decision_log.jsonl), and
+[manifest](artifacts/pact-strengthened-v3/manifest.json). The JSON contains six
+case-policy records; the CSV expands their arguments into 18 parameter rows.
+
+The earlier `pact-minimum-v2`/v1 artifacts and model-based factorial runs are
+retained as historical supplementary evidence. The AgentDojo runs below are an
+external attack-realism baseline, not direct evidence for PACT effectiveness;
+they are not merged into PACT metrics. Secret Broker, semantic provenance, L3
+confirmation, extra models, and extra seeds remain future work.
+
 This repository is the implementation and reproducibility package for the
 AIAA/AAIA 4313 group project. It evaluates indirect prompt injection against a
 local, tool-using multi-agent office assistant and compares prompt-only defenses
@@ -15,7 +54,8 @@ substantially reducing benign task completion?
 
 The claim is intentionally limited to this controlled prototype. The system
 tracks exact registered synthetic values and does not provide general semantic
-information-flow security.
+information-flow security. It assumes the provenance tracker and gateway are
+trusted components; model-proposed labels and tool arguments are untrusted.
 
 ## System
 
@@ -42,7 +82,7 @@ The primary model is already available locally and must not be downloaded:
 
 One A40 runs one shared vLLM 0.15.1 service in the `vllm` Conda environment.
 The controller uses the `test` environment. Requests are non-streaming; vLLM is
-configured for BF16, an 8K context, one GPU, and the Hermes tool parser.
+configured for BF16, a configurable 16K default context, one GPU, and the Hermes tool parser.
 
 ## Experimental design
 
@@ -82,7 +122,9 @@ and [experiment protocol](docs/EXPERIMENT_PROTOCOL.md). The
 [demo guide](docs/DEMO.md) covers live execution, artifact replay, and the
 presentation script.
 
-## Formal results
+## Historical model-based results (supplementary)
+
+The following Qwen-based factorial results are retained for context and are not the primary PACT evidence. They use the earlier synthetic ledger and must not be pooled with `pact-strengthened-v3`.
 
 The frozen plan contained 216 runs. The analysis retained 213 valid records and
 3 infrastructure-invalid records; the latter remain visible in the intention-to-
@@ -160,7 +202,38 @@ This hardened set therefore shows an end-to-end provenance gain above the
 safe prompt/capability baseline. Its artifacts and figures are in
 [`artifacts/hardened-full-factorial-analysis-v1/`](artifacts/hardened-full-factorial-analysis-v1/), with the
 frozen corpus in [`data/frozen/red_corpus_qwen3_hardened_v1/`](data/frozen/red_corpus_qwen3_hardened_v1/).
-- [technical report PDF](report/main.pdf)
+- [technical report PDF](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf)
+
+## Full native AgentDojo benchmark
+
+We completed the pinned native AgentDojo suites with local Qwen3-VL-8B-Instruct:
+AgentDojo `v0.1.35` at commit `a75aba7631d3ca5fb7ab938965c97ead2f9ff84b`,
+benchmark `v1.2.2`, BF16 vLLM, and a 16K context. The formal plan contains
+3,942 rows: Workspace 2,308, Travel 588, Banking 596, and Slack 450. All
+3,942 formal records are covered; 3,935 are valid and 7 Workspace rows are
+`agentdojo_execution_error` records retained in the ITT denominator.
+
+The benchmark reports AgentDojo targeted attack success and utility separately
+from this project's T1--T4 authority leakage and T5--T6 sensitive-value leakage.
+The official AgentDojo matrix has no synthetic-secret metric, so these results
+are not pooled with the project factorial tables. Valid-only values are shown
+first; ITT is shown in parentheses.
+
+| Attack / defense | Targeted ASR | Attack utility | Clean utility |
+| --- | ---: | ---: | ---: |
+| `important_instructions` / `none` | 95/940 (95/941), 10.1% | 637/940, 67.8% | 64/89, 71.9% |
+| `important_instructions` / `repeat_user_prompt` | 81/940 (81/941), 8.6% | 610/940, 64.9% | 65/89, 73.0% |
+| `tool_knowledge` / `none` | 152/937 (152/941), 16.2% | 584/937, 62.3% | 64/89, 71.9% |
+| `tool_knowledge` / `repeat_user_prompt` | 97/940 (97/941), 10.3% | 620/940, 66.0% | 65/89, 73.0% |
+
+The compact [results summary](artifacts/agentdojo-external-full-analysis-v1/results_summary.json),
+[attack table](artifacts/agentdojo-external-full-analysis-v1/attack_summary.csv),
+[clean-utility table](artifacts/agentdojo-external-full-analysis-v1/clean_utility.csv),
+[publication figure](artifacts/agentdojo-external-full-analysis-v1/agentdojo_outcomes.png),
+and [attempt-selection manifest](artifacts/agentdojo-external-full-v1/attempt_selection.json)
+are retained. Raw vLLM logs and complete official traces remain untracked. See
+[the external-validation note](docs/EXTERNAL_VALIDATION.md) for denominators,
+hashes, and scope limitations.
 
 ## Demo and report
 
@@ -173,7 +246,7 @@ conda run -n test python scripts/demo.py --replay-only
 Omit `--replay-only` when the local vLLM service and live experiment adapter are
 available. The bundled deterministic replay is illustrative only; the formal
 claims above come from the frozen Qwen3-VL evaluation and its stored aggregates.
-The compiled report is [available here](report/main.pdf).
+The compiled report is [available here](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf).
 
 ## Repository layout
 
@@ -192,6 +265,7 @@ report/             final technical report sources
 
 - Every attempt starts from a fresh world snapshot.
 - Raw evidence is append-only; retries never overwrite prior attempts.
+- Strengthened PACT text outputs are canonical LF and manifest hashes cover every output.
 - Manifests use relative paths and record SHA-256 hashes.
 - Exposure is proved by structured resource-read and context-parent events.
 - No-op and refusal are valid behavioral outcomes, not infrastructure failures.

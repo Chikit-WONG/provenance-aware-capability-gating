@@ -1,0 +1,55 @@
+{
+  "code_commit": "3b7f886b3e5b10fc26bf1e62ff7ffd24cd5ac0e0",
+  "e2e_cases": [
+    "external-bob-allowlisted",
+    "user-bob",
+    "external-content"
+  ],
+  "e2e_run_count": 6,
+  "experiment": "pact_strengthened_e2e_and_strategy_matrix",
+  "fresh_world_per_policy_run": true,
+  "line_ending": "LF",
+  "output_sha256": {
+    "architecture.mmd": "cc58922e98c187dd5acbd350c70c279e2a5e42966727a158ed48929a9c34ea47",
+    "decision_log.jsonl": "3b823ca09a76c509d8fc1744fed9d0ee951865d8cf3d594f872ecf8ebf9d7d03",
+    "e2e_results.csv": "79f9b79c0f9a4c530899aaf6af4b4fbb17eb96fe275458e8d5c4b0cf696addda",
+    "e2e_results.json": "06cc183a10d9e8b3703f5f2dc5e7f2e6876ebf6e12bcd7a3073905afed8d65ed",
+    "strategy_matrix.svg": "0ec63f9c97ef04d65b34ff3e29cba435bc90e79f610116d1427e86b3223c797f",
+    "strategy_results.csv": "e03a5f28f89731eba34e360a74ab7316abc6d3f8bb7f268a892b0b05b2236f47",
+    "strategy_results.json": "a832ee8dcbd36b080426571c191290035ab952caeb084917fc4b5db9a781fac9"
+  },
+  "outputs": {
+    "architecture.mmd": "cc58922e98c187dd5acbd350c70c279e2a5e42966727a158ed48929a9c34ea47",
+    "decision_log.jsonl": "3b823ca09a76c509d8fc1744fed9d0ee951865d8cf3d594f872ecf8ebf9d7d03",
+    "e2e_results.csv": "79f9b79c0f9a4c530899aaf6af4b4fbb17eb96fe275458e8d5c4b0cf696addda",
+    "e2e_results.json": "06cc183a10d9e8b3703f5f2dc5e7f2e6876ebf6e12bcd7a3073905afed8d65ed",
+    "strategy_matrix.svg": "0ec63f9c97ef04d65b34ff3e29cba435bc90e79f610116d1427e86b3223c797f",
+    "strategy_results.csv": "e03a5f28f89731eba34e360a74ab7316abc6d3f8bb7f268a892b0b05b2236f47",
+    "strategy_results.json": "a832ee8dcbd36b080426571c191290035ab952caeb084917fc4b5db9a781fac9"
+  },
+  "schema_version": "strengthened-1",
+  "semantics": {
+    "capability_only": "exact value allow-list without role provenance enforcement",
+    "external_content_role": "allowed",
+    "external_registered_transform": "explicitly untrusted and denied",
+    "high_trust_roles": [
+      "recipient",
+      "target",
+      "control"
+    ],
+    "pact": "exact role binding plus trusted user provenance or exact registered transformation",
+    "transformation_registry": "exact-match source hash, output hash, transform name, and source authority"
+  },
+  "strategy_case_count": 8,
+  "strategy_cases": [
+    "user-recipient-none",
+    "external-recipient-none",
+    "external-content-none",
+    "user-recipient-registered",
+    "user-recipient-unregistered",
+    "external-recipient-registered",
+    "user-control-none",
+    "external-control-none"
+  ],
+  "transform_name": "NormalizeEmailAddress"
+}
