@@ -6,7 +6,7 @@
 
 The current primary evidence is the deterministic strengthened PACT
 (Provenance-Aware Capability Tracking/Control) artifact
-[`artifacts/pact-strengthened-v2/`](artifacts/pact-strengthened-v2/). It has six
+[`artifacts/pact-strengthened-v3/`](artifacts/pact-strengthened-v3/). It has six
 real local tool-boundary records (three cases x `capability_only`/PACT) and an
 eight-row role/transformation policy matrix. Ordinary capability checks ask
 only whether a value is on an allow-list; PACT additionally checks whether its
@@ -20,17 +20,20 @@ selects Alice while external email text is used only as `content`, both policies
 send successfully (`outbox_count=1`).
 
 The strengthened matrix instantiates `recipient`, `control`, and low-risk
-`content`; the policy also declares `target` as a high-trust role. It includes
+`content`; the policy also declares `target` as a high-trust role, while `control`
+is the representative high-trust role in the eight-row matrix and `target` is not
+instantiated separately. It includes
 registered and unregistered
 `NormalizeEmailAddress` transformations. A transformation is accepted only on
 an exact source-value hash, output-value hash, transform name, and trusted source
-authority match in the append-only registry; this is not fuzzy matching.
+authority match in the exact-match registry; this is not fuzzy matching.
 See the concise [protocol](docs/PACT_MINIMUM.md),
-[e2e records](artifacts/pact-strengthened-v2/e2e_results.csv),
-[strategy rows](artifacts/pact-strengthened-v2/strategy_results.csv),
-[plot](artifacts/pact-strengthened-v2/strategy_matrix.svg),
-[decision log](artifacts/pact-strengthened-v2/decision_log.jsonl), and
-[manifest](artifacts/pact-strengthened-v2/manifest.json).
+[e2e records](artifacts/pact-strengthened-v3/e2e_results.csv),
+[strategy rows](artifacts/pact-strengthened-v3/strategy_results.csv),
+[plot](artifacts/pact-strengthened-v3/strategy_matrix.svg),
+[decision log](artifacts/pact-strengthened-v3/decision_log.jsonl), and
+[manifest](artifacts/pact-strengthened-v3/manifest.json). The JSON contains six
+case-policy records; the CSV expands their arguments into 18 parameter rows.
 
 The earlier `pact-minimum-v2`/v1 artifacts and model-based factorial runs are
 retained as historical supplementary evidence. The AgentDojo runs below are an
@@ -51,7 +54,8 @@ substantially reducing benign task completion?
 
 The claim is intentionally limited to this controlled prototype. The system
 tracks exact registered synthetic values and does not provide general semantic
-information-flow security.
+information-flow security. It assumes the provenance tracker and gateway are
+trusted components; model-proposed labels and tool arguments are untrusted.
 
 ## System
 
@@ -120,7 +124,7 @@ presentation script.
 
 ## Historical model-based results (supplementary)
 
-The following Qwen-based factorial results are retained for context and are not the primary PACT evidence. They use the earlier synthetic ledger and must not be pooled with `pact-strengthened-v2`.
+The following Qwen-based factorial results are retained for context and are not the primary PACT evidence. They use the earlier synthetic ledger and must not be pooled with `pact-strengthened-v3`.
 
 The frozen plan contained 216 runs. The analysis retained 213 valid records and
 3 infrastructure-invalid records; the latter remain visible in the intention-to-
@@ -198,7 +202,7 @@ This hardened set therefore shows an end-to-end provenance gain above the
 safe prompt/capability baseline. Its artifacts and figures are in
 [`artifacts/hardened-full-factorial-analysis-v1/`](artifacts/hardened-full-factorial-analysis-v1/), with the
 frozen corpus in [`data/frozen/red_corpus_qwen3_hardened_v1/`](data/frozen/red_corpus_qwen3_hardened_v1/).
-- [technical report PDF](report/main.pdf)
+- [technical report PDF](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf)
 
 ## Full native AgentDojo benchmark
 
@@ -242,7 +246,7 @@ conda run -n test python scripts/demo.py --replay-only
 Omit `--replay-only` when the local vLLM service and live experiment adapter are
 available. The bundled deterministic replay is illustrative only; the formal
 claims above come from the frozen Qwen3-VL evaluation and its stored aggregates.
-The compiled report is [available here](report/main.pdf).
+The compiled report is [available here](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf).
 
 ## Repository layout
 

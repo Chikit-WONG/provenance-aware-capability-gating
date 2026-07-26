@@ -6,7 +6,7 @@
 
 当前主结果是确定性的强化版 PACT（Provenance-Aware Capability
 Tracking/Control）artifact：
-[`artifacts/pact-strengthened-v2/`](artifacts/pact-strengthened-v2/)。它包含 6 条
+[`artifacts/pact-strengthened-v3/`](artifacts/pact-strengthened-v3/)。它包含 6 条
 真实本地工具边界记录（3 个案例分别用 `capability_only` 和 PACT 执行）以及
 8 行角色/转换策略矩阵。普通 capability 只检查值是否在 allow-list 中；PACT
 还检查该值的 provenance 是否足以绑定到当前参数角色。
@@ -18,14 +18,16 @@ allow-list 中的 Bob 时，Capability-only 实际调用工具并产生
 `content` 时，两种策略都正常发送（`outbox_count=1`）。
 
 强化矩阵实例化了 `recipient`、`control` 和低风险 `content`；策略同时将
-`target` 声明为高信任角色，并覆盖已注册/未注册的 `NormalizeEmailAddress` 转换。转换只有在 append-only registry
+`target` 声明为高信任角色；8 行矩阵用 `control` 作为代表性的高信任角色，
+没有单独实例化 `target`，并覆盖已注册/未注册的 `NormalizeEmailAddress` 转换。转换只有在 exact-match registry
 中对 source-value hash、output-value hash、transform name 和 trusted source
 authority 做精确匹配时才被接受，不使用模糊匹配。详见
-[实验协议](docs/PACT_MINIMUM.md)、[端到端记录](artifacts/pact-strengthened-v2/e2e_results.csv)、
-[策略矩阵](artifacts/pact-strengthened-v2/strategy_results.csv)、
-[结果图](artifacts/pact-strengthened-v2/strategy_matrix.svg)、
-[decision log](artifacts/pact-strengthened-v2/decision_log.jsonl) 和
-[manifest](artifacts/pact-strengthened-v2/manifest.json)。
+[实验协议](docs/PACT_MINIMUM.md)、[端到端记录](artifacts/pact-strengthened-v3/e2e_results.csv)、
+[策略矩阵](artifacts/pact-strengthened-v3/strategy_results.csv)、
+[结果图](artifacts/pact-strengthened-v3/strategy_matrix.svg)、
+[decision log](artifacts/pact-strengthened-v3/decision_log.jsonl) 和
+[manifest](artifacts/pact-strengthened-v3/manifest.json)。其中 JSON 是 6 条
+case-policy 记录，CSV 则把这些记录中的参数展开为 18 行。
 
 之前的 `pact-minimum-v2`/v1 artifact 和模型 factorial 实验保留为历史补充证据。
 下面的 AgentDojo 结果只用于说明攻击的现实性，不直接评价 PACT，也不与 PACT
@@ -40,7 +42,8 @@ authority 做精确匹配时才被接受，不使用模糊匹配。详见
 正式研究问题是：**在任务授权 manifest 正确的前提下，provenance-aware
 capability gating 能否减少真实执行的越权行为和合成秘密泄露，同时保持正常任务
 完成率？** 本项目不声称解决一般语义信息流安全；Full 防御只追踪已注册的精确合成
-敏感值，编码、释义或拆分后的逃逸属于明确局限。
+敏感值，编码、释义或拆分后的逃逸属于明确局限；实验同时假设 provenance tracker
+和 gateway 属于可信计算基，模型生成的标签和工具参数均不可信。
 
 ## 已固定的关键选择
 
@@ -70,7 +73,7 @@ capability gating 能否减少真实执行的越权行为和合成秘密泄露�
 
 ## 历史模型实验结果（补充）
 
-下面的 Qwen 模型 factorial 结果仅作背景补充，不是当前 PACT 主证据，且不能与 `pact-strengthened-v2` 合并。
+下面的 Qwen 模型 factorial 结果仅作背景补充，不是当前 PACT 主证据，且不能与 `pact-strengthened-v3` 合并。
 
 冻结的正式计划包含 216 次运行，分析得到 213 条有效记录和 3 条基础设施无效记录；
 无效记录保留在 intention-to-test（ITT）统计中。下表为六个任务合并后的有效样本率：
@@ -143,7 +146,7 @@ Provenance-only 相对 Allow-All 为 $-0.33$（95% CI $[-0.67,0.00]$），Prompt
 之上的端到端 provenance 增益。完整结果和图见
 [hardened 完整分析](artifacts/hardened-full-factorial-analysis-v1/)，冻结语料见
 [red_corpus_qwen3_hardened_v1](data/frozen/red_corpus_qwen3_hardened_v1/)。
-- [技术报告 PDF](report/main.pdf)
+- [技术报告 PDF](https://github.com/Chikit-WONG/provenance-aware-capability-gating-report/blob/main/main.pdf)
 
 ## 完整 AgentDojo 外部 benchmark
 
