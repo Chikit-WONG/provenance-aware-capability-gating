@@ -535,23 +535,42 @@ def _draw_strategy_svg(rows: list[dict[str, Any]]) -> bytes:
     pact = [int(row["pact_allowed"]) for row in rows]
     positions = list(range(len(rows)))
     width = 0.36
-    fig, axis = plt.subplots(figsize=(12, 4.8))
-    axis.bar([pos - width / 2 for pos in positions], capability, width, label="Capability-only", color="#9ecae1")
-    axis.bar([pos + width / 2 for pos in positions], pact, width, label="PACT", color="#3182bd")
-    axis.set_ylim(0, 1.18)
-    axis.set_yticks([0, 1])
-    axis.set_yticklabels(["Deny", "Allow"])
-    axis.set_xticks(positions)
-    axis.set_xticklabels(labels, fontsize=8)
-    axis.set_ylabel("Policy decision")
-    axis.set_title("PACT strategy matrix: value allow-list versus provenance-aware role check")
-    axis.legend(loc="upper center", ncol=2, frameon=False)
-    axis.grid(axis="y", alpha=0.25)
-    fig.tight_layout()
-    stream = io.BytesIO()
-    fig.savefig(stream, format="svg", metadata={"Date": None})
-    plt.close(fig)
-    return _lf_bytes(stream.getvalue())
+    # Matplotlib hashes SVG clip paths and emits a random identifier unless a
+    # salt is fixed.  Keep the context local so this experiment cannot change
+    # plotting settings for callers that import the runner.
+    with matplotlib.rc_context({"svg.hashsalt": "pact-strengthened"}):
+        fig, axis = plt.subplots(figsize=(12, 4.8))
+        axis.bar(
+            [pos - width / 2 for pos in positions],
+            capability,
+            width,
+            label="Capability-only",
+            color="#9ecae1",
+        )
+        axis.bar(
+            [pos + width / 2 for pos in positions],
+            pact,
+            width,
+            label="PACT",
+            color="#3182bd",
+        )
+        axis.set_ylim(0, 1.18)
+        axis.set_yticks([0, 1])
+        axis.set_yticklabels(["Deny", "Allow"])
+        axis.set_xticks(positions)
+        axis.set_xticklabels(labels, fontsize=8)
+        axis.set_ylabel("Policy decision")
+        axis.set_title("PACT strategy matrix: value allow-list versus provenance-aware role check")
+        axis.legend(loc="upper center", ncol=2, frameon=False)
+        axis.grid(axis="y", alpha=0.25)
+        fig.tight_layout()
+        stream = io.BytesIO()
+        fig.savefig(stream, format="svg", metadata={"Date": None})
+        plt.close(fig)
+    # SVG path data from Matplotlib contains indentation-independent trailing
+    # spaces.  Remove those while preserving the final LF byte.
+    canonical = _lf_bytes(stream.getvalue())
+    return b"\n".join(line.rstrip(b" \t") for line in canonical.split(b"\n"))
 
 
 ARCHITECTURE = """flowchart LR

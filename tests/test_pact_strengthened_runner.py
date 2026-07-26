@@ -7,6 +7,8 @@ from pathlib import Path
 
 from scripts.run_pact_strengthened import (
     STRATEGY_CASE_IDS,
+    _draw_strategy_svg,
+    _strategy_record,
     normalize_email_address,
     run,
 )
@@ -126,6 +128,13 @@ class StrengthenedPACTRunnerTests(unittest.TestCase):
             run(artifact)
             with self.assertRaises(FileExistsError):
                 run(artifact)
+
+    def test_strategy_svg_is_byte_reproducible_and_has_no_trailing_whitespace(self) -> None:
+        rows = [_strategy_record(case_id) for case_id in STRATEGY_CASE_IDS]
+        first = _draw_strategy_svg(rows)
+        second = _draw_strategy_svg(rows)
+        self.assertEqual(first, second)
+        self.assertTrue(all(line == line.rstrip(b" \t") for line in first.splitlines()))
 
 
 def _sha256(path: Path) -> str:
