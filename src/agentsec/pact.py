@@ -205,6 +205,11 @@ class PACTGateway:
                 return False, f"{argument.name} value is outside capability allow-list"
         return True, "capability allow-list passed"
 
+    def capability_decision(self, call: PACTCall) -> tuple[bool, str]:
+        """Return the ordinary value-only capability decision for ``call``."""
+
+        return self._capability_check(call)
+
     def _pact_check(self, call: PACTCall) -> tuple[bool, bool, str]:
         transformation_verified = False
         for argument in call.arguments.values():
@@ -223,9 +228,14 @@ class PACTGateway:
             # External values are intentionally allowed at low-risk content roles.
         return True, transformation_verified, "PACT role and provenance checks passed"
 
+    def pact_decision(self, call: PACTCall) -> tuple[bool, bool, str]:
+        """Return the role/provenance decision and transform status for ``call``."""
+
+        return self._pact_check(call)
+
     def execute(self, call: PACTCall, *, case_id: str) -> PACTResult:
-        capability_allowed, capability_reason = self._capability_check(call)
-        pact_allowed, transformation_verified, pact_reason = self._pact_check(call)
+        capability_allowed, capability_reason = self.capability_decision(call)
+        pact_allowed, transformation_verified, pact_reason = self.pact_decision(call)
         allowed = capability_allowed and pact_allowed
         executed = bool(allowed)
         if executed:
