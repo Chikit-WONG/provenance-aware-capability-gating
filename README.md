@@ -2,25 +2,41 @@
 
 [中文说明](README_ZH.md)
 
-## Frozen project scope: PACT core
+## Frozen project scope: strengthened PACT core
 
-The course-project main line is now the deterministic PACT (Provenance-Aware
-Capability Tracking/Control) mechanism. The key claim is narrow: ordinary
-capability checks ask whether a value is on an allow-list; PACT also checks
-whether that value is trusted for the requested parameter role.
+The current primary evidence is the deterministic strengthened PACT
+(Provenance-Aware Capability Tracking/Control) artifact
+[`artifacts/pact-strengthened-v2/`](artifacts/pact-strengthened-v2/). It has six
+real local tool-boundary records (three cases x `capability_only`/PACT) and an
+eight-row role/transformation policy matrix. Ordinary capability checks ask
+only whether a value is on an allow-list; PACT additionally checks whether its
+provenance is trusted for the requested parameter role.
 
-The minimum experiment has four auditable cases: user-selected Alice is
-allowed, an allow-listed Bob supplied by an external email is denied at the
-recipient role, external email text is allowed at a low-risk content role, and a
-user value is allowed after an explicitly registered Base64 transformation.
-The result table, decision logs, architecture diagram, and hashes are in
-[`artifacts/pact-minimum-v2/`](artifacts/pact-minimum-v2/); the protocol is in
-[`docs/PACT_MINIMUM.md`](docs/PACT_MINIMUM.md).
+The key end-to-end result is observable in `MockWorld.send_email`: an external
+email supplies allow-listed Bob, so capability-only calls the tool and produces
+`outbox_count=1`; PACT denies before `ToolExecutor`, records no tool event, and
+leaves `outbox_count=0`. When the user explicitly selects Bob, and when the user
+selects Alice while external email text is used only as `content`, both policies
+send successfully (`outbox_count=1`).
 
-The AgentDojo runs below are retained as an external attack-realism baseline.
-They are not used as direct evidence for PACT effectiveness. Secret Broker,
-semantic provenance, L3 confirmation, extra models, and extra seeds are future
-work.
+The strengthened matrix instantiates `recipient`, `control`, and low-risk
+`content`; the policy also declares `target` as a high-trust role. It includes
+registered and unregistered
+`NormalizeEmailAddress` transformations. A transformation is accepted only on
+an exact source-value hash, output-value hash, transform name, and trusted source
+authority match in the append-only registry; this is not fuzzy matching.
+See the concise [protocol](docs/PACT_MINIMUM.md),
+[e2e records](artifacts/pact-strengthened-v2/e2e_results.csv),
+[strategy rows](artifacts/pact-strengthened-v2/strategy_results.csv),
+[plot](artifacts/pact-strengthened-v2/strategy_matrix.svg),
+[decision log](artifacts/pact-strengthened-v2/decision_log.jsonl), and
+[manifest](artifacts/pact-strengthened-v2/manifest.json).
+
+The earlier `pact-minimum-v2`/v1 artifacts and model-based factorial runs are
+retained as historical supplementary evidence. The AgentDojo runs below are an
+external attack-realism baseline, not direct evidence for PACT effectiveness;
+they are not merged into PACT metrics. Secret Broker, semantic provenance, L3
+confirmation, extra models, and extra seeds remain future work.
 
 This repository is the implementation and reproducibility package for the
 AIAA/AAIA 4313 group project. It evaluates indirect prompt injection against a
@@ -102,7 +118,9 @@ and [experiment protocol](docs/EXPERIMENT_PROTOCOL.md). The
 [demo guide](docs/DEMO.md) covers live execution, artifact replay, and the
 presentation script.
 
-## Formal results
+## Historical model-based results (supplementary)
+
+The following Qwen-based factorial results are retained for context and are not the primary PACT evidence. They use the earlier synthetic ledger and must not be pooled with `pact-strengthened-v2`.
 
 The frozen plan contained 216 runs. The analysis retained 213 valid records and
 3 infrastructure-invalid records; the latter remain visible in the intention-to-
@@ -243,6 +261,7 @@ report/             final technical report sources
 
 - Every attempt starts from a fresh world snapshot.
 - Raw evidence is append-only; retries never overwrite prior attempts.
+- Strengthened PACT text outputs are canonical LF and manifest hashes cover every output.
 - Manifests use relative paths and record SHA-256 hashes.
 - Exposure is proved by structured resource-read and context-parent events.
 - No-op and refusal are valid behavioral outcomes, not infrastructure failures.
